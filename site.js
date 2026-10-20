@@ -5,7 +5,7 @@ if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catc
   if (!IOS || navigator.standalone) return;
   try { if (localStorage.getItem(KEY)) return; } catch (e) {}
   const tip = document.createElement('p'); tip.className = 'tip';
-  tip.innerHTML = 'For a full-screen app that keeps playing when your phone locks: tap <b>Share</b>, then <b>Add to Home Screen</b>. <button class="linkish" type="button">Got it</button>';
+  tip.innerHTML = T('For a full-screen app that keeps playing when your phone locks: tap <b>Share</b>, then <b>Add to Home Screen</b>.') + ` <button class="linkish" type="button">${T('Got it')}</button>`;
   tip.querySelector('button').addEventListener('click', () => { tip.remove(); try { localStorage.setItem(KEY, '1'); } catch (e) {} });
   document.querySelector('.top').after(tip);
 })();
