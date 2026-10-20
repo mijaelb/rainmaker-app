@@ -150,6 +150,8 @@ input[type=range]::-moz-range-thumb { width: 12px; height: 12px; border-radius: 
 .zen-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
 .zen button { background: transparent; color: var(--scope-4); border: 1px solid var(--scope-line); border-radius: 999px; padding: 10px 18px; cursor: pointer; font-weight: 600; }
 body.zen-on { overflow: hidden; }
+.zen-row, .zen-time { transition: opacity 0.4s; }
+.zen.calm .zen-row, .zen.calm .zen-time { opacity: 0.08; transition: opacity 2.5s; }
 .scope.guided { height: 270px; }
 .guide { position: absolute; left: 64px; right: 14px; bottom: 12px; text-align: center; pointer-events: none; display: grid; gap: 3px; justify-items: center; }
 .guide b { font: 600 18px/1.25 var(--display); color: var(--scope-4); text-shadow: 0 1px 10px rgba(0,0,0,0.75); max-width: 46ch; text-wrap: balance; }
@@ -177,6 +179,8 @@ body.zen-on { overflow: hidden; }
 .foot { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 18px 28px; border-top: 1px solid var(--line); padding-top: 20px; color: var(--muted); font-size: 13.5px; }
 .foot h4 { margin: 0 0 4px; font: 700 15px/1.2 var(--display); color: var(--ink); }
 .foot p { margin: 0; text-wrap: pretty; }
+.tip { margin: 0; padding: 10px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--muted); font-size: 13.5px; text-wrap: pretty; }
+.tip b { color: var(--ink); }
 .linkish { background: none; border: 0; padding: 0; color: var(--muted); text-decoration: underline; cursor: pointer; font-size: 13px; }
 /* phones */
 .dock { position: fixed; left: 0; right: 0; bottom: 0; z-index: 25; display: flex; align-items: center; gap: 12px;
@@ -357,28 +361,42 @@ let SR = 48000;
 const TAU = Math.PI * 2;
 let rnd = Math.random;
 function seedRandom(seed) { let t = seed >>> 0; rnd = () => { t = (t + 0x6D2B79F5) >>> 0; let x = Math.imul(t ^ (t >>> 15), 1 | t); x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x; return ((x ^ (x >>> 14)) >>> 0) / 4294967296; }; }
-// K: the inner settings of each sound. Defaults were found by tuning against real recordings
-// (texture statistics plus an AudioSet sound recogniser); render tools can override them.
+// K: the inner settings of each sound, grouped by sound. Defaults were found by tuning against real
+// recordings (texture statistics, AI listeners, loudness); the test tools can override them.
 const K = {
-  w_fc0: 432.1, w_fcK: 2432, w_fcExp: 0.7091, w_q: 0.2024, w_hp: 196.4, w_body: 0.9745, w_bodyExp: 0.6963, w_brown: 0.3019, w_pink: 2.696, w_gustDepth: 0.5538, w_stretch: 2.576,
-  w_g1: 0.08753, w_g1k: 0.3935, w_g2: 0.2857, w_g2k: 3.379, w_flut: 1.44, w_leafRate: 6000, w_leafG: 0.01, w_leafLo: 1175, w_leafHi: 3537, w_leafQ: 0.6381, w_leafHp: 772.8, w_whis: 1.4,
-  o_tb: 0.5001, o_att: 1.114, o_tau: 1.505, o_A: 1.875, o_fc0: 280.7, o_fcB: 734.3, o_fcK: 6640, o_fcExp: 3.668, o_q: 0.3328, o_xlp: 1566, o_sub: 0.1147, o_back: 0.1767,
-  o_foamRate: 3.001, o_foamG: 0.02074, o_foamLo: 4476, o_foamHi: 3374, o_ba: 0.7538, o_sa: 1.172, o_saLp: 1379, o_farRate: 0.4914, o_farG: 0.3451, o_set2: 1.102,
-  s_wd: 0.6, s_gw: 0.4876, s_band: 0.08, s_bandQ: 2.143, s_wLo: 600, s_wHi: 2410, s_wQ: 1.962, s_base: 1.354, s_bubA: 0.06924, s_bubDF: 0.9534, s_bubEps: 0.3559, s_smallA: 0.2945,
-  s_splash: 0.1411, s_splashRate: 1.454, s_la: 1.317, s_ga: 1.292, s_gurg: 1.461, s_turb: 12.98, s_mDepth: 5.915,
-  f_rate0: 0.2925, f_rate: 123.1, f_m: 3.803, f_ampPow: 3.563, f_amp: 1.694, f_fbLo: 2511, f_fbHi: 4881, f_exLo: 0.0001381, f_exHi: 0.001175, f_q: 2.654, f_snap: 0.1406, f_span: 1.608,
-  d_dist: 1, d_pow: 1.5, d_leafEx: 1, d_leafF: 1, d_leafQ: 1, d_thud: 1, d_plinkF: 1, d_plink: 0.6, d_plinkDF: 4, d_wet: 1,
-  t_ic: 1, t_dir: 0.15, t_tau: 1, t_abs: 12000, t_absK: 1300, t_absE: 0.62, t_shadow: 6, t_rise: 1, t_tail: 1, t_echo: 1,
-  b_width: 0.6, b_itd: 0.00045, fr_width: 0.9, fr_itd: 0.0009, c_width: 0.4, r_gs: 0.35, r_hgs: 0.5, r_col: 3, s_spGs: 0.5, r_wKnock: 1, r_wClick: 1, r_wClickF: 1, r_wHi: 1,
-  w_gdb: 14, w_locdb: 1, w_fast: 1.2, w_loc: 0.08, w_fexp: 0.35, w_chp: 280, w_clp: 3400, w_lf: 4500, w_lq: 0.55, w_ca: 0.82, w_sexp: 0.72, w_cexp: 2.5, w_la: 0.53, w_lexp: 3, w_flut2: 0.2, w_rumble: 1.35, w_col: 5,
-  o_peel: 1, o_sets: 0.3, o_hp: 130, o_fzTick: 0.35, o_fizz: 0.3, o_fzTop: 9000,
-  b_doveQ: 6, b_doveOec: 1, b_doveLp: 0.6, b_owlQ: 3, b_owlOec: 0.9, b_owlLp: 1,
-  fr_peepH: 1, fr_treeH: 1, fr_treePr: 1, fr_treePd: 1,
-  b_sbOec: 0.8,
-  f_actS: 0.06, f_actM: 0.3, f_actD: 2.0, f_actL: 0.9, f_crackP: 0.3, f_crackA: 1.0,
-  d_bubP: 0.3, d_splash: 1.5, d_bg: 0.08, d_bgRate: 120, d_bgLo: 900, d_bgHi: 5000, d_bgQ: 2.2,
-  b_syr: 1, b_sa: 0.007, b_sb: 0.02, b_wet: 1.437, b_press: 0.4128, b_jit: 0.01022, b_tubeR: 0.1296, b_oecQ: 1.5, b_breath: 0.5, b_off: -0.03, b_flutP: 2.585, b_flutD: 3.201, b_airLo: 0.01822, b_airHf: 0.006144, b_far: 6.193, fr_far: 2.5, fr_farMax: 20, fr_treeF: 1, fr_treeLo: 1, fr_pulseSm: 0.7, fr_pulseJ: 0.08, r_click: 1, r_clickQ: 1, r_dens: 1, r_bedQ: 1, r_hiDens: 0.6, r_hi: 1, r_hiQ: 1, r_bub: 1.5, r_slow: 0.05, b_ambDove: 0.25, b_farDove: 0.5, b_ambOwl: 0.3, b_pressDove: 1, b_breathDove: 0.5, b_hp: 294.9, b_noise: 0.0004792, b_air: 0.01929,
-  f_pop: 1.722, f_roar: 1.149, f_roarLp: 2.99, f_lick: 0.009958, f_lickRate: 1.364, f_siz: 0.01791, f_flurry: 0.04542,
+  // rain
+  r_gs: 0.35, r_hgs: 0.5, r_col: 3, r_wKnock: 1, r_wClick: 1, r_wClickF: 1, r_wHi: 1, r_wEqLo: 6, r_click: 1, r_clickQ: 1, r_dens: 1, r_bedQ: 1, r_hiDens: 0.6,
+  r_hi: 1, r_hiQ: 1, r_bub: 1.5, r_slow: 0.05,
+  // thunder
+  t_ic: 1, t_dir: 0.15, t_tau: 1, t_absK: 1300, t_absE: 0.62, t_shadow: 6, t_rise: 1, t_tail: 1, t_echo: 1,
+  // wind
+  w_leafRate: 6000, w_leafG: 0.01, w_whis: 1.4, w_gdb: 14, w_locdb: 1, w_fast: 1.2, w_fexp: 0.35, w_chp: 280, w_clp: 3400, w_lf: 4500, w_lq: 0.55,
+  w_ca: 0.82, w_sexp: 0.72, w_la: 0.53, w_lexp: 3, w_flut2: 0.2, w_rumble: 1.35, w_col: 5,
+  // ocean
+  o_tb: 0.5001, o_att: 1.114, o_tau: 1.505, o_A: 1.875, o_fc0: 280.7, o_fcB: 734.3, o_fcK: 6640, o_fcExp: 3.668, o_q: 0.3328, o_xlp: 1566,
+  o_sub: 0.1147, o_back: 0.1767, o_foamRate: 3.001, o_foamG: 0.02074, o_ba: 0.7538, o_sa: 1.172, o_saLp: 1379, o_farRate: 0.4914, o_farG: 0.3451,
+  o_set2: 1.102, o_peel: 1, o_sets: 0.3, o_hp: 130, o_fzTick: 0.35, o_fizz: 0.3, o_fzTop: 9000,
+  // stream
+  s_wd: 0.6, s_gw: 0.4876, s_band: 0.08, s_bandQ: 2.143, s_wLo: 600, s_wHi: 2410, s_wQ: 1.962, s_base: 1.354, s_bubA: 0.06924, s_bubDF: 0.9534,
+  s_bubEps: 0.3559, s_smallA: 0.2945, s_splash: 0.1411, s_splashRate: 1.454, s_la: 1.317, s_ga: 1.292, s_gurg: 1.461, s_turb: 12.98, s_mDepth: 5.915,
+  s_spGs: 0.5, s_eqPres: 5,
+  // fire
+  f_rate0: 0.2925, f_rate: 123.1, f_m: 3.803, f_ampPow: 3.563, f_amp: 1.694, f_fbLo: 2511, f_fbHi: 4881, f_exLo: 0.0001381, f_exHi: 0.001175,
+  f_q: 2.654, f_snap: 0.1406, f_span: 1.608, f_actS: 0.06, f_actM: 0.3, f_actD: 2, f_actL: 0.9, f_crackP: 0.3, f_crackA: 1, f_pop: 1.722,
+  f_roar: 1.149, f_roarLp: 2.99, f_lick: 0.009958, f_lickRate: 1.364, f_siz: 0.01791, f_flurry: 0.04542,
+  // birds (syrinx voices, stereo placement, ambience)
+  b_width: 0.6, b_itd: 0.00045, b_doveQ: 6, b_doveOec: 1, b_doveLp: 0.6, b_owlQ: 3, b_owlOec: 0.9, b_owlLp: 1, b_sbOec: 0.8, b_syr: 1, b_sa: 0.007,
+  b_sb: 0.02, b_wet: 1.437, b_press: 0.4128, b_jit: 0.01022, b_tubeR: 0.1296, b_oecQ: 1.5, b_breath: 0.5, b_off: -0.03, b_flutP: 2.585,
+  b_flutD: 3.201, b_airLo: 0.01822, b_airHf: 0.006144, b_far: 6.193, b_ambDove: 0.25, b_farDove: 0.5, b_ambOwl: 0.3, b_pressDove: 1,
+  b_breathDove: 0.5, b_hp: 294.9, b_noise: 0.0004792, b_air: 0.01929,
+  // frogs
+  fr_width: 0.9, fr_itd: 0.0009, fr_peepH: 1, fr_treeH: 1, fr_treePr: 1, fr_treePd: 1, fr_far: 2.5, fr_farMax: 20, fr_treeF: 1, fr_treeLo: 1,
+  fr_pulseSm: 0.7, fr_pulseJ: 0.08,
+  // crickets
+  c_width: 0.4,
+  // after the rain (drips)
+  d_dist: 1, d_pow: 1.5, d_leafEx: 1, d_leafF: 1, d_leafQ: 1, d_thud: 1, d_plinkF: 1, d_plink: 0.6, d_plinkDF: 4, d_wet: 1, d_bubP: 0.3,
+  d_splash: 1.5, d_bg: 0.08, d_bgRate: 120, d_bgLo: 900, d_bgHi: 5000, d_bgQ: 2.2,
 };
 const rr = (a, b) => a + rnd() * (b - a);
 const lr = (a, b) => a * Math.pow(b / a, rnd());
@@ -526,6 +544,10 @@ class Color { // gentle spectral bumps that wander over minutes: no real place h
     }
   }
 }
+class Tone { // fixed peaking bands [Hz, Q, dB] on both channels; 0 dB bands cost nothing
+  constructor(bands) { this.f = bands.filter(b => b[2]).map(([f, q, db]) => [new BQ('pk', f, q, db), new BQ('pk', f, q, db)]); }
+  run(L, R, n) { for (const [a, b] of this.f) for (let i = 0; i < n; i++) { L[i] = a.run(L[i]); R[i] = b.run(R[i]); } }
+}
 class StereoField { // real stereo recordings keep left and right alike in the lows and let them drift apart in the highs
   constructor(fc = 6000, low = 0.4, high = 1.3) { this.a = 1 - Math.exp(-TAU * fc / SR); this.s1 = 0; this.s2 = 0; this.low = low; this.high = high; }
   run(L, R, n) {
@@ -592,7 +614,7 @@ const SURF = {
   ground: { dn: 1, out: 1, bed: [200, 3800], bq: [1.8, 4.5], lp: 6500, bg: 1, hi: 1.1, hlp: 17000, near: 'drop', nr: 1, bub: 1, gs: 1 },
   leaves: { dn: 1, out: 1, bed: [260, 5200], bq: [2.5, 6], lp: 8000, bg: 1, hi: 1.3, hlp: 17000, near: 'leaf', nr: 1.2, bub: 0.04, gs: 1 },
   roof: { dn: 0.6, out: 1, bed: [350, 4200], bq: [5, 14], lp: 5500, bg: 0.8, hi: 0.7, hlp: 10000, near: 'roof', nr: 1, bub: 0, gs: 1.6 },
-  window: { dn: 0.6, out: 2, bed: [120, 2000], bq: [1.5, 3.5], lp: 2400, bg: 0.3, hi: 0.45, hlp: 12000, near: 'glass', nr: 1.6, bub: 0, gs: 1.2 },
+  window: { dn: 0.6, out: 1.58, bed: [120, 2000], bq: [1.5, 3.5], lp: 2400, bg: 0.3, hi: 0.45, hlp: 12000, near: 'glass', nr: 1.6, bub: 0, gs: 1.2 },
   tent: { dn: 0.4, out: 1, bed: [140, 1300], bq: [1.5, 3.5], lp: 2600, bg: 1.1, hi: 0.15, hlp: 6000, near: 'tent', nr: 1, bub: 0, gs: 1.2 },
 };
 let HI_LEVEL = 0.18;
@@ -602,6 +624,7 @@ function Rain() {
   const lpL = new BQ('lp', 6500, 0.6), lpR = new BQ('lp', 6500, 0.6), hpL = new BQ('hp', 90, 0.7), hpR = new BQ('hp', 90, 0.7);
   const rmL = new BQ('lp', 200, 0.7), rmR = new BQ('lp', 200, 0.7);
   const gust = new Drift(0.15), hsw = new Drift(0.8), spB = new Spawner(), voices = [], drips = [], col = new Color(3, 250, 4000);
+  const wTone = new Tone([[130, 0.7, K.r_wEqLo]]); // indoors, the room and glass add a low thump to rain on a window
   let surf = null, lpKey = -1, gt = 0, nt = 0, ht = 0, rA = 0;
   function nearDrop(s, i, C, S, A) {
     const pan = rr(-1, 1) * (0.55 + 0.45 * C), amp = Math.pow(rnd(), 2) * A, fs = 1.2 - 0.4 * S;
@@ -689,6 +712,7 @@ function Rain() {
     }
     runVoices(voices, L, R, n);
     if (K.r_col > 0) col.run(L, R, n, K.r_col);
+    if (s === SURF.window) wTone.run(L, R, n);
     if (s.out !== 1) for (let i = 0; i < n; i++) { L[i] *= s.out; R[i] *= s.out; }
   } };
 }
@@ -934,7 +958,7 @@ function Ocean() {
    Tuned against stream recordings: a dense body of tiny water impacts with a broad
    low pocket resonance, bubbles and bright splashes on top, little low rumble. */
 function Stream() {
-  const pL = new Pink(), pR = new Pink(), bL = new Brown(), bR = new Brown();
+  const pL = new Pink(), pR = new Pink(), bL = new Brown(), bR = new Brown(), tone = new Tone([[2400, 0.9, K.s_eqPres]]); // the 2-3 kHz sparkle of real streams
   const bpL = new BQ('bp', 900, 0.7), bpR = new BQ('bp', 900, 0.7), lL = new BQ('lp', 260, 0.7), lR = new BQ('lp', 260, 0.7);
   const splash = new GrainCloud(400), water = new GrainCloud(1200), szL = new ResBank(6), szR = new ResBank(6), turb = new Drift(K.s_turb), bands = [lr(260, 360), lr(260, 360), lr(3400, 4600)].map(f => ({ f, d: new Drift(0.15) })), slow = new Drift(0.2), sp = new Spawner(), sp2 = new Spawner(), spG = new Spawner(), voices = [];
   return { render(L, R, n, p) {
@@ -976,6 +1000,7 @@ function Stream() {
       }
     }
     runVoices(voices, L, R, n);
+    tone.run(L, R, n);
   } };
 }
 
@@ -1497,7 +1522,7 @@ const SOUNDS = [
       { id: 'period', label: 'Wave period', def: 9, min: 5, max: 16, step: 0.5, fmt: v => v + ' s between waves' },
       { id: 'distance', label: 'Distance', def: 0.3, fmt: v => Math.round(5 + 295 * Math.pow(v, 1.5)) + ' m from the surf' },
     ] },
-  { id: 'stream', field: true, name: 'Stream', vol: 0.6, trim: 1.99, send: 0.12, create: Stream,
+  { id: 'stream', field: true, name: 'Stream', vol: 0.6, trim: 1.54, send: 0.12, create: Stream,
     blurb: 'Hundreds of collapsing bubbles a second over the low body of moving water. Babble makes them arrive in bursts.',
     params: [
       { id: 'flow', label: 'Flow', def: 0.45, fmt: v => { const q = 0.2 * Math.pow(500, v); return (q < 10 ? q.toFixed(1) : Math.round(q)) + ' L/s'; } },
@@ -2238,8 +2263,11 @@ function updatePacer(now) {
     lbl.textContent = PHASE_LABEL[b.s.lab]; sub.textContent = Math.ceil(b.left) + ' s';
   }
 }
+let zenT = 0;
+function zenWake() { const z = $('#zen'); z.classList.remove('calm'); clearTimeout(zenT); zenT = setTimeout(() => z.classList.add('calm'), 6000); }
+for (const ev of ['pointerdown', 'pointermove', 'keydown']) $('#zen').addEventListener(ev, zenWake);
 function zen(on) {
-  $('#zen').hidden = !on; document.body.classList.toggle('zen-on', on);
+  $('#zen').hidden = !on; document.body.classList.toggle('zen-on', on); if (on) zenWake(); else clearTimeout(zenT);
   if (on) { try { const p = document.documentElement.requestFullscreen && document.documentElement.requestFullscreen(); if (p) p.catch(() => {}); } catch (e) {} $('#zen-exit').focus(); timerTick(); }
   else { try { if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); } catch (e) {} $('#zen-btn').focus(); }
 }
@@ -2324,7 +2352,7 @@ $('#prac-voice').addEventListener('change', e => { state.prac.voice = e.target.c
 if ('speechSynthesis' in window) { speechSynthesis.getVoices(); speechSynthesis.addEventListener && speechSynthesis.addEventListener('voiceschanged', () => {}); }
 
 buildScenes(); buildCards(); buildSession(); buildPractices(); buildAxis(); updateTransport(); timerTick();
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 </script>
+<script src="site.js"></script>
 </body>
 </html>
