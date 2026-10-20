@@ -112,6 +112,15 @@ body.sleepy .scope canvas { opacity: 0.3; } /* bedtime: the moving display dims 
 /* soundscapes: icon cards */
 .scene-groups { display: flex; flex-direction: column; gap: 16px; }
 .chip-group { display: flex; flex-direction: column; gap: 8px; }
+.grp { display: flex; align-items: center; gap: 7px; }
+.grp .ic { width: 15px; height: 15px; }
+.vol-row { display: flex; align-items: center; gap: 8px; color: var(--muted); }
+.vol-row .ic { width: 17px; height: 17px; }
+.ci-q { display: inline-flex; align-items: center; gap: 7px; }
+.ci-q .ic { width: 16px; height: 16px; color: var(--accent); }
+.voice .ic { width: 16px; height: 16px; }
+.btn .ic { width: 16px; height: 16px; }
+.zen button.round { width: 48px; height: 48px; padding: 0; justify-content: center; border-radius: 50%; }
 .chips { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 10px; }
 .chip { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 12px 14px 13px; text-align: left; transition: border-color 0.15s, background 0.15s; }
 .chip-icons { display: flex; gap: 6px; color: var(--accent); }
@@ -143,6 +152,7 @@ body.sleepy .scope canvas { opacity: 0.3; } /* bedtime: the moving display dims 
 .tile[data-on="false"] .tile-vol { opacity: 0.45; } /* drag it up to add the sound */
 .tile[data-open="true"] .tile-vol { max-width: 420px; }
 .tile-body { display: flex; flex-direction: column; gap: 14px; padding: 6px 4px 0; border-top: 1px solid var(--line); }
+.sec-head .linkish { align-self: center; }
 .blurb { margin: 8px 0 0; color: var(--muted); font-size: 13.5px; max-width: 75ch; text-wrap: pretty; }
 .params { display: grid; gap: 14px 26px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); }
 .row { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
@@ -282,12 +292,12 @@ body.zen-on { overflow: hidden; }
 </head>
 <body>
 
-<svg width="0" height="0" style="position:absolute" aria-hidden="true"><!-- icons: Lucide, ISC licence --><symbol id="i-bird" viewBox="0 0 24 24"><path d="M16 7h.01" /> <path d="M3.4 18H12a8 8 0 0 0 8-8V7a4 4 0 0 0-7.28-2.3L2 20" /> <path d="m20 7 2 .5-2 .5" /> <path d="M10 18v3" /> <path d="M14 17.75V21" /> <path d="M7 18a6 6 0 0 0 3.84-10.61" /></symbol><symbol id="i-brain" viewBox="0 0 24 24"><path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z" /> <path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z" /> <path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4" /> <path d="M17.599 6.5a3 3 0 0 0 .399-1.375" /> <path d="M6.003 5.125A3 3 0 0 0 6.401 6.5" /> <path d="M3.477 10.896a4 4 0 0 1 .585-.396" /> <path d="M19.938 10.5a4 4 0 0 1 .585.396" /> <path d="M6 18a4 4 0 0 1-1.967-.516" /> <path d="M19.967 17.484A4 4 0 0 1 18 18" /></symbol><symbol id="i-bug" viewBox="0 0 24 24"><path d="m8 2 1.88 1.88" /> <path d="M14.12 3.88 16 2" /> <path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1" /> <path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6" /> <path d="M12 20v-9" /> <path d="M6.53 9C4.6 8.8 3 7.1 3 5" /> <path d="M6 13H2" /> <path d="M3 21c0-2.1 1.7-3.9 3.8-4" /> <path d="M20.97 5c0 2.1-1.6 3.8-3.5 4" /> <path d="M22 13h-4" /> <path d="M17.2 17c2.1.1 3.8 1.9 3.8 4" /></symbol><symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" /></symbol><symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></symbol><symbol id="i-cloud-drizzle" viewBox="0 0 24 24"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" /> <path d="M8 19v1" /> <path d="M8 14v1" /> <path d="M16 19v1" /> <path d="M16 14v1" /> <path d="M12 21v1" /> <path d="M12 16v1" /></symbol><symbol id="i-cloud-lightning" viewBox="0 0 24 24"><path d="M6 16.326A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 .5 8.973" /> <path d="m13 12-3 5h4l-3 5" /></symbol><symbol id="i-cloud-rain" viewBox="0 0 24 24"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" /> <path d="M16 14v6" /> <path d="M8 14v6" /> <path d="M12 16v6" /></symbol><symbol id="i-droplets" viewBox="0 0 24 24"><path d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 6.75 7 5.3c-.29 1.45-1.14 2.84-2.29 3.76S3 11.1 3 12.25c0 2.22 1.8 4.05 4 4.05z" /> <path d="M12.56 6.6A10.97 10.97 0 0 0 14 3.02c.5 2.5 2 4.9 4 6.5s3 3.5 3 5.5a6.98 6.98 0 0 1-11.91 4.97" /></symbol><symbol id="i-ear" viewBox="0 0 24 24"><path d="M6 8.5a6.5 6.5 0 1 1 13 0c0 6-6 6-6 10a3.5 3.5 0 1 1-7 0" /> <path d="M15 8.5a2.5 2.5 0 0 0-5 0v1a2 2 0 1 1 0 4" /></symbol><symbol id="i-feather" viewBox="0 0 24 24"><path d="M12.67 19a2 2 0 0 0 1.416-.588l6.154-6.172a6 6 0 0 0-8.49-8.49L5.586 9.914A2 2 0 0 0 5 11.328V18a1 1 0 0 0 1 1z" /> <path d="M16 8 2 22" /> <path d="M17.5 15H9" /></symbol><symbol id="i-flame" viewBox="0 0 24 24"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" /></symbol><symbol id="i-flower-2" viewBox="0 0 24 24"><path d="M12 5a3 3 0 1 1 3 3m-3-3a3 3 0 1 0-3 3m3-3v1M9 8a3 3 0 1 0 3 3M9 8h1m5 0a3 3 0 1 1-3 3m3-3h-1m-2 3v-1" /> <circle cx="12" cy="8" r="2" /> <path d="M12 10v12" /> <path d="M12 22c4.2 0 7-1.667 7-5-4.2 0-7 1.667-7 5Z" /> <path d="M12 22c-4.2 0-7-1.667-7-5 4.2 0 7 1.667 7 5Z" /></symbol><symbol id="i-focus" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" /> <path d="M3 7V5a2 2 0 0 1 2-2h2" /> <path d="M17 3h2a2 2 0 0 1 2 2v2" /> <path d="M21 17v2a2 2 0 0 1-2 2h-2" /> <path d="M7 21H5a2 2 0 0 1-2-2v-2" /></symbol><symbol id="i-heart-pulse" viewBox="0 0 24 24"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" /> <path d="M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27" /></symbol><symbol id="i-house" viewBox="0 0 24 24"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" /> <path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></symbol><symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /> <path d="M12 16v-4" /> <path d="M12 8h.01" /></symbol><symbol id="i-leaf" viewBox="0 0 24 24"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" /> <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" /></symbol><symbol id="i-maximize-2" viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9" /> <polyline points="9 21 3 21 3 15" /> <line x1="21" x2="14" y1="3" y2="10" /> <line x1="3" x2="10" y1="21" y2="14" /></symbol><symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" /></symbol><symbol id="i-mountain" viewBox="0 0 24 24"><path d="m8 3 4 8 5-5 5 15H2L8 3z" /></symbol><symbol id="i-pause" viewBox="0 0 24 24"><rect x="14" y="4" width="4" height="16" rx="1" /> <rect x="6" y="4" width="4" height="16" rx="1" /></symbol><symbol id="i-play" viewBox="0 0 24 24"><polygon points="6 3 20 12 6 21 6 3" /></symbol><symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14" /> <path d="M12 5v14" /></symbol><symbol id="i-rotate-ccw" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /> <path d="M3 3v5h5" /></symbol><symbol id="i-sliders-horizontal" viewBox="0 0 24 24"><line x1="21" x2="14" y1="4" y2="4" /> <line x1="10" x2="3" y1="4" y2="4" /> <line x1="21" x2="12" y1="12" y2="12" /> <line x1="8" x2="3" y1="12" y2="12" /> <line x1="21" x2="16" y1="20" y2="20" /> <line x1="12" x2="3" y1="20" y2="20" /> <line x1="14" x2="14" y1="2" y2="6" /> <line x1="8" x2="8" y1="10" y2="14" /> <line x1="16" x2="16" y1="18" y2="22" /></symbol><symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" /> <path d="M20 3v4" /> <path d="M22 5h-4" /> <path d="M4 17v2" /> <path d="M5 18H3" /></symbol><symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" /> <path d="M12 2v2" /> <path d="M12 20v2" /> <path d="m4.93 4.93 1.41 1.41" /> <path d="m17.66 17.66 1.41 1.41" /> <path d="M2 12h2" /> <path d="M20 12h2" /> <path d="m6.34 17.66-1.41 1.41" /> <path d="m19.07 4.93-1.41 1.41" /></symbol><symbol id="i-timer" viewBox="0 0 24 24"><line x1="10" x2="14" y1="2" y2="2" /> <line x1="12" x2="15" y1="14" y2="11" /> <circle cx="12" cy="14" r="8" /></symbol><symbol id="i-trees" viewBox="0 0 24 24"><path d="M10 10v.2A3 3 0 0 1 8.9 16H5a3 3 0 0 1-1-5.8V10a3 3 0 0 1 6 0Z" /> <path d="M7 16v6" /> <path d="M13 19v3" /> <path d="M12 19h8.3a1 1 0 0 0 .7-1.7L18 14h.3a1 1 0 0 0 .7-1.7L16 9h.2a1 1 0 0 0 .8-1.7L13 3l-1.4 1.5" /></symbol><symbol id="i-volume-2" viewBox="0 0 24 24"><path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z" /> <path d="M16 9a5 5 0 0 1 0 6" /> <path d="M19.364 18.364a9 9 0 0 0 0-12.728" /></symbol><symbol id="i-waves" viewBox="0 0 24 24"><path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1" /> <path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1" /> <path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1" /></symbol><symbol id="i-wind" viewBox="0 0 24 24"><path d="M12.8 19.6A2 2 0 1 0 14 16H2" /> <path d="M17.5 8a2.5 2.5 0 1 1 2 4H2" /> <path d="M9.8 4.4A2 2 0 1 1 11 8H2" /></symbol><symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18" /> <path d="m6 6 12 12" /></symbol><symbol id="i-zap" viewBox="0 0 24 24"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z" /></symbol><symbol id="i-logo" viewBox="0 0 48 48"><g fill="none" stroke-width="2.2" stroke-linecap="round" style="stroke: var(--scope-2)"><ellipse cx="24" cy="34" rx="7" ry="2.6"/><ellipse cx="24" cy="34" rx="14" ry="5" opacity="0.6"/><ellipse cx="24" cy="34" rx="21" ry="7.4" opacity="0.3"/></g><path style="fill: var(--accent)" d="M24 5.5c3.2 5.2 7.2 9.3 7.2 13.6a7.2 7.2 0 0 1-14.4 0c0-4.3 4-8.4 7.2-13.6z"/></symbol></svg>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><!-- icons: Lucide, ISC licence --><symbol id="i-bird" viewBox="0 0 24 24"><path d="M16 7h.01" /> <path d="M3.4 18H12a8 8 0 0 0 8-8V7a4 4 0 0 0-7.28-2.3L2 20" /> <path d="m20 7 2 .5-2 .5" /> <path d="M10 18v3" /> <path d="M14 17.75V21" /> <path d="M7 18a6 6 0 0 0 3.84-10.61" /></symbol><symbol id="i-brain" viewBox="0 0 24 24"><path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z" /> <path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z" /> <path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4" /> <path d="M17.599 6.5a3 3 0 0 0 .399-1.375" /> <path d="M6.003 5.125A3 3 0 0 0 6.401 6.5" /> <path d="M3.477 10.896a4 4 0 0 1 .585-.396" /> <path d="M19.938 10.5a4 4 0 0 1 .585.396" /> <path d="M6 18a4 4 0 0 1-1.967-.516" /> <path d="M19.967 17.484A4 4 0 0 1 18 18" /></symbol><symbol id="i-bug" viewBox="0 0 24 24"><path d="m8 2 1.88 1.88" /> <path d="M14.12 3.88 16 2" /> <path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1" /> <path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6" /> <path d="M12 20v-9" /> <path d="M6.53 9C4.6 8.8 3 7.1 3 5" /> <path d="M6 13H2" /> <path d="M3 21c0-2.1 1.7-3.9 3.8-4" /> <path d="M20.97 5c0 2.1-1.6 3.8-3.5 4" /> <path d="M22 13h-4" /> <path d="M17.2 17c2.1.1 3.8 1.9 3.8 4" /></symbol><symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></symbol><symbol id="i-cloud-drizzle" viewBox="0 0 24 24"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" /> <path d="M8 19v1" /> <path d="M8 14v1" /> <path d="M16 19v1" /> <path d="M16 14v1" /> <path d="M12 21v1" /> <path d="M12 16v1" /></symbol><symbol id="i-cloud-lightning" viewBox="0 0 24 24"><path d="M6 16.326A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 .5 8.973" /> <path d="m13 12-3 5h4l-3 5" /></symbol><symbol id="i-cloud-rain" viewBox="0 0 24 24"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" /> <path d="M16 14v6" /> <path d="M8 14v6" /> <path d="M12 16v6" /></symbol><symbol id="i-droplets" viewBox="0 0 24 24"><path d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 6.75 7 5.3c-.29 1.45-1.14 2.84-2.29 3.76S3 11.1 3 12.25c0 2.22 1.8 4.05 4 4.05z" /> <path d="M12.56 6.6A10.97 10.97 0 0 0 14 3.02c.5 2.5 2 4.9 4 6.5s3 3.5 3 5.5a6.98 6.98 0 0 1-11.91 4.97" /></symbol><symbol id="i-ear" viewBox="0 0 24 24"><path d="M6 8.5a6.5 6.5 0 1 1 13 0c0 6-6 6-6 10a3.5 3.5 0 1 1-7 0" /> <path d="M15 8.5a2.5 2.5 0 0 0-5 0v1a2 2 0 1 1 0 4" /></symbol><symbol id="i-feather" viewBox="0 0 24 24"><path d="M12.67 19a2 2 0 0 0 1.416-.588l6.154-6.172a6 6 0 0 0-8.49-8.49L5.586 9.914A2 2 0 0 0 5 11.328V18a1 1 0 0 0 1 1z" /> <path d="M16 8 2 22" /> <path d="M17.5 15H9" /></symbol><symbol id="i-flame" viewBox="0 0 24 24"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" /></symbol><symbol id="i-flower-2" viewBox="0 0 24 24"><path d="M12 5a3 3 0 1 1 3 3m-3-3a3 3 0 1 0-3 3m3-3v1M9 8a3 3 0 1 0 3 3M9 8h1m5 0a3 3 0 1 1-3 3m3-3h-1m-2 3v-1" /> <circle cx="12" cy="8" r="2" /> <path d="M12 10v12" /> <path d="M12 22c4.2 0 7-1.667 7-5-4.2 0-7 1.667-7 5Z" /> <path d="M12 22c-4.2 0-7-1.667-7-5 4.2 0 7 1.667 7 5Z" /></symbol><symbol id="i-focus" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" /> <path d="M3 7V5a2 2 0 0 1 2-2h2" /> <path d="M17 3h2a2 2 0 0 1 2 2v2" /> <path d="M21 17v2a2 2 0 0 1-2 2h-2" /> <path d="M7 21H5a2 2 0 0 1-2-2v-2" /></symbol><symbol id="i-gauge" viewBox="0 0 24 24"><path d="m12 14 4-4" /> <path d="M3.34 19a10 10 0 1 1 17.32 0" /></symbol><symbol id="i-hand" viewBox="0 0 24 24"><path d="M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2" /> <path d="M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2" /> <path d="M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8" /> <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" /></symbol><symbol id="i-heart-pulse" viewBox="0 0 24 24"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" /> <path d="M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27" /></symbol><symbol id="i-house" viewBox="0 0 24 24"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" /> <path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></symbol><symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /> <path d="M12 16v-4" /> <path d="M12 8h.01" /></symbol><symbol id="i-leaf" viewBox="0 0 24 24"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" /> <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" /></symbol><symbol id="i-maximize-2" viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9" /> <polyline points="9 21 3 21 3 15" /> <line x1="21" x2="14" y1="3" y2="10" /> <line x1="3" x2="10" y1="21" y2="14" /></symbol><symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" /></symbol><symbol id="i-mountain" viewBox="0 0 24 24"><path d="m8 3 4 8 5-5 5 15H2L8 3z" /></symbol><symbol id="i-notebook-pen" viewBox="0 0 24 24"><path d="M13.4 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.4" /> <path d="M2 6h4" /> <path d="M2 10h4" /> <path d="M2 14h4" /> <path d="M2 18h4" /> <path d="M21.378 5.626a1 1 0 1 0-3.004-3.004l-5.01 5.012a2 2 0 0 0-.506.854l-.837 2.87a.5.5 0 0 0 .62.62l2.87-.837a2 2 0 0 0 .854-.506z" /></symbol><symbol id="i-pause" viewBox="0 0 24 24"><rect x="14" y="4" width="4" height="16" rx="1" /> <rect x="6" y="4" width="4" height="16" rx="1" /></symbol><symbol id="i-play" viewBox="0 0 24 24"><polygon points="6 3 20 12 6 21 6 3" /></symbol><symbol id="i-rotate-ccw" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /> <path d="M3 3v5h5" /></symbol><symbol id="i-shuffle" viewBox="0 0 24 24"><path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H22" /> <path d="m18 2 4 4-4 4" /> <path d="M2 6h1.9c1.5 0 2.9.9 3.6 2.2" /> <path d="M22 18h-5.9c-1.3 0-2.6-.7-3.3-1.8l-.5-.8" /> <path d="m18 14 4 4-4 4" /></symbol><symbol id="i-sliders-horizontal" viewBox="0 0 24 24"><line x1="21" x2="14" y1="4" y2="4" /> <line x1="10" x2="3" y1="4" y2="4" /> <line x1="21" x2="12" y1="12" y2="12" /> <line x1="8" x2="3" y1="12" y2="12" /> <line x1="21" x2="16" y1="20" y2="20" /> <line x1="12" x2="3" y1="20" y2="20" /> <line x1="14" x2="14" y1="2" y2="6" /> <line x1="8" x2="8" y1="10" y2="14" /> <line x1="16" x2="16" y1="18" y2="22" /></symbol><symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" /> <path d="M20 3v4" /> <path d="M22 5h-4" /> <path d="M4 17v2" /> <path d="M5 18H3" /></symbol><symbol id="i-square" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2" /></symbol><symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" /> <path d="M12 2v2" /> <path d="M12 20v2" /> <path d="m4.93 4.93 1.41 1.41" /> <path d="m17.66 17.66 1.41 1.41" /> <path d="M2 12h2" /> <path d="M20 12h2" /> <path d="m6.34 17.66-1.41 1.41" /> <path d="m19.07 4.93-1.41 1.41" /></symbol><symbol id="i-timer" viewBox="0 0 24 24"><line x1="10" x2="14" y1="2" y2="2" /> <line x1="12" x2="15" y1="14" y2="11" /> <circle cx="12" cy="14" r="8" /></symbol><symbol id="i-trees" viewBox="0 0 24 24"><path d="M10 10v.2A3 3 0 0 1 8.9 16H5a3 3 0 0 1-1-5.8V10a3 3 0 0 1 6 0Z" /> <path d="M7 16v6" /> <path d="M13 19v3" /> <path d="M12 19h8.3a1 1 0 0 0 .7-1.7L18 14h.3a1 1 0 0 0 .7-1.7L16 9h.2a1 1 0 0 0 .8-1.7L13 3l-1.4 1.5" /></symbol><symbol id="i-volume-2" viewBox="0 0 24 24"><path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z" /> <path d="M16 9a5 5 0 0 1 0 6" /> <path d="M19.364 18.364a9 9 0 0 0 0-12.728" /></symbol><symbol id="i-waves" viewBox="0 0 24 24"><path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1" /> <path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1" /> <path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1" /></symbol><symbol id="i-wind" viewBox="0 0 24 24"><path d="M12.8 19.6A2 2 0 1 0 14 16H2" /> <path d="M17.5 8a2.5 2.5 0 1 1 2 4H2" /> <path d="M9.8 4.4A2 2 0 1 1 11 8H2" /></symbol><symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18" /> <path d="m6 6 12 12" /></symbol><symbol id="i-zap" viewBox="0 0 24 24"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z" /></symbol><symbol id="i-logo" viewBox="0 0 48 48"><g fill="none" stroke-width="2.2" stroke-linecap="round" style="stroke: var(--scope-2)"><ellipse cx="24" cy="34" rx="7" ry="2.6"/><ellipse cx="24" cy="34" rx="14" ry="5" opacity="0.6"/><ellipse cx="24" cy="34" rx="21" ry="7.4" opacity="0.3"/></g><path style="fill: var(--accent)" d="M24 5.5c3.2 5.2 7.2 9.3 7.2 13.6a7.2 7.2 0 0 1-14.4 0c0-4.3 4-8.4 7.2-13.6z"/></symbol></svg>
 <div class="flash" id="flash"></div>
 <div class="wrap">
   <header class="top">
     <div class="brand"><svg class="logo" aria-hidden="true"><use href="#i-logo"/></svg><h1>Rainmaker</h1></div>
-    <p>Nature sounds, synthesized live in your browser. No recordings and no loops, so a night of rain never repeats.</p>
+    <p>Live nature sounds for calm, focus and sleep. Never a loop.</p>
   </header>
 
   <section class="player" aria-label="Player">
@@ -298,7 +308,7 @@ body.zen-on { overflow: hidden; }
       <div class="pacer" id="pacer" hidden><div class="glow"></div><div class="ring"></div><div><b>Breathe out</b><small></small></div></div>
       <div class="guide" id="guide" hidden aria-live="polite"><b></b><small></small></div>
       <div class="scope-meta"><span class="pill" id="sleep-pill" hidden></span></div>
-      <div class="idle" id="idle"><strong>Press play to begin</strong><span>Low sounds draw at the bottom of this screen, bright detail such as drops and crackles at the top.</span></div>
+      <div class="idle" id="idle"><strong>Press play</strong></div>
     </div>
     <div class="transport">
       <button class="play" id="play" type="button" aria-label="Play"><svg class="ic" aria-hidden="true"><use id="play-ico" href="#i-play"/></svg></button>
@@ -313,21 +323,20 @@ body.zen-on { overflow: hidden; }
   </section>
 
   <section class="sec scenes" aria-labelledby="scenes-h">
-    <div class="sec-head"><h2 id="scenes-h">Soundscapes</h2><p>Pick one to start. Each is a mix you can change below.</p></div>
+    <div class="sec-head"><h2 id="scenes-h">Soundscapes</h2></div>
     <div class="scene-groups" id="chips"></div>
   </section>
 
   <section class="sec mix" aria-labelledby="mix-h">
-    <div class="sec-head"><h2 id="mix-h">Your mix</h2><p>Tap a sound to turn it on or off. The slider button opens its finer controls.</p></div>
+    <div class="sec-head"><h2 id="mix-h">Your mix</h2><button class="linkish" id="reset" type="button" title="Reset all sounds and settings"><svg class="ic" aria-hidden="true"><use href="#i-rotate-ccw"/></svg>Reset</button></div>
     <div class="tiles" id="cards"></div>
-    <div class="mix-foot"><button class="linkish" id="reset" type="button"><svg class="ic" aria-hidden="true"><use href="#i-rotate-ccw"/></svg>Reset all sounds and settings</button></div>
   </section>
 
   <section class="sec calm" aria-labelledby="calm-h">
-    <div class="sec-head"><h2 id="calm-h">Calm</h2><p>How the sound behaves, the place you hear it in, and short practices that ease tension.</p></div>
+    <div class="sec-head"><h2 id="calm-h">Calm</h2></div>
     <div class="session">
       <div class="panel">
-        <div class="card-head"><svg class="ic" aria-hidden="true"><use href="#i-ear"/></svg><h3>Mode</h3><span class="status" id="guard-status"></span></div>
+        <div class="card-head"><svg class="ic" aria-hidden="true"><use href="#i-sparkles"/></svg><h3>Mode</h3><span class="status" id="guard-status"></span></div>
         <div class="seg" id="modes" role="group" aria-label="Mode"></div>
         <p class="desc" id="mode-desc"></p>
       </div>
@@ -337,29 +346,29 @@ body.zen-on { overflow: hidden; }
         <p class="desc" id="space-desc"></p>
       </div>
       <div class="panel">
-        <div class="card-head"><svg class="ic" aria-hidden="true"><use href="#i-heart-pulse"/></svg><h3 id="breath-h">Breathe with the sound</h3><button class="switch" type="button" role="switch" id="breath-sw" aria-labelledby="breath-h" aria-checked="false"><span></span></button></div>
+        <div class="card-head"><svg class="ic" aria-hidden="true"><use href="#i-heart-pulse"/></svg><h3 id="breath-h">Breathe</h3><button class="switch" type="button" role="switch" id="breath-sw" aria-labelledby="breath-h" aria-checked="false"><span></span></button></div>
         <div class="seg" id="patterns" role="group" aria-label="Breathing pattern"></div>
         <p class="desc" id="breath-desc"></p>
         <div id="depth-row"></div>
       </div>
       <div class="panel" id="prac-panel">
-        <div class="card-head"><svg class="ic" aria-hidden="true"><use href="#i-brain"/></svg><h3>Calm practices</h3><span class="status" id="prac-status"></span></div>
+        <div class="card-head"><svg class="ic" aria-hidden="true"><use href="#i-brain"/></svg><h3>Practices</h3><span class="status" id="prac-status"></span></div>
         <div class="prac-body">
           <div class="prac-col">
             <div class="seg" id="pracs" role="group" aria-label="Practice"></div>
             <p class="desc" id="prac-desc"></p>
             <div class="row" id="list-row" hidden>
               <textarea id="list" aria-label="Your list for the coming days" placeholder="Tomorrow I need to..."></textarea>
-              <div class="ci-scale"><span>Kept in this browser only</span><button class="linkish" id="list-clear" type="button">Clear the list</button></div>
+              <div class="ci-scale"><span>Stays on this device</span><button class="linkish" id="list-clear" type="button">Clear</button></div>
             </div>
           </div>
           <div class="prac-col">
             <div class="row">
-              <div class="row-top"><span class="lbl" id="ci-q">How tense do you feel right now?</span><output id="ci-val"></output></div>
+              <div class="row-top"><span class="lbl ci-q"><svg class="ic" aria-hidden="true"><use href="#i-gauge"/></svg><span id="ci-q">Tension now</span></span><output id="ci-val"></output></div>
               <div class="seg ci" id="ci" role="group" aria-labelledby="ci-q"></div>
-              <div class="ci-scale"><span>0 calm</span><span>10 very tense</span></div>
+              <div class="ci-scale"><span>0 calm</span><span>10 tense</span></div>
             </div>
-            <div class="action"><button class="btn" id="prac-go" type="button">Start</button><label class="voice"><input type="checkbox" id="prac-voice"> Read the steps aloud</label></div>
+            <div class="action"><button class="btn" id="prac-go" type="button"><svg class="ic" aria-hidden="true"><use href="#i-play"/></svg>Start</button><label class="voice"><input type="checkbox" id="prac-voice"><svg class="ic" aria-hidden="true"><use href="#i-volume-2"/></svg>Read aloud</label></div>
             <p class="status" id="prac-hist"></p>
           </div>
         </div>
@@ -368,7 +377,7 @@ body.zen-on { overflow: hidden; }
   </section>
 
   <details class="about">
-    <summary><svg class="ic" aria-hidden="true"><use href="#i-info"/></svg>How it works, and the research behind it<svg class="ic chev" aria-hidden="true"><use href="#i-chevron-down"/></svg></summary>
+    <summary><svg class="ic" aria-hidden="true"><use href="#i-info"/></svg>About and research<svg class="ic chev" aria-hidden="true"><use href="#i-chevron-down"/></svg></summary>
     <div class="about-body">
       <div class="foot">
         <div><h4>Drops on water</h4><p>A raindrop hitting a puddle traps a tiny air bubble that rings at the Minnaert frequency, about 3.3 kHz divided by its radius in mm, and rises in pitch as it settles. That chirp is the "plink" in real rain.</p></div>
@@ -411,7 +420,7 @@ body.zen-on { overflow: hidden; }
     <div class="pacer" id="zpacer"><div class="glow"></div><div class="ring"></div><div><b>Listening</b><small></small></div></div>
     <div class="zen-guide" id="zguide" hidden aria-live="polite"><b></b><small></small></div>
     <div class="zen-time" id="zen-time"></div>
-    <div class="zen-row"><button type="button" id="zen-play">Pause</button><button type="button" id="zen-breath"><svg class="ic" aria-hidden="true"><use href="#i-heart-pulse"/></svg>Breathe with the sound</button><button type="button" id="zen-exit"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg>Exit focus view</button></div>
+    <div class="zen-row"><button type="button" id="zen-play" class="round" aria-label="Pause"></button><button type="button" id="zen-breath"><svg class="ic" aria-hidden="true"><use href="#i-heart-pulse"/></svg>Breathe</button><button type="button" id="zen-exit" class="round" aria-label="Exit focus view"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button></div>
   </div>
 </div>
 
@@ -1638,12 +1647,12 @@ const SCENES = [
   { g: 'Rain', id: 'roof', name: 'Tin roof', sub: 'Rain, distant thunder', space: 'indoors', mix: { rain: { p: { intensity: 0.55, surface: 'roof', size: 0.5, closeness: 0.6, drips: 0.5, gusts: 0.25 } }, thunder: { vol: 0.6, p: { often: 0.35, distance: 0.8 } } } },
   { g: 'Rain', id: 'window', name: 'Rainy window', sub: 'Rain on glass', space: 'indoors', mix: { rain: { p: { intensity: 0.5, surface: 'window', size: 0.45, closeness: 0.7, drips: 0, gusts: 0.35 } } } },
   { g: 'Rain', id: 'tent', name: 'In a tent', sub: 'Rain on canvas, wind', space: 'open', mix: { rain: { p: { intensity: 0.45, surface: 'tent', size: 0.55, closeness: 0.6, drips: 0, gusts: 0.3 } }, wind: { vol: 0.35, p: { speed: 0.3, trees: 0.6, whistle: 0 } } } },
-  { g: 'Woodland and water', id: 'dawn', name: 'Dawn chorus', sub: 'Birds waking, light breeze', space: 'forest', mix: { birds: { p: { kind: 'dawn', count: 9, activity: 0.7, distance: 0.45 } }, wind: { vol: 0.25, p: { speed: 0.12, trees: 0.6, whistle: 0, gust: 0.3 } } } },
-  { g: 'Woodland and water', id: 'spring', name: 'Spring woodland', sub: 'Birds, brook, breeze', space: 'forest', mix: { birds: { p: { kind: 'woodland', count: 4, activity: 0.35, distance: 0.45 } }, stream: { vol: 0.45, pos: -0.5, p: { flow: 0.3 } }, wind: { vol: 0.28, p: { speed: 0.15, trees: 0.7, whistle: 0 } } } },
-  { g: 'Woodland and water', id: 'after', name: 'After the rain', sub: 'Dripping canopy, birds return', space: 'forest', mix: { drips: {}, birds: { vol: 0.45, p: { kind: 'woodland', count: 3, activity: 0.25, distance: 0.55 } }, wind: { vol: 0.22, p: { speed: 0.12, trees: 0.6, whistle: 0 } } } },
-  { g: 'Woodland and water', id: 'brook', name: 'Forest brook', sub: 'Stream, breeze', space: 'forest', mix: { stream: { pos: 0.3 }, wind: { vol: 0.4, p: { speed: 0.22, trees: 0.8, whistle: 0, gust: 0.4 } } } },
-  { g: 'Woodland and water', id: 'garden', name: 'Garden doves', sub: 'Doves, soft breeze', space: 'open', mix: { birds: { p: { kind: 'doves', count: 3, activity: 0.5, distance: 0.35 } }, wind: { vol: 0.22, p: { speed: 0.1, trees: 0.5, whistle: 0 } } } },
-  { g: 'Woodland and water', id: 'sea', name: 'Seaside', sub: 'Waves, sea breeze', space: 'open', mix: { ocean: {}, wind: { vol: 0.4, p: { speed: 0.35, trees: 0, whistle: 0.1, gust: 0.4 } } } },
+  { g: 'Nature', id: 'dawn', name: 'Dawn chorus', sub: 'Birds waking, light breeze', space: 'forest', mix: { birds: { p: { kind: 'dawn', count: 9, activity: 0.7, distance: 0.45 } }, wind: { vol: 0.25, p: { speed: 0.12, trees: 0.6, whistle: 0, gust: 0.3 } } } },
+  { g: 'Nature', id: 'spring', name: 'Spring woodland', sub: 'Birds, brook, breeze', space: 'forest', mix: { birds: { p: { kind: 'woodland', count: 4, activity: 0.35, distance: 0.45 } }, stream: { vol: 0.45, pos: -0.5, p: { flow: 0.3 } }, wind: { vol: 0.28, p: { speed: 0.15, trees: 0.7, whistle: 0 } } } },
+  { g: 'Nature', id: 'after', name: 'After the rain', sub: 'Dripping canopy, birds return', space: 'forest', mix: { drips: {}, birds: { vol: 0.45, p: { kind: 'woodland', count: 3, activity: 0.25, distance: 0.55 } }, wind: { vol: 0.22, p: { speed: 0.12, trees: 0.6, whistle: 0 } } } },
+  { g: 'Nature', id: 'brook', name: 'Forest brook', sub: 'Stream, breeze', space: 'forest', mix: { stream: { pos: 0.3 }, wind: { vol: 0.4, p: { speed: 0.22, trees: 0.8, whistle: 0, gust: 0.4 } } } },
+  { g: 'Nature', id: 'garden', name: 'Garden doves', sub: 'Doves, soft breeze', space: 'open', mix: { birds: { p: { kind: 'doves', count: 3, activity: 0.5, distance: 0.35 } }, wind: { vol: 0.22, p: { speed: 0.1, trees: 0.5, whistle: 0 } } } },
+  { g: 'Nature', id: 'sea', name: 'Seaside', sub: 'Waves, sea breeze', space: 'open', mix: { ocean: {}, wind: { vol: 0.4, p: { speed: 0.35, trees: 0, whistle: 0.1, gust: 0.4 } } } },
   { g: 'Night', id: 'camp', name: 'Campfire night', sub: 'Fire, crickets', space: 'open', mix: { fire: {}, crickets: { pos: 0.4, p: { count: 7, temp: 22, distance: 0.45 } }, wind: { vol: 0.3, p: { speed: 0.15, trees: 0.6, whistle: 0 } } } },
   { g: 'Night', id: 'pond', name: 'Night pond', sub: 'Frogs, crickets', space: 'open', mix: { frogs: { pos: 0.3 }, crickets: { vol: 0.35, pos: -0.4, p: { count: 4, distance: 0.6 } }, wind: { vol: 0.2, p: { speed: 0.08, trees: 0.4, whistle: 0 } } } },
   { g: 'Night', id: 'owl', name: 'Owl wood', sub: 'Owls, night breeze', space: 'valley', mix: { birds: { p: { kind: 'owls', count: 2, activity: 0.5, distance: 0.5 } }, wind: { vol: 0.3, p: { speed: 0.12, trees: 0.5, whistle: 0 } }, crickets: { vol: 0.25, p: { count: 3, distance: 0.7 } } } },
@@ -1651,30 +1660,30 @@ const SCENES = [
 ];
 const PLACE = new Set(['stream', 'fire', 'ocean', 'birds', 'frogs', 'drips', 'crickets']);
 const SPACE_DESC = {
-  open: 'Open ground with little to reflect the sound: close and clear, as on a meadow or a beach.',
-  forest: 'Trunks and leaves scatter the sound into a soft, short reverberation, the way birdsong carries through woodland.',
-  indoors: 'A furnished room: brief, warm reflections, as if you were listening from inside.',
-  valley: 'The slopes send sound back as distant echoes with a long, open tail.',
+  open: 'Open air, close and clear.',
+  forest: 'A soft woodland echo.',
+  indoors: 'Inside a room.',
+  valley: 'Distant echoes from the slopes.',
 };
 const MODES = {
-  listen: { name: 'Listen', crest: 60, evolve: 0, desc: 'Everything plays exactly as you set it. No softening and no drift.' },
-  relax: { name: 'Relax', crest: 15, evolve: 1, thunderMin: 0.55, desc: 'Keeps the storm at least 3 km away, caps sudden peaks at 15 dB above the background, and lets the weather drift slowly over minutes so your attention can rest on it without effort.' },
-  focus: { name: 'Focus', crest: 11, evolve: 0.35, thunderMin: 0.85, oftenMax: 0.3, drips: 0.4, gust: 0.5, whistle: 0.5, crackle: 0.6, calm: 0.5, desc: 'A steady, even bed that masks nearby talk. Sudden events are capped at 11 dB, drips and gusts are calmed, thunder stays far off, and the drift is minimal so nothing pulls at your attention.' },
-  sleep: { name: 'Sleep', crest: 8, evolve: 0.6, thunderMin: 0.8, oftenMax: 0.4, drips: 0.4, gust: 0.5, whistle: 0.4, crackle: 0.5, calm: 0.45, desc: 'The strictest cap on sudden peaks (8 dB), no close thunder, fewer crackles and drips, and a long ending in which the sound slowly darkens and fades. Starts a 45-minute timer if none is running.' },
+  listen: { name: 'Listen', crest: 60, evolve: 0, desc: 'Plays exactly as set.' },
+  relax: { name: 'Relax', crest: 15, evolve: 1, thunderMin: 0.55, desc: 'Softens sudden sounds. The weather drifts slowly.' },
+  focus: { name: 'Focus', crest: 11, evolve: 0.35, thunderMin: 0.85, oftenMax: 0.3, drips: 0.4, gust: 0.5, whistle: 0.5, crackle: 0.6, calm: 0.5, desc: 'Steady and even. Masks nearby talk.' },
+  sleep: { name: 'Sleep', crest: 8, evolve: 0.6, thunderMin: 0.8, oftenMax: 0.4, drips: 0.4, gust: 0.5, whistle: 0.4, crackle: 0.5, calm: 0.45, desc: 'Softest. Fades out slowly, 45-minute timer.' },
 };
 const BREATH = {
-  slow: { name: 'Slow', desc: '4.4 s in, 6.5 s out: about 5.5 breaths a minute, the pace used in heart-rate-variability training.', seq: () => [['in', 4.4, 1], ['out', 6.5, 0]] },
-  sigh: { name: 'Cyclic sigh', desc: 'Breathe in, take a short second sip of air, then let it all out slowly. Five minutes a day of this lifted mood in a 2023 Stanford study.', seq: () => [['in', 2.3, 0.8], ['top', 1.0, 1], ['out', 6.2, 0]] },
-  settle: { name: 'Settle', desc: 'Starts near an everyday resting pace of 10 breaths a minute and slows to 5.5 over four minutes, leading you down gradually.', seq: e => { const f = Math.min(1, e / 240), c = 6 + 4.9 * f; return [['in', c * 0.4, 1], ['out', c * 0.6, 0]]; } },
+  slow: { name: 'Slow', desc: '4.4 s in, 6.5 s out. 5.5 breaths a minute.', seq: () => [['in', 4.4, 1], ['out', 6.5, 0]] },
+  sigh: { name: 'Cyclic sigh', desc: 'In, a second short sip, then a long sigh out.', seq: () => [['in', 2.3, 0.8], ['top', 1.0, 1], ['out', 6.2, 0]] },
+  settle: { name: 'Settle', desc: 'Slows from 10 to 5.5 breaths a minute.', seq: e => { const f = Math.min(1, e / 240), c = 6 + 4.9 * f; return [['in', c * 0.4, 1], ['out', c * 0.6, 0]]; } },
 };
 const PHASE_LABEL = { in: 'Breathe in', top: 'A little more', out: 'Breathe out' };
 // guided practices from anxiety treatment; each returns timed steps {t (s), text, sub, say, hold}
 const PRACTICES = {
-  att: { name: 'Attention training', desc: 'About 12 minutes, after Wells\u2019s Attention Training Technique: focus on one sound at a time, then switch quickly as each is named, then hear them all at once. It trains you to steer attention away from worry rather than fight it. Works best with three or more sounds placed around you.', steps: attSteps },
-  leaves: { name: 'Leaves on a stream', desc: 'About 8 minutes, from acceptance and commitment therapy: picture a stream and set each thought on a leaf to float away. With practice, thoughts feel less gripping. Pairs well with Forest brook.', steps: leavesSteps },
-  muscle: { name: 'Muscle release', desc: 'About 7 minutes of progressive muscle relaxation: tense each muscle group gently as you breathe in, let it go as you breathe out, and notice the difference.', steps: muscleSteps },
-  write: { name: 'Write it down', desc: 'About 5 minutes before sleep: write a specific to-do list for the coming days, then let the sound take over. In a sleep-lab study, people who did this fell asleep faster than people who wrote about what they had already done, and the more specific the list, the faster.', steps: writeSteps },
-  shuffle: { name: 'Sleep shuffle', desc: 'For falling asleep: a simple, unrelated thing to picture every 9 seconds for 20 minutes, which leaves little room for worry. Early research. Best with the steps read aloud and your eyes closed.', steps: shuffleSteps },
+  att: { name: 'Attention', desc: '12 min. Hear one sound, then switch, then all at once.', steps: attSteps },
+  leaves: { name: 'Leaves', desc: '8 min. Let each thought float away on a leaf.', steps: leavesSteps },
+  muscle: { name: 'Release', desc: '7 min. Tense, then let go, muscle by muscle.', steps: muscleSteps },
+  write: { name: 'To-do list', desc: '5 min. Write tomorrow\u2019s tasks, then rest.', steps: writeSteps },
+  shuffle: { name: 'Shuffle', desc: '20 min. Picture simple things and drift off.', steps: shuffleSteps },
 };
 const CHECKS = 'rainmaker-checkins';
 const capF = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -1774,6 +1783,7 @@ const $ = s => document.querySelector(s);
 const icon = n => `<svg class="ic" aria-hidden="true"><use href="#i-${n}"/></svg>`; // Lucide icons, inlined by build.py
 const ICON = { rain: 'cloud-rain', thunder: 'cloud-lightning', wind: 'wind', ocean: 'waves', stream: 'droplets', fire: 'flame', birds: 'bird', frogs: 'flower-2', drips: 'cloud-drizzle', crickets: 'bug' };
 const MODE_ICON = { listen: 'ear', relax: 'feather', focus: 'focus', sleep: 'moon' }, SPACE_ICON = { open: 'sun', forest: 'trees', indoors: 'house', valley: 'mountain' };
+const PRAC_ICON = { att: 'ear', leaves: 'leaf', muscle: 'hand', write: 'notebook-pen', shuffle: 'shuffle' }, GROUP_ICON = { Rain: 'cloud-rain', Nature: 'trees', Night: 'moon' };
 const DEF = Object.fromEntries(SOUNDS.map(d => [d.id, d]));
 
 function defaults() {
@@ -2013,9 +2023,9 @@ function pause() {
 function updateTransport() {
   const label = playing ? 'Pause' : 'Play', sc = SCENES.find(x => x.id === activeScene), live = SOUNDS.filter(d => state.sounds[d.id].on), on = live.map(d => d.name);
   for (const id of ['#play-ico', '#dock-ico']) $(id).setAttribute('href', playing ? '#i-pause' : '#i-play');
-  $('#play').setAttribute('aria-label', label); $('#dock-play').setAttribute('aria-label', label); $('#zen-play').innerHTML = icon(playing ? 'pause' : 'play') + label;
+  for (const id of ['#play', '#dock-play', '#zen-play']) $(id).setAttribute('aria-label', label); $('#zen-play').innerHTML = icon(playing ? 'pause' : 'play');
   $('#idle').hidden = playing || !!eng;
-  $('#breath-desc').textContent = BREATH[state.breath.pattern].desc + (state.sounds.ocean.on ? ' The ocean\u2019s waves break on each in-breath.' : '');
+  $('#breath-desc').textContent = BREATH[state.breath.pattern].desc + (state.sounds.ocean.on ? ' Waves break on each in-breath.' : '');
   $('#now-title').textContent = sc ? sc.name : on.length ? 'Your mix' : 'Nothing selected';
   $('#now').innerHTML = live.length ? live.map(d => icon(ICON[d.id]) + `<span>${d.name}</span>`).join('') : '<span>Turn on a sound below</span>';
   $('#dock-now').textContent = sc ? sc.name : on.join(' \u00b7 ') || 'Nothing selected';
@@ -2063,6 +2073,13 @@ function rangeRow(id, label, cfg, value, onInput) {
   inp.addEventListener('input', () => { show(); onInput(+inp.value); });
   show(); return row;
 }
+function volRow(id, label, value, onInput) { // a speaker and a slider: volume needs no words
+  const row = document.createElement('label'); row.className = 'vol-row'; row.htmlFor = id; row.title = label;
+  row.innerHTML = `${icon('volume-2')}<input type="range" id="${id}" min="0" max="1" step="0.01" aria-label="${label}">`;
+  const inp = row.querySelector('input'); inp.value = value; setPct(inp);
+  inp.addEventListener('input', () => { setPct(inp); onInput(+inp.value); });
+  return row;
+}
 function choiceRow(id, q, value, onPick) {
   const row = document.createElement('div'); row.className = 'row span';
   row.innerHTML = `<div class="row-top"><span class="lbl" id="${id}-l">${q.label}</span></div><div class="seg" role="group" aria-labelledby="${id}-l"></div>`;
@@ -2090,7 +2107,7 @@ function buildCards() {
         <button class="more" type="button" aria-expanded="false" aria-controls="body-${d.id}" aria-label="${d.name} settings" title="Settings">${icon('sliders-horizontal')}</button></div>
       <span class="meter" aria-hidden="true"><i></i></span><div class="tile-vol"></div>
       <div class="tile-body" id="body-${d.id}" hidden><p class="blurb">${d.blurb}</p><div class="params"></div></div>`;
-    tile.querySelector('.tile-vol').append(rangeRow(`vol-${d.id}`, 'Volume', { fmt: pct }, st.vol, v => { st.vol = v; if (!st.on) setOn(d.id, true); else if (eng) eng.setVol(d.id); touched(); }));
+    tile.querySelector('.tile-vol').append(volRow(`vol-${d.id}`, `${d.name} volume`, st.vol, v => { st.vol = v; if (!st.on) setOn(d.id, true); else if (eng) eng.setVol(d.id); touched(); }));
     const params = tile.querySelector('.params'), set = (k, v) => { st.p[k] = v; touched(); refreshTile(d.id); };
     if (PLACE.has(d.id)) params.append(rangeRow(`pos-${d.id}`, 'Where it is', { min: -0.8, max: 0.8, step: 0.05, fmt: v => v < -0.45 ? 'to your left' : v < -0.15 ? 'front left' : v <= 0.15 ? 'in front' : v <= 0.45 ? 'front right' : 'to your right' }, st.pos || 0, v => { st.pos = v; touched(); }));
     for (const q of d.params) {
@@ -2132,10 +2149,10 @@ function buildScenes() {
   const box = $('#chips'); box.innerHTML = '';
   for (const grp of [...new Set(SCENES.map(x => x.g))]) {
     const wrap = document.createElement('div'); wrap.className = 'chip-group';
-    wrap.innerHTML = `<div class="lbl">${grp}</div><div class="chips"></div>`;
+    wrap.innerHTML = `<div class="lbl grp">${icon(GROUP_ICON[grp])}${grp}</div><div class="chips"></div>`;
     for (const sc of SCENES.filter(x => x.g === grp)) {
       const b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.dataset.id = sc.id; b.setAttribute('aria-pressed', 'false');
-      b.innerHTML = `<span class="chip-icons">${Object.keys(sc.mix).slice(0, 3).map(id => icon(ICON[id])).join('')}</span><b>${sc.name}</b><small>${sc.sub}</small>`;
+      b.title = sc.sub; b.innerHTML = `<span class="chip-icons">${Object.keys(sc.mix).slice(0, 3).map(id => icon(ICON[id])).join('')}</span><b>${sc.name}</b>`;
       b.addEventListener('click', () => applyScene(sc));
       wrap.querySelector('.chips').append(b);
     }
@@ -2230,7 +2247,7 @@ function loop(ts) {
   for (const s of strikes) if (!s.flashed && now >= s.flash) { s.flashed = true; flash(); }
   if (ts - statusT > 120) {
     statusT = ts;
-    $('#guard-status').textContent = state.mode !== 'listen' && eng.softened ? `Softened ${eng.softened} sudden peak${eng.softened > 1 ? 's' : ''}` : '';
+    $('#guard-status').textContent = state.mode !== 'listen' && eng.softened ? `${eng.softened} peak${eng.softened > 1 ? 's' : ''} softened` : '';
     const el = $('#strike-status'); if (!el) return;
     const s = strikes.filter(x => now >= x.flash).pop();
     let txt = state.sounds.thunder.on ? 'Waiting for the next strike' : 'Thunder is off', hot = false;
@@ -2313,7 +2330,7 @@ function setSpace(k) {
 }
 function setBreath(on) {
   state.breath.on = on; save(); $('#breath-sw').setAttribute('aria-checked', on);
-  $('#zen-breath').innerHTML = icon('heart-pulse') + (on ? 'Stop breathing guide' : 'Breathe with the sound');
+  $('#zen-breath').innerHTML = icon('heart-pulse') + (on ? 'Stop' : 'Breathe');
   if (on) { if (!playing) play(); else if (eng && !eng.breath.on) eng.breath.start(); }
   else if (eng && eng.breath.on) eng.breath.stop();
   updateWake();
@@ -2325,7 +2342,7 @@ function buildSession() {
   $('#mode-desc').textContent = MODES[state.mode].desc;
   segButtons($('#patterns'), Object.entries(BREATH).map(([k, b]) => [k, b.name]), state.breath.pattern, k => { state.breath.pattern = k; save(); updateTransport(); });
   const dr = $('#depth-row'); dr.innerHTML = '';
-  dr.append(rangeRow('breath-depth', 'How much the sound moves', { fmt: v => v < 0.05 ? 'not at all, visual guide only' : v < 0.4 ? 'subtly' : v < 0.75 ? 'clearly' : 'strongly' }, state.breath.depth, v => { state.breath.depth = v; save(); }));
+  dr.append(rangeRow('breath-depth', 'Sound follows the breath', { fmt: v => v < 0.05 ? 'off' : v < 0.4 ? 'a little' : v < 0.75 ? 'clearly' : 'strongly' }, state.breath.depth, v => { state.breath.depth = v; save(); }));
   $('#breath-sw').setAttribute('aria-checked', state.breath.on);
 }
 $('#breath-sw').addEventListener('click', () => setBreath(!state.breath.on));
@@ -2391,13 +2408,13 @@ async function startPractice() {
   if (!eng) return;
   const steps = PRACTICES[state.prac.id].steps(), last = steps[steps.length - 1];
   prac = { id: state.prac.id, t0: eng.ctx.currentTime, steps, i: 0, end: last.t + (last.hold || 20) }; ciPrac = prac.id; ciAfter = false;
-  $('#prac-go').textContent = 'Stop'; renderCheckin(); practiceTick(); updateWake();
+  $('#prac-go').innerHTML = icon('square') + 'Stop'; renderCheckin(); practiceTick(); updateWake();
 }
 function stopPractice(finished) {
   if (!prac) return;
   const ran = eng ? eng.ctx.currentTime - prac.t0 : 0; prac = null; hideGuide();
   if ('speechSynthesis' in window) speechSynthesis.cancel();
-  $('#prac-go').textContent = 'Start'; $('#prac-status').textContent = finished ? 'Well done' : '';
+  $('#prac-go').innerHTML = icon('play') + 'Start'; $('#prac-status').textContent = finished ? 'Well done' : '';
   if (ran > 90) ciAfter = true; // ask how it feels now, after a real session
   renderCheckin(); updateWake();
 }
@@ -2410,24 +2427,24 @@ function practiceTick() { // runs on the audio ticker, so a paused session pause
 }
 function readChecks() { try { const h = JSON.parse(localStorage.getItem(CHECKS) || '[]'); return Array.isArray(h) ? h : []; } catch (e) { return []; } }
 function renderCheckin() {
-  $('#ci-q').textContent = ciAfter ? 'And how tense do you feel now?' : 'How tense do you feel right now?';
+  $('#ci-q').textContent = ciAfter ? 'Tension now, after' : 'Tension now';
   const cur = ciAfter || ciBefore == null ? '' : String(ciBefore);
   segButtons($('#ci'), Array.from({ length: 11 }, (_, i) => [String(i), String(i)]), cur, k => {
     if (ciAfter) {
       const h = readChecks(); if (ciBefore != null) { h.push({ d: Date.now(), p: ciPrac, b: ciBefore, a: +k }); try { localStorage.setItem(CHECKS, JSON.stringify(h.slice(-40))); } catch (e) {} }
       ciAfter = false; ciBefore = null; renderCheckin();
-    } else { ciBefore = +k; $('#ci-val').textContent = k + ' of 10'; }
+    } else { ciBefore = +k; $('#ci-val').textContent = k + ' / 10'; }
   });
-  $('#ci-val').textContent = ciAfter ? 'tap a number' : ciBefore == null ? 'optional' : ciBefore + ' of 10';
+  $('#ci-val').textContent = ciAfter ? 'tap a number' : ciBefore == null ? 'optional' : ciBefore + ' / 10';
   const h = readChecks(), el = $('#prac-hist');
-  if (!h.length) { el.textContent = 'Rate yourself before and after a practice to see what helps you most. Ratings stay in this browser.'; return; }
+  if (!h.length) { el.textContent = 'Rate before and after to see what helps you.'; return; }
   const last = h[h.length - 1], avg = h.reduce((s, x) => s + (x.b - x.a), 0) / h.length;
-  el.textContent = `Last time ${last.b} \u2192 ${last.a}. Across ${h.length} session${h.length > 1 ? 's' : ''}, tension ` + (avg >= 0 ? `eased by ${avg.toFixed(1)} points on average.` : `rose by ${(-avg).toFixed(1)} points on average.`);
+  el.textContent = `Last time ${last.b} \u2192 ${last.a}. ${h.length} session${h.length > 1 ? 's' : ''}: ` + (avg >= 0 ? `${avg.toFixed(1)} points calmer on average.` : `${(-avg).toFixed(1)} points tenser on average.`);
 }
 const LIST = 'rainmaker-list';
 function showList() { $('#list-row').hidden = state.prac.id !== 'write'; }
 function buildPractices() {
-  segButtons($('#pracs'), Object.entries(PRACTICES).map(([k, p]) => [k, p.name]), state.prac.id, k => { if (prac) stopPractice(false); state.prac.id = k; save(); $('#prac-desc').textContent = PRACTICES[k].desc; showList(); });
+  segButtons($('#pracs'), Object.entries(PRACTICES).map(([k, p]) => [k, p.name, PRAC_ICON[k]]), state.prac.id, k => { if (prac) stopPractice(false); state.prac.id = k; save(); $('#prac-desc').textContent = PRACTICES[k].desc; showList(); });
   $('#prac-desc').textContent = PRACTICES[state.prac.id].desc; showList();
   try { $('#list').value = localStorage.getItem(LIST) || ''; } catch (e) {}
   const v = $('#prac-voice'); v.checked = state.prac.voice; v.closest('label').hidden = !('speechSynthesis' in window);
