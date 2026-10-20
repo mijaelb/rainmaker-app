@@ -1587,7 +1587,7 @@ function makeBowl(f0, secs) { // one strike as stereo buffers, for the session b
 }
 const BOWL_SETS = { one: [1], two: [1, 4 / 3], three: [1, 4 / 3, 3 / 2] }; // a fourth and a fifth: bowls tuned to sit well together
 function Bowl() {
-  const g = new GrainCloud(96), pans = [rr(-0.4, 0.4), rr(-0.7, -0.3), rr(0.3, 0.7)]; let next = Math.floor(rr(0.5, 2) * SR);
+  const g = new GrainCloud(96), pans = [rr(-0.4, 0.4), rr(-0.7, -0.3), rr(0.3, 0.7)]; let next = Math.floor(rr(0.3, 0.8) * SR); // the first strike comes right after you press play
   return { render(L, R, n, p) {
     const f0 = 420 * Math.pow(120 / 420, p.size), gap = 120 * Math.pow(10 / 120, p.pace), set = BOWL_SETS[p.bowls] || BOWL_SETS.one;
     for (let i = 0; i < n; i++) {
