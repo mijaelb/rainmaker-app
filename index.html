@@ -18,61 +18,66 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
-/* Layout: a field recorder. A dark "scope" screen up top that never changes theme,
-   transport beside the name, scenes as presets, then one channel strip per sound. */
+/* Layout: a night field recorder. The live spectrum screen and the transport are one dark device at the top;
+   below it, soundscapes as icon cards, a soundboard of sound tiles, then the calm tools. Research folds away. */
 :root {
-  --bg: #E6EBEE; --surface: #F5F7F8; --ink: #142029; --muted: #55646F; --line: #C8D1D7;
-  --accent: #A65F05; --accent-soft: #F1DFC4; --on-accent: #FFFFFF; --focus: #2F6690;
-  --scope-bg: #0F1A22; --scope-1: #1F4766; --scope-2: #3F8AB8; --scope-3: #E9A23B; --scope-4: #FFF2DA; --scope-ink: #B9C7D1; --scope-line: #24333F;
+  --bg: #E7ECEF; --surface: #F6F8F9; --ink: #142029; --muted: #55646F; --line: #CAD3D9;
+  --accent: #A35A03; --accent-soft: #F2E1C6; --on-accent: #FFFFFF; --focus: #2F6690;
+  --scope-bg: #0E1820; --scope-1: #1F4766; --scope-2: #3F8AB8; --scope-3: #E9A23B; --scope-4: #FFF2DA; --scope-ink: #B9C7D1; --scope-line: #22323E;
   --display: 'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif;
   --body: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
   --mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+  --on-scope-3: #1A1207; --glow: rgba(233, 162, 59, 0.14);
+  --r: 14px;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --bg: #0D1317; --surface: #151E25; --ink: #E0E7EB; --muted: #8A99A3; --line: #25323B;
+  --bg: #0B1115; --surface: #131C23; --ink: #E2E8EC; --muted: #8B9AA4; --line: #24313B;
   --accent: #E9A23B; --accent-soft: #3A2A13; --on-accent: #1A1207; --focus: #7DB4DB;
-  --scope-bg: #091015; --scope-1: #183A55; --scope-2: #3F8AB8; --scope-3: #E9A23B; --scope-4: #FFF2DA; --scope-ink: #9FB0BC; --scope-line: #1B2832;
+  --scope-bg: #080F14; --scope-1: #183A55; --scope-2: #3F8AB8; --scope-3: #E9A23B; --scope-4: #FFF2DA; --scope-ink: #9FB0BC; --scope-line: #1B2832;
   color-scheme: dark; } }
 :root[data-theme="dark"] {
-  --bg: #0D1317; --surface: #151E25; --ink: #E0E7EB; --muted: #8A99A3; --line: #25323B;
+  --bg: #0B1115; --surface: #131C23; --ink: #E2E8EC; --muted: #8B9AA4; --line: #24313B;
   --accent: #E9A23B; --accent-soft: #3A2A13; --on-accent: #1A1207; --focus: #7DB4DB;
-  --scope-bg: #091015; --scope-1: #183A55; --scope-2: #3F8AB8; --scope-3: #E9A23B; --scope-4: #FFF2DA; --scope-ink: #9FB0BC; --scope-line: #1B2832;
+  --scope-bg: #080F14; --scope-1: #183A55; --scope-2: #3F8AB8; --scope-3: #E9A23B; --scope-4: #FFF2DA; --scope-ink: #9FB0BC; --scope-line: #1B2832;
   color-scheme: dark; }
 
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--body); }
-.wrap { max-width: 1180px; margin: 0 auto; padding-block: 28px 56px;
+.wrap { max-width: 1120px; margin: 0 auto; padding-block: 26px 64px;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
-  display: flex; flex-direction: column; gap: 22px; }
-button, select, input { font: inherit; color: inherit; }
+  display: flex; flex-direction: column; gap: 30px; }
+button, select, input, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.ic { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+h2 { margin: 0; font: 700 22px/1.1 var(--display); letter-spacing: -0.015em; text-wrap: balance; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.lbl { font: 500 11px/1.2 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.sec { display: flex; flex-direction: column; gap: 14px; }
+.sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: 6px 16px; flex-wrap: wrap; }
+.sec-head p { margin: 0; color: var(--muted); font-size: 13.5px; }
 
-/* head + transport */
-.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 18px 28px; }
-.brand h1 { font: 800 clamp(40px, 7vw, 68px)/0.9 var(--display); letter-spacing: -0.035em; margin: 0; }
-.brand p { margin: 10px 0 0; color: var(--muted); max-width: 52ch; text-wrap: pretty; }
-.transport { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 18px; }
-.play { display: inline-flex; align-items: center; gap: 10px; border: 0; border-radius: 999px; padding: 12px 22px 12px 16px;
-  background: var(--accent); color: var(--on-accent); font-weight: 600; cursor: pointer; min-width: 128px; justify-content: center; }
-.play svg { width: 20px; height: 20px; fill: currentColor; }
-.play:hover { filter: brightness(1.06); }
-.knob { display: flex; flex-direction: column; gap: 4px; min-width: 150px; }
-.knob label, .lbl { font: 500 11px/1.2 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
-select { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; }
+/* brand */
+.top { display: flex; flex-direction: column; gap: 6px; }
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand .logo { width: 40px; height: 40px; flex: none; }
+.brand h1 { margin: 0; font: 800 clamp(34px, 5vw, 46px)/1 var(--display); letter-spacing: -0.035em; }
+.top p { margin: 0; color: var(--muted); max-width: 60ch; text-wrap: pretty; }
+.tip { margin: 0; padding: 10px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--muted); font-size: 13.5px; text-wrap: pretty; }
+.tip b { color: var(--ink); }
 
-/* scope */
-.scope { position: relative; background: var(--scope-bg); border-radius: 12px; overflow: hidden; height: 210px; color: var(--scope-ink); }
+/* the device: spectrum screen + transport */
+.player { background: var(--scope-bg); color: var(--scope-ink); border-radius: 18px; overflow: hidden; box-shadow: 0 1px 0 rgba(255,255,255,0.04) inset, 0 18px 40px -24px rgba(0,0,0,0.6); }
+.scope { position: relative; height: 210px; overflow: hidden; }
 .scope canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; transition: opacity 2s; }
 body.sleepy .scope canvas { opacity: 0.3; } /* bedtime: the moving display dims to a soft glow */
 .axis { position: absolute; left: 0; top: 0; bottom: 0; width: 64px; pointer-events: none; }
-.axis span { position: absolute; left: 12px; transform: translateY(-50%); font: 500 10px/1 var(--mono); letter-spacing: 0.04em; color: var(--scope-ink); opacity: 0.8; }
+.axis span { position: absolute; left: 14px; transform: translateY(-50%); font: 500 10px/1 var(--mono); letter-spacing: 0.04em; color: var(--scope-ink); opacity: 0.75; }
 .axis span::after { content: ""; position: absolute; left: 44px; top: 50%; width: 9999px; border-top: 1px dashed var(--scope-line); }
 .scope-meta { position: absolute; right: 14px; top: 12px; display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; font: 500 11px/1 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; }
 .pill { padding: 6px 9px; border-radius: 999px; background: rgba(255,255,255,0.06); border: 1px solid var(--scope-line); }
-.pill.live { color: var(--scope-3); }
-.pill.live::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--scope-3); margin-right: 7px; vertical-align: 0; }
-.idle { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 10px; text-align: center; padding: 16px 16px 16px 64px; }
+.idle { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 8px; text-align: center; padding: 16px 16px 16px 64px; }
 .idle strong { font: 700 22px/1.15 var(--display); color: var(--scope-4); letter-spacing: -0.01em; }
 .idle span { max-width: 46ch; font-size: 13px; }
 .bolt { position: absolute; inset: 0; background: var(--scope-4); opacity: 0; pointer-events: none; }
@@ -81,67 +86,120 @@ body.sleepy .scope canvas { opacity: 0.3; } /* bedtime: the moving display dims 
 .flash { position: fixed; inset: 0; background: #FFFFFF; opacity: 0; pointer-events: none; z-index: 20; }
 .flash.on { animation: flash 0.8s ease-out; }
 @keyframes flash { 0% { opacity: 0.22 } 10% { opacity: 0.02 } 16% { opacity: 0.14 } 100% { opacity: 0 } }
+.transport { display: flex; align-items: center; gap: 14px 18px; flex-wrap: wrap; padding: 14px 18px; border-top: 1px solid var(--scope-line); }
+.play { width: 58px; height: 58px; border-radius: 50%; border: 0; display: grid; place-items: center; flex: none;
+  background: var(--scope-3); color: var(--on-scope-3); box-shadow: 0 0 0 6px var(--glow); transition: transform 0.12s, box-shadow 0.2s; }
+.play .ic { width: 26px; height: 26px; fill: currentColor; stroke-width: 1.5; }
+.play:hover { box-shadow: 0 0 0 9px var(--glow); }
+.play:active { transform: scale(0.96); }
+.now { flex: 1 1 200px; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.now b { font: 600 19px/1.2 var(--display); color: var(--scope-4); letter-spacing: -0.01em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.now-sounds { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font: 500 11px/1.3 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; }
+.now-sounds .ic { width: 16px; height: 16px; color: var(--scope-3); }
+.tools { display: flex; align-items: center; gap: 10px 14px; flex-wrap: wrap; }
+.tool { display: flex; align-items: center; gap: 8px; color: var(--scope-ink); }
+.tool input[type=range] { width: 120px; }
+.tool select { background: transparent; color: var(--scope-4); border: 1px solid var(--scope-line); border-radius: 999px; padding: 7px 12px; }
+.tool select option { color: initial; }
+.icon-btn { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--scope-line); background: transparent; color: var(--scope-4); flex: none; }
+.icon-btn:hover { border-color: var(--scope-ink); }
+.player input[type=range]::-webkit-slider-runnable-track { background: linear-gradient(to right, var(--scope-3) var(--pct, 50%), var(--scope-line) var(--pct, 50%)); }
+.player input[type=range]::-webkit-slider-thumb { background: var(--scope-bg); border-color: var(--scope-3); }
+.player input[type=range]::-moz-range-progress { background: var(--scope-3); }
+.player input[type=range]::-moz-range-track { background: var(--scope-line); }
+.player input[type=range]::-moz-range-thumb { background: var(--scope-bg); border-color: var(--scope-3); }
 
-/* scenes */
-.scenes { display: flex; flex-direction: column; gap: 10px; }
-.chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.scene-groups { display: flex; flex-direction: column; gap: 12px; }
-.chip-group { display: flex; flex-direction: column; gap: 6px; }
-.chip { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 8px 12px; cursor: pointer; text-align: left; }
-.chip b { font-weight: 600; font-size: 14px; }
-.chip small { color: var(--muted); font-size: 12px; }
+/* soundscapes: icon cards */
+.scene-groups { display: flex; flex-direction: column; gap: 16px; }
+.chip-group { display: flex; flex-direction: column; gap: 8px; }
+.chips { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 10px; }
+.chip { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 12px 14px 13px; text-align: left; transition: border-color 0.15s, background 0.15s; }
+.chip-icons { display: flex; gap: 6px; color: var(--accent); }
+.chip-icons .ic { width: 20px; height: 20px; }
+.chip b { font-weight: 600; font-size: 15px; line-height: 1.2; }
+.chip small { color: var(--muted); font-size: 12.5px; line-height: 1.35; margin-top: -4px; }
 .chip:hover { border-color: var(--muted); }
 .chip[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
 
-/* channel strips */
-.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 14px; align-items: start; }
-.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 16px 18px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
-.card[data-on="true"] { border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); }
-@media (min-width: 700px) { .card.wide { grid-column: span 2; } .card.wide .params { grid-template-columns: 1fr 1fr; } }
-.card-head { display: flex; align-items: center; gap: 12px; }
-.card-head h3 { margin: 0; font: 700 22px/1 var(--display); letter-spacing: -0.015em; flex: 1; }
-.meter { width: 54px; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
-.meter i { display: block; height: 100%; width: calc(var(--lv, 0) * 100%); background: var(--accent); border-radius: 3px; }
-.switch { width: 44px; height: 26px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); padding: 2px; cursor: pointer; flex: none; }
-.switch span { display: block; width: 20px; height: 20px; border-radius: 50%; background: var(--muted); transition: transform 0.15s, background 0.15s; }
-.switch[aria-checked="true"] { background: var(--accent); border-color: var(--accent); }
-.switch[aria-checked="true"] span { transform: translateX(18px); background: var(--on-accent); }
-.blurb { margin: 0; color: var(--muted); font-size: 13.5px; text-wrap: pretty; }
-.params { display: grid; gap: 12px 22px; transition: opacity 0.2s; }
-.card[data-on="false"] .params { opacity: 0.55; }
+/* your mix: a soundboard of tiles; each opens to its finer controls */
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr)); gap: 10px; align-items: start; }
+.tile { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 12px 12px; display: flex; flex-direction: column; gap: 8px; min-width: 0; transition: border-color 0.15s; }
+.tile[data-on="true"] { border-color: color-mix(in srgb, var(--accent) 60%, var(--line)); }
+.tile[data-open="true"] { grid-column: 1 / -1; padding: 12px 14px 16px; }
+.tile-head { display: flex; align-items: center; gap: 10px; }
+.tile-on { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; flex: 1; min-width: 0; border: 0; background: none; padding: 2px; text-align: left; border-radius: 10px; }
+.tile-on .badge { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; flex: none; background: var(--bg); color: var(--muted); border: 1px solid var(--line); transition: background 0.15s, color 0.15s; }
+.tile-on .badge .ic { width: 22px; height: 22px; }
+.tile[data-on="true"] .badge { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+.tile-name { display: flex; flex-direction: column; gap: 1px; width: 100%; min-width: 0; overflow: hidden; }
+.tile-name b { font: 600 16px/1.2 var(--display); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tile-name small { font: 500 11px/1.3 var(--mono); letter-spacing: 0.04em; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.more { position: absolute; top: 10px; right: 10px; width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; border: 1px solid transparent; background: none; color: var(--muted); }
+.more:hover, .more[aria-expanded="true"] { border-color: var(--line); color: var(--ink); background: var(--bg); }
+.meter { width: 100%; height: 3px; border-radius: 2px; background: var(--line); overflow: hidden; }
+.meter i { display: block; height: 100%; width: calc(var(--lv, 0) * 100%); background: var(--accent); border-radius: 2px; }
+.tile[data-on="false"] .meter { visibility: hidden; }
+.tile-vol { padding-inline: 4px; }
+.tile[data-on="false"] .tile-vol { opacity: 0.45; } /* drag it up to add the sound */
+.tile-body { display: flex; flex-direction: column; gap: 14px; padding: 6px 4px 0; border-top: 1px solid var(--line); }
+.blurb { margin: 8px 0 0; color: var(--muted); font-size: 13.5px; max-width: 75ch; text-wrap: pretty; }
+.params { display: grid; gap: 14px 26px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); }
 .row { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .row-top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
 .row-top label, .row-top .lbl { font: 500 13px/1.2 var(--body); text-transform: none; letter-spacing: 0; color: var(--ink); }
 output { font: 400 12px/1.2 var(--mono); color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
 .row.span { grid-column: 1 / -1; }
+.mix-foot { display: flex; justify-content: flex-end; }
 
-input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 20px; background: transparent; cursor: pointer; margin: 0; }
-input[type=range]::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: linear-gradient(to right, var(--ink) var(--pct, 50%), var(--line) var(--pct, 50%)); }
+input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 22px; background: transparent; margin: 0; }
+input[type=range]::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: linear-gradient(to right, var(--accent) var(--pct, 50%), var(--line) var(--pct, 50%)); }
 input[type=range]::-moz-range-track { height: 4px; border-radius: 2px; background: var(--line); }
-input[type=range]::-moz-range-progress { height: 4px; border-radius: 2px; background: var(--ink); }
-input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--surface); border: 2px solid var(--ink); margin-top: -6px; }
-input[type=range]::-moz-range-thumb { width: 12px; height: 12px; border-radius: 50%; background: var(--surface); border: 2px solid var(--ink); }
-.seg { display: flex; flex-wrap: wrap; gap: 4px; }
-.seg button { border: 1px solid var(--line); background: var(--bg); border-radius: 6px; padding: 5px 10px; font-size: 13px; cursor: pointer; }
+input[type=range]::-moz-range-progress { height: 4px; border-radius: 2px; background: var(--accent); }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--surface); border: 2px solid var(--accent); margin-top: -7px; }
+input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: var(--surface); border: 2px solid var(--accent); }
+.seg { display: flex; flex-wrap: wrap; gap: 6px; }
+.seg button { display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--line); background: var(--bg); border-radius: 999px; padding: 6px 12px; font-size: 13.5px; }
+.seg button .ic { width: 17px; height: 17px; }
 .seg button[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
 .action { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.btn { border: 1px solid var(--ink); background: transparent; border-radius: 6px; padding: 6px 12px; font-weight: 600; font-size: 13px; cursor: pointer; }
+.btn { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--ink); background: transparent; border-radius: 999px; padding: 7px 14px; font-weight: 600; font-size: 13.5px; }
 .btn:hover { background: var(--ink); color: var(--surface); }
 .status { font: 400 12px/1.35 var(--mono); color: var(--muted); }
 .status.hot { color: var(--accent); }
+.linkish { display: inline-flex; align-items: center; gap: 6px; background: none; border: 0; padding: 0; color: var(--muted); text-decoration: underline; font-size: 13px; }
+.linkish .ic { width: 15px; height: 15px; }
 
-/* session: mode + breathing */
-.session { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 14px; }
-.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 16px 18px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
-.panel h3 { margin: 0; font: 700 22px/1 var(--display); letter-spacing: -0.015em; flex: 1; }
+/* calm tools */
+.session { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 12px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px 16px 18px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.card-head { display: flex; align-items: center; gap: 10px; }
+.card-head .ic { color: var(--accent); }
+.panel h3 { margin: 0; font: 700 19px/1.1 var(--display); letter-spacing: -0.01em; flex: 1; }
 .desc { margin: 0; color: var(--muted); font-size: 13.5px; text-wrap: pretty; }
-.ghost { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 11px 16px; cursor: pointer; font-weight: 600; }
-.ghost:hover { border-color: var(--muted); }
+.switch { width: 44px; height: 26px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); padding: 2px; flex: none; }
+.switch span { display: block; width: 20px; height: 20px; border-radius: 50%; background: var(--muted); transition: transform 0.15s, background 0.15s; }
+.switch[aria-checked="true"] { background: var(--accent); border-color: var(--accent); }
+.switch[aria-checked="true"] span { transform: translateX(18px); background: var(--on-accent); }
+#prac-panel { grid-column: 1 / -1; }
+.prac-body { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 14px 36px; }
+.prac-col { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.ci { gap: 3px; flex-wrap: nowrap; }
+.ci button { flex: 1 1 0; min-width: 0; padding: 6px 0; justify-content: center; border-radius: 8px; font-variant-numeric: tabular-nums; }
+.ci-scale { display: flex; justify-content: space-between; font: 400 11px/1.2 var(--mono); color: var(--muted); }
+#list { width: 100%; min-height: 110px; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 10px; padding: 9px 11px; font: 14px/1.55 var(--body); resize: vertical; }
+.voice { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; color: var(--muted); cursor: pointer; }
+.voice input { width: 16px; height: 16px; accent-color: var(--accent); margin: 0; }
+
+/* breathing pacer, practice guide, focus view */
 .pacer { position: absolute; left: 50%; top: 50%; width: 150px; height: 150px; margin: -75px 0 0 -75px; pointer-events: none; display: grid; place-items: center; text-align: center; }
 .pacer .ring { position: absolute; inset: 0; border-radius: 50%; border: 2px solid var(--scope-4); opacity: 0.55; transform: scale(var(--s, 0.6)); }
 .pacer .glow { position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--scope-3) 40%, transparent) 0%, transparent 70%); transform: scale(var(--s, 0.6)); }
 .pacer b { position: relative; display: block; font: 600 16px/1.2 var(--display); color: var(--scope-4); text-shadow: 0 1px 8px rgba(0,0,0,0.6); }
 .pacer small { position: relative; display: block; font: 500 11px/1.4 var(--mono); color: var(--scope-ink); }
+.scope.guided { height: 270px; }
+.guide { position: absolute; left: 64px; right: 14px; bottom: 12px; text-align: center; pointer-events: none; display: grid; gap: 3px; justify-items: center; }
+.guide b { font: 600 18px/1.25 var(--display); color: var(--scope-4); text-shadow: 0 1px 10px rgba(0,0,0,0.75); max-width: 46ch; text-wrap: balance; }
+.guide small { font-size: 13px; line-height: 1.4; color: var(--scope-ink); text-shadow: 0 1px 8px rgba(0,0,0,0.75); max-width: 70ch; text-wrap: balance; }
 .zen { position: fixed; inset: 0; z-index: 30; background: var(--scope-bg); color: var(--scope-ink); display: grid; place-items: center;
   padding-block: env(safe-area-inset-top, 0px) env(safe-area-inset-bottom, 0px); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 .zen-inner { display: flex; flex-direction: column; align-items: center; gap: 26px; }
@@ -149,76 +207,64 @@ input[type=range]::-moz-range-thumb { width: 12px; height: 12px; border-radius: 
 .zen .pacer b { font-size: 24px; }
 .zen-time { font: 500 13px/1.4 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; text-align: center; }
 .zen-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-.zen button { background: transparent; color: var(--scope-4); border: 1px solid var(--scope-line); border-radius: 999px; padding: 10px 18px; cursor: pointer; font-weight: 600; }
-body.zen-on { overflow: hidden; }
+.zen button { display: inline-flex; align-items: center; gap: 8px; background: transparent; color: var(--scope-4); border: 1px solid var(--scope-line); border-radius: 999px; padding: 10px 18px; font-weight: 600; }
 .zen-row, .zen-time { transition: opacity 0.4s; }
 .zen.calm .zen-row, .zen.calm .zen-time { opacity: 0.08; transition: opacity 2.5s; }
-.scope.guided { height: 270px; }
-.guide { position: absolute; left: 64px; right: 14px; bottom: 12px; text-align: center; pointer-events: none; display: grid; gap: 3px; justify-items: center; }
-.guide b { font: 600 18px/1.25 var(--display); color: var(--scope-4); text-shadow: 0 1px 10px rgba(0,0,0,0.75); max-width: 46ch; text-wrap: balance; }
-.guide small { font-size: 13px; line-height: 1.4; color: var(--scope-ink); text-shadow: 0 1px 8px rgba(0,0,0,0.75); max-width: 70ch; text-wrap: balance; }
+body.zen-on { overflow: hidden; }
 .zen-guide { max-width: 44ch; text-align: center; display: grid; gap: 8px; justify-items: center; }
 .zen-guide b { font: 600 clamp(20px, 3.4vw, 28px)/1.25 var(--display); color: var(--scope-4); text-wrap: balance; }
 .zen-guide small { font-size: 15px; line-height: 1.45; text-wrap: balance; }
 .guide.fresh b, .guide.fresh small, .zen-guide.fresh b, .zen-guide.fresh small { animation: fadein 1.2s ease-out; }
 @keyframes fadein { from { opacity: 0 } to { opacity: 1 } }
-#prac-panel { grid-column: 1 / -1; }
-.prac-body { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 14px 36px; }
-.prac-col { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
-.ci { gap: 3px; }
-.ci { flex-wrap: nowrap; }
-#list { width: 100%; min-height: 110px; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 9px 11px; font: 14px/1.55 var(--body); resize: vertical; }
-#list:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
-.ci button { flex: 1 1 0; min-width: 0; padding: 5px 0; text-align: center; font-variant-numeric: tabular-nums; }
-.ci-scale { display: flex; justify-content: space-between; font: 400 11px/1.2 var(--mono); color: var(--muted); }
-.voice { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; color: var(--muted); cursor: pointer; }
-.voice input { width: 16px; height: 16px; accent-color: var(--accent); margin: 0; }
+
+/* about: facts and research, folded away */
+.about { border-top: 1px solid var(--line); padding-top: 6px; }
+.about summary { display: flex; align-items: center; gap: 10px; padding: 12px 0; cursor: pointer; list-style: none; font: 700 17px/1.2 var(--display); }
+.about summary::-webkit-details-marker { display: none; }
+.about summary .ic { color: var(--accent); }
+.about summary .chev { margin-left: auto; color: var(--muted); transition: transform 0.2s; }
+.about[open] summary .chev { transform: rotate(180deg); }
+.about-body { display: flex; flex-direction: column; gap: 22px; padding-bottom: 8px; }
+.foot { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 18px 28px; color: var(--muted); font-size: 13.5px; }
+.foot h4, .research h4 { margin: 0 0 4px; font: 700 15px/1.2 var(--display); color: var(--ink); }
+.foot p { margin: 0; text-wrap: pretty; }
 .research { display: flex; flex-direction: column; gap: 8px; color: var(--muted); font-size: 13.5px; }
-.research h4 { margin: 0; font: 700 15px/1.2 var(--display); color: var(--ink); }
 .research ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; max-width: 95ch; }
 .research cite { font-style: normal; color: var(--ink); }
-.foot { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 18px 28px; border-top: 1px solid var(--line); padding-top: 20px; color: var(--muted); font-size: 13.5px; }
-.foot h4 { margin: 0 0 4px; font: 700 15px/1.2 var(--display); color: var(--ink); }
-.foot p { margin: 0; text-wrap: pretty; }
-.tip { margin: 0; padding: 10px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--muted); font-size: 13.5px; text-wrap: pretty; }
-.tip b { color: var(--ink); }
-.linkish { background: none; border: 0; padding: 0; color: var(--muted); text-decoration: underline; cursor: pointer; font-size: 13px; }
-/* phones */
+
+/* phones: a play dock follows you down the page */
 .dock { position: fixed; left: 0; right: 0; bottom: 0; z-index: 25; display: flex; align-items: center; gap: 12px;
   padding: 10px max(16px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
-  background: color-mix(in srgb, var(--surface) 88%, transparent); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
-  border-top: 1px solid var(--line); transform: translateY(110%); transition: transform 0.25s ease; }
+  background: color-mix(in srgb, var(--scope-bg) 92%, transparent); color: var(--scope-ink); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+  border-top: 1px solid var(--scope-line); transform: translateY(110%); transition: transform 0.25s ease; }
 .dock.show { transform: none; }
-.dock .play { min-width: 0; width: 48px; height: 48px; padding: 0; flex: none; }
+.dock .play { width: 48px; height: 48px; box-shadow: none; }
+.dock .play .ic { width: 22px; height: 22px; }
 .dock-now { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .dock-now span, .dock-now small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dock-now span { font-weight: 600; font-size: 14px; }
-.dock-now small { font: 500 11px/1.3 var(--mono); letter-spacing: 0.04em; color: var(--muted); }
-.dock .ghost { padding: 10px 14px; flex: none; }
+.dock-now span { font-weight: 600; font-size: 14px; color: var(--scope-4); }
+.dock-now small { font: 500 11px/1.3 var(--mono); letter-spacing: 0.04em; }
 @media (min-width: 761px) { .dock { display: none; } }
 @media (max-width: 760px) {
-  .wrap { gap: 18px; padding-top: max(20px, env(safe-area-inset-top, 0px)); padding-bottom: calc(92px + env(safe-area-inset-bottom, 0px)); }
-  .brand h1 { font-size: 46px; }
-  .brand p { font-size: 14px; }
-  .transport { width: 100%; gap: 12px 14px; }
-  .transport .knob { flex: 1 1 140px; min-width: 0; }
-  .scope { height: 150px; order: 1; }
+  .wrap { gap: 24px; padding-top: max(18px, env(safe-area-inset-top, 0px)); padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
+  .scope { height: 150px; }
+  .scope.guided { height: 230px; }
   .scope:has(.idle:not([hidden])) .scope-meta, .idle span { display: none; }
   .idle { padding-left: 56px; }
-  .scope.guided { height: 230px; }
-  .scenes { order: 2; }
-  .cards { order: 3; }
-  .session { order: 4; }
-  .foot { order: 5; }
-  .research { order: 6; }
-  .scenes .chips { flex-wrap: nowrap; overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none;
+  .transport { padding: 12px 14px 14px; }
+  .tools { width: 100%; justify-content: space-between; }
+  .tool.vol { flex: 1; }
+  .tool input[type=range] { width: 100%; }
+  .scenes .chips { display: flex; overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none;
     margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); padding: 2px max(16px, env(safe-area-inset-left, 0px)); scroll-padding-inline: max(16px, env(safe-area-inset-left, 0px)); }
   .scenes .chips::-webkit-scrollbar { display: none; }
-  .chip { flex: none; width: 152px; scroll-snap-align: start; padding: 10px 13px; border-radius: 10px; }
-  .card-head h3, .panel h3 { font-size: 20px; }
+  .chip { flex: none; width: 150px; scroll-snap-align: start; }
+  .tiles { grid-template-columns: 1fr 1fr; }
+  .tile-on .badge { width: 38px; height: 38px; }
+  .tile-name b { font-size: 15px; }
 }
 @media (pointer: coarse) {
-  .seg button { padding: 9px 13px; min-height: 40px; }
+  .seg button { padding: 9px 14px; min-height: 40px; }
   .ci button { padding-inline: 0; }
   .btn { padding: 10px 16px; }
   select { padding: 9px 10px; }
@@ -229,119 +275,134 @@ body.zen-on { overflow: hidden; }
   .switch span { width: 24px; height: 24px; }
   .switch[aria-checked="true"] span { transform: translateX(22px); }
 }
-@media (prefers-reduced-motion: reduce) { .dock { transition: none; } }
-@media (prefers-reduced-motion: reduce) { .switch span { transition: none; } .flash { display: none; } .guide.fresh b, .guide.fresh small, .zen-guide.fresh b, .zen-guide.fresh small { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .switch span, .dock, .play, .chip, .tile, .badge { transition: none; } .flash { display: none; } .guide.fresh b, .guide.fresh small, .zen-guide.fresh b, .zen-guide.fresh small { animation: none; } }
 </style>
 </head>
 <body>
 
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><!-- icons: Lucide, ISC licence --><symbol id="i-bird" viewBox="0 0 24 24"><path d="M16 7h.01" /> <path d="M3.4 18H12a8 8 0 0 0 8-8V7a4 4 0 0 0-7.28-2.3L2 20" /> <path d="m20 7 2 .5-2 .5" /> <path d="M10 18v3" /> <path d="M14 17.75V21" /> <path d="M7 18a6 6 0 0 0 3.84-10.61" /></symbol><symbol id="i-brain" viewBox="0 0 24 24"><path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z" /> <path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z" /> <path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4" /> <path d="M17.599 6.5a3 3 0 0 0 .399-1.375" /> <path d="M6.003 5.125A3 3 0 0 0 6.401 6.5" /> <path d="M3.477 10.896a4 4 0 0 1 .585-.396" /> <path d="M19.938 10.5a4 4 0 0 1 .585.396" /> <path d="M6 18a4 4 0 0 1-1.967-.516" /> <path d="M19.967 17.484A4 4 0 0 1 18 18" /></symbol><symbol id="i-bug" viewBox="0 0 24 24"><path d="m8 2 1.88 1.88" /> <path d="M14.12 3.88 16 2" /> <path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1" /> <path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6" /> <path d="M12 20v-9" /> <path d="M6.53 9C4.6 8.8 3 7.1 3 5" /> <path d="M6 13H2" /> <path d="M3 21c0-2.1 1.7-3.9 3.8-4" /> <path d="M20.97 5c0 2.1-1.6 3.8-3.5 4" /> <path d="M22 13h-4" /> <path d="M17.2 17c2.1.1 3.8 1.9 3.8 4" /></symbol><symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" /></symbol><symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></symbol><symbol id="i-cloud-drizzle" viewBox="0 0 24 24"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" /> <path d="M8 19v1" /> <path d="M8 14v1" /> <path d="M16 19v1" /> <path d="M16 14v1" /> <path d="M12 21v1" /> <path d="M12 16v1" /></symbol><symbol id="i-cloud-lightning" viewBox="0 0 24 24"><path d="M6 16.326A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 .5 8.973" /> <path d="m13 12-3 5h4l-3 5" /></symbol><symbol id="i-cloud-rain" viewBox="0 0 24 24"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" /> <path d="M16 14v6" /> <path d="M8 14v6" /> <path d="M12 16v6" /></symbol><symbol id="i-droplets" viewBox="0 0 24 24"><path d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 6.75 7 5.3c-.29 1.45-1.14 2.84-2.29 3.76S3 11.1 3 12.25c0 2.22 1.8 4.05 4 4.05z" /> <path d="M12.56 6.6A10.97 10.97 0 0 0 14 3.02c.5 2.5 2 4.9 4 6.5s3 3.5 3 5.5a6.98 6.98 0 0 1-11.91 4.97" /></symbol><symbol id="i-ear" viewBox="0 0 24 24"><path d="M6 8.5a6.5 6.5 0 1 1 13 0c0 6-6 6-6 10a3.5 3.5 0 1 1-7 0" /> <path d="M15 8.5a2.5 2.5 0 0 0-5 0v1a2 2 0 1 1 0 4" /></symbol><symbol id="i-feather" viewBox="0 0 24 24"><path d="M12.67 19a2 2 0 0 0 1.416-.588l6.154-6.172a6 6 0 0 0-8.49-8.49L5.586 9.914A2 2 0 0 0 5 11.328V18a1 1 0 0 0 1 1z" /> <path d="M16 8 2 22" /> <path d="M17.5 15H9" /></symbol><symbol id="i-flame" viewBox="0 0 24 24"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" /></symbol><symbol id="i-flower-2" viewBox="0 0 24 24"><path d="M12 5a3 3 0 1 1 3 3m-3-3a3 3 0 1 0-3 3m3-3v1M9 8a3 3 0 1 0 3 3M9 8h1m5 0a3 3 0 1 1-3 3m3-3h-1m-2 3v-1" /> <circle cx="12" cy="8" r="2" /> <path d="M12 10v12" /> <path d="M12 22c4.2 0 7-1.667 7-5-4.2 0-7 1.667-7 5Z" /> <path d="M12 22c-4.2 0-7-1.667-7-5 4.2 0 7 1.667 7 5Z" /></symbol><symbol id="i-focus" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" /> <path d="M3 7V5a2 2 0 0 1 2-2h2" /> <path d="M17 3h2a2 2 0 0 1 2 2v2" /> <path d="M21 17v2a2 2 0 0 1-2 2h-2" /> <path d="M7 21H5a2 2 0 0 1-2-2v-2" /></symbol><symbol id="i-heart-pulse" viewBox="0 0 24 24"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" /> <path d="M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27" /></symbol><symbol id="i-house" viewBox="0 0 24 24"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" /> <path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></symbol><symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /> <path d="M12 16v-4" /> <path d="M12 8h.01" /></symbol><symbol id="i-leaf" viewBox="0 0 24 24"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" /> <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" /></symbol><symbol id="i-maximize-2" viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9" /> <polyline points="9 21 3 21 3 15" /> <line x1="21" x2="14" y1="3" y2="10" /> <line x1="3" x2="10" y1="21" y2="14" /></symbol><symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" /></symbol><symbol id="i-mountain" viewBox="0 0 24 24"><path d="m8 3 4 8 5-5 5 15H2L8 3z" /></symbol><symbol id="i-pause" viewBox="0 0 24 24"><rect x="14" y="4" width="4" height="16" rx="1" /> <rect x="6" y="4" width="4" height="16" rx="1" /></symbol><symbol id="i-play" viewBox="0 0 24 24"><polygon points="6 3 20 12 6 21 6 3" /></symbol><symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14" /> <path d="M12 5v14" /></symbol><symbol id="i-rotate-ccw" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /> <path d="M3 3v5h5" /></symbol><symbol id="i-sliders-horizontal" viewBox="0 0 24 24"><line x1="21" x2="14" y1="4" y2="4" /> <line x1="10" x2="3" y1="4" y2="4" /> <line x1="21" x2="12" y1="12" y2="12" /> <line x1="8" x2="3" y1="12" y2="12" /> <line x1="21" x2="16" y1="20" y2="20" /> <line x1="12" x2="3" y1="20" y2="20" /> <line x1="14" x2="14" y1="2" y2="6" /> <line x1="8" x2="8" y1="10" y2="14" /> <line x1="16" x2="16" y1="18" y2="22" /></symbol><symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" /> <path d="M20 3v4" /> <path d="M22 5h-4" /> <path d="M4 17v2" /> <path d="M5 18H3" /></symbol><symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" /> <path d="M12 2v2" /> <path d="M12 20v2" /> <path d="m4.93 4.93 1.41 1.41" /> <path d="m17.66 17.66 1.41 1.41" /> <path d="M2 12h2" /> <path d="M20 12h2" /> <path d="m6.34 17.66-1.41 1.41" /> <path d="m19.07 4.93-1.41 1.41" /></symbol><symbol id="i-timer" viewBox="0 0 24 24"><line x1="10" x2="14" y1="2" y2="2" /> <line x1="12" x2="15" y1="14" y2="11" /> <circle cx="12" cy="14" r="8" /></symbol><symbol id="i-trees" viewBox="0 0 24 24"><path d="M10 10v.2A3 3 0 0 1 8.9 16H5a3 3 0 0 1-1-5.8V10a3 3 0 0 1 6 0Z" /> <path d="M7 16v6" /> <path d="M13 19v3" /> <path d="M12 19h8.3a1 1 0 0 0 .7-1.7L18 14h.3a1 1 0 0 0 .7-1.7L16 9h.2a1 1 0 0 0 .8-1.7L13 3l-1.4 1.5" /></symbol><symbol id="i-volume-2" viewBox="0 0 24 24"><path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z" /> <path d="M16 9a5 5 0 0 1 0 6" /> <path d="M19.364 18.364a9 9 0 0 0 0-12.728" /></symbol><symbol id="i-waves" viewBox="0 0 24 24"><path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1" /> <path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1" /> <path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1" /></symbol><symbol id="i-wind" viewBox="0 0 24 24"><path d="M12.8 19.6A2 2 0 1 0 14 16H2" /> <path d="M17.5 8a2.5 2.5 0 1 1 2 4H2" /> <path d="M9.8 4.4A2 2 0 1 1 11 8H2" /></symbol><symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18" /> <path d="m6 6 12 12" /></symbol><symbol id="i-zap" viewBox="0 0 24 24"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z" /></symbol><symbol id="i-logo" viewBox="0 0 48 48"><g fill="none" stroke-width="2.2" stroke-linecap="round" style="stroke: var(--scope-2)"><ellipse cx="24" cy="34" rx="7" ry="2.6"/><ellipse cx="24" cy="34" rx="14" ry="5" opacity="0.6"/><ellipse cx="24" cy="34" rx="21" ry="7.4" opacity="0.3"/></g><path style="fill: var(--accent)" d="M24 5.5c3.2 5.2 7.2 9.3 7.2 13.6a7.2 7.2 0 0 1-14.4 0c0-4.3 4-8.4 7.2-13.6z"/></symbol></svg>
 <div class="flash" id="flash"></div>
 <div class="wrap">
   <header class="top">
-    <div class="brand">
-      <h1>Rainmaker</h1>
-      <p>Natural ambience synthesized live in your browser. No recordings and no loops, so it can play all night without repeating.</p>
-    </div>
-    <div class="transport">
-      <button class="play" id="play" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path id="play-ico" d="M8 5v14l11-7z"/></svg><span id="play-lbl">Play</span></button>
-      <div class="knob"><label for="master">Master <output id="master-out" for="master"></output></label><input type="range" id="master" min="0" max="1" step="0.01"></div>
-      <div class="knob"><label for="sleep">Fade out after</label>
-        <select id="sleep"><option value="0">Never</option><option value="10">10 min</option><option value="20">20 min</option><option value="30">30 min</option><option value="45">45 min</option><option value="60">1 hour</option><option value="90">90 min</option><option value="120">2 hours</option></select></div>
-      <button class="ghost" id="zen-btn" type="button">Focus view</button>
-    </div>
+    <div class="brand"><svg class="logo" aria-hidden="true"><use href="#i-logo"/></svg><h1>Rainmaker</h1></div>
+    <p>Nature sounds, synthesized live in your browser. No recordings and no loops, so a night of rain never repeats.</p>
   </header>
 
-  <section class="scope" id="scope" aria-label="Live spectrogram">
-    <canvas id="cv"></canvas>
-    <div class="axis" id="axis"></div>
-    <div class="bolt" id="bolt"></div>
-    <div class="pacer" id="pacer" hidden><div class="glow"></div><div class="ring"></div><div><b>Breathe out</b><small></small></div></div>
-    <div class="guide" id="guide" hidden aria-live="polite"><b></b><small></small></div>
-    <div class="scope-meta"><span class="pill" id="now">Nothing playing</span><span class="pill" id="sleep-pill" hidden></span></div>
-    <div class="idle" id="idle"><strong>Press Play to begin</strong><span>The spectrogram scrolls here once sound is running. Low frequencies sit at the bottom, bright detail like drops and crackles at the top.</span></div>
+  <section class="player" aria-label="Player">
+    <div class="scope" id="scope" aria-label="Live spectrogram">
+      <canvas id="cv"></canvas>
+      <div class="axis" id="axis"></div>
+      <div class="bolt" id="bolt"></div>
+      <div class="pacer" id="pacer" hidden><div class="glow"></div><div class="ring"></div><div><b>Breathe out</b><small></small></div></div>
+      <div class="guide" id="guide" hidden aria-live="polite"><b></b><small></small></div>
+      <div class="scope-meta"><span class="pill" id="sleep-pill" hidden></span></div>
+      <div class="idle" id="idle"><strong>Press play to begin</strong><span>Low sounds draw at the bottom of this screen, bright detail such as drops and crackles at the top.</span></div>
+    </div>
+    <div class="transport">
+      <button class="play" id="play" type="button" aria-label="Play"><svg class="ic" aria-hidden="true"><use id="play-ico" href="#i-play"/></svg></button>
+      <div class="now"><b id="now-title">Rain</b><span class="now-sounds" id="now"></span></div>
+      <div class="tools">
+        <label class="tool vol" for="master" title="Volume"><svg class="ic" aria-hidden="true"><use href="#i-volume-2"/></svg><span class="sr">Volume</span><input type="range" id="master" min="0" max="1" step="0.01"><output id="master-out" for="master" hidden></output></label>
+        <label class="tool" for="sleep" title="Fade out after"><svg class="ic" aria-hidden="true"><use href="#i-timer"/></svg><span class="sr">Fade out after</span>
+          <select id="sleep"><option value="0">No timer</option><option value="10">10 min</option><option value="20">20 min</option><option value="30">30 min</option><option value="45">45 min</option><option value="60">1 hour</option><option value="90">90 min</option><option value="120">2 hours</option></select></label>
+        <button class="icon-btn" id="zen-btn" type="button" aria-label="Focus view" title="Focus view"><svg class="ic" aria-hidden="true"><use href="#i-maximize-2"/></svg></button>
+      </div>
+    </div>
   </section>
 
-  <section class="session" aria-label="Mode, space and breathing">
-    <div class="panel">
-      <div class="card-head"><h3>Mode</h3><span class="status" id="guard-status"></span></div>
-      <div class="seg" id="modes" role="group" aria-label="Mode"></div>
-      <p class="desc" id="mode-desc"></p>
-    </div>
-    <div class="panel">
-      <div class="card-head"><h3>Space</h3></div>
-      <div class="seg" id="spaces" role="group" aria-label="Acoustic space"></div>
-      <p class="desc" id="space-desc"></p>
-    </div>
-    <div class="panel">
-      <div class="card-head"><h3 id="breath-h">Breathe with the sound</h3><button class="switch" type="button" role="switch" id="breath-sw" aria-labelledby="breath-h" aria-checked="false"><span></span></button></div>
-      <div class="seg" id="patterns" role="group" aria-label="Breathing pattern"></div>
-      <p class="desc" id="breath-desc"></p>
-      <div id="depth-row"></div>
-    </div>
-    <div class="panel" id="prac-panel">
-      <div class="card-head"><h3>Calm practices</h3><span class="status" id="prac-status"></span></div>
-      <div class="prac-body">
-        <div class="prac-col">
-          <div class="seg" id="pracs" role="group" aria-label="Practice"></div>
-          <p class="desc" id="prac-desc"></p>
-          <div class="row" id="list-row" hidden>
-            <textarea id="list" aria-label="Your list for the coming days" placeholder="Tomorrow I need to..."></textarea>
-            <div class="ci-scale"><span>Kept in this browser only</span><button class="linkish" id="list-clear" type="button">Clear the list</button></div>
+  <section class="sec scenes" aria-labelledby="scenes-h">
+    <div class="sec-head"><h2 id="scenes-h">Soundscapes</h2><p>Pick one to start. Each is a mix you can change below.</p></div>
+    <div class="scene-groups" id="chips"></div>
+  </section>
+
+  <section class="sec mix" aria-labelledby="mix-h">
+    <div class="sec-head"><h2 id="mix-h">Your mix</h2><p>Tap a sound to turn it on or off. The slider button opens its finer controls.</p></div>
+    <div class="tiles" id="cards"></div>
+    <div class="mix-foot"><button class="linkish" id="reset" type="button"><svg class="ic" aria-hidden="true"><use href="#i-rotate-ccw"/></svg>Reset all sounds and settings</button></div>
+  </section>
+
+  <section class="sec calm" aria-labelledby="calm-h">
+    <div class="sec-head"><h2 id="calm-h">Calm</h2><p>How the sound behaves, the place you hear it in, and short practices that ease tension.</p></div>
+    <div class="session">
+      <div class="panel">
+        <div class="card-head"><svg class="ic" aria-hidden="true"><use href="#i-ear"/></svg><h3>Mode</h3><span class="status" id="guard-status"></span></div>
+        <div class="seg" id="modes" role="group" aria-label="Mode"></div>
+        <p class="desc" id="mode-desc"></p>
+      </div>
+      <div class="panel">
+        <div class="card-head"><svg class="ic" aria-hidden="true"><use href="#i-mountain"/></svg><h3>Space</h3></div>
+        <div class="seg" id="spaces" role="group" aria-label="Acoustic space"></div>
+        <p class="desc" id="space-desc"></p>
+      </div>
+      <div class="panel">
+        <div class="card-head"><svg class="ic" aria-hidden="true"><use href="#i-heart-pulse"/></svg><h3 id="breath-h">Breathe with the sound</h3><button class="switch" type="button" role="switch" id="breath-sw" aria-labelledby="breath-h" aria-checked="false"><span></span></button></div>
+        <div class="seg" id="patterns" role="group" aria-label="Breathing pattern"></div>
+        <p class="desc" id="breath-desc"></p>
+        <div id="depth-row"></div>
+      </div>
+      <div class="panel" id="prac-panel">
+        <div class="card-head"><svg class="ic" aria-hidden="true"><use href="#i-brain"/></svg><h3>Calm practices</h3><span class="status" id="prac-status"></span></div>
+        <div class="prac-body">
+          <div class="prac-col">
+            <div class="seg" id="pracs" role="group" aria-label="Practice"></div>
+            <p class="desc" id="prac-desc"></p>
+            <div class="row" id="list-row" hidden>
+              <textarea id="list" aria-label="Your list for the coming days" placeholder="Tomorrow I need to..."></textarea>
+              <div class="ci-scale"><span>Kept in this browser only</span><button class="linkish" id="list-clear" type="button">Clear the list</button></div>
+            </div>
           </div>
-        </div>
-        <div class="prac-col">
-          <div class="row">
-            <div class="row-top"><span class="lbl" id="ci-q">How tense do you feel right now?</span><output id="ci-val"></output></div>
-            <div class="seg ci" id="ci" role="group" aria-labelledby="ci-q"></div>
-            <div class="ci-scale"><span>0 calm</span><span>10 very tense</span></div>
+          <div class="prac-col">
+            <div class="row">
+              <div class="row-top"><span class="lbl" id="ci-q">How tense do you feel right now?</span><output id="ci-val"></output></div>
+              <div class="seg ci" id="ci" role="group" aria-labelledby="ci-q"></div>
+              <div class="ci-scale"><span>0 calm</span><span>10 very tense</span></div>
+            </div>
+            <div class="action"><button class="btn" id="prac-go" type="button">Start</button><label class="voice"><input type="checkbox" id="prac-voice"> Read the steps aloud</label></div>
+            <p class="status" id="prac-hist"></p>
           </div>
-          <div class="action"><button class="btn" id="prac-go" type="button">Start</button><label class="voice"><input type="checkbox" id="prac-voice"> Read the steps aloud</label></div>
-          <p class="status" id="prac-hist"></p>
         </div>
       </div>
     </div>
   </section>
 
-  <section class="scenes" aria-labelledby="scenes-h">
-    <div class="lbl" id="scenes-h">Soundscapes</div>
-    <div class="scene-groups" id="chips"></div>
-  </section>
-
-  <section class="cards" id="cards" aria-label="Sounds"></section>
-
-  <footer class="foot">
-    <div><h4>Drops on water</h4><p>A raindrop hitting a puddle traps a tiny air bubble that rings at the Minnaert frequency, about 3.3 kHz divided by its radius in mm, and rises in pitch as it settles. That chirp is the "plink" in real rain.</p></div>
-    <div><h4>Thunder timing</h4><p>Sound covers a kilometre in about 2.9 seconds. Each strike flashes on the scope, then the rumble arrives after the matching delay, duller and longer the farther away it is.</p></div>
-    <div><h4>Tuned to real recordings</h4><p>Every sound is synthesized, never sampled. Birds sing through a physical model of the songbird syrinx, thunder comes from a model of a lightning channel, and each sound was tuned against real field recordings using two AI listeners and the statistics the human ear uses to recognise natural textures.</p></div>
-    <div><h4>Your mix</h4><p>Volumes and settings are saved in this browser. Turn on any combination of sounds, then shape each one with its own controls. <button class="linkish" id="reset" type="button">Reset to defaults</button></p></div>
-  </footer>
-  <section class="research" aria-labelledby="res-h">
-    <h4 id="res-h">The research behind the modes</h4>
-    <ul>
-      <li>Slow breathing near 6 breaths a minute raises heart-rate variability and lowers anxiety. <cite>Lehrer &amp; Gevirtz, 2014; Zaccaro et al., 2018</cite></li>
-      <li>Five minutes a day of cyclic sighing improved mood and slowed resting breathing more than mindfulness meditation. <cite>Balban et al., Cell Reports Medicine, 2023</cite></li>
-      <li>People tend to breathe along with a slow rhythm they hear, which is why the sound itself swells and settles with the pacer and ocean waves break on each in-breath. <cite>Bernardi et al., Heart, 2006</cite></li>
-      <li>Nature sounds speed physiological recovery from stress compared with traffic noise, and turn attention outward rather than inward. <cite>Alvarsson, Wiens &amp; Nilsson, 2010; Gould van Praag et al., 2017</cite></li>
-      <li>Gentle, effortless interest ("soft fascination") lets tired directed attention recover, hence the slow drift of the weather in Relax mode. <cite>Kaplan, 1995</cite></li>
-      <li>Birdsong is among the sounds people find most restorative, and listening to it lowered anxiety in a controlled study. <cite>Ratcliffe, Gatersleben &amp; Sowden, 2013; Stobbe et al., Scientific Reports, 2022</cite></li>
-      <li>Sudden noise events that rise above the background, more than steady sound, are what wake sleepers. The startle guard caps how far any event can rise. <cite>Basner et al., 2011; WHO Environmental Noise Guidelines, 2018</cite></li>
-      <li>Background speech is the most disruptive sound for reading and memory; a steady masking sound reduces it. <cite>Banbury et al., 2001</cite></li>
-      <li>Attention training (focusing on one sound, switching between sounds, then hearing them all at once) reduced worry, anxiety and low mood across clinical and non-clinical studies. <cite>Wells, 1990; Knowles, Foden, El-Deredy &amp; Wells, 2016</cite></li>
-      <li>Letting thoughts pass, as in "leaves on a stream", is a core exercise of acceptance and commitment therapy, which helps with anxiety and depression in controlled trials. <cite>Hayes, Strosahl &amp; Wilson, 1999; A-Tjak et al., 2015</cite></li>
-      <li>Relaxation training, progressive muscle relaxation included, reliably lowers anxiety. <cite>Jacobson, 1938; Manzoni et al., BMC Psychiatry, 2008</cite></li>
-      <li>Picturing a stream of unrelated, harmless objects ("cognitive shuffling") is proposed to ease the slide into sleep by crowding out worry; the evidence is still early. <cite>Beaudoin, 2013</cite></li>
-      <li>Writing a specific to-do list for five minutes at bedtime helped people fall asleep faster in a sleep-lab study. <cite>Scullin et al., Journal of Experimental Psychology: General, 2018</cite></li>
-      <li>Rating tension from 0 to 10 before and after practice comes from behaviour therapy and helps you notice what works for you. <cite>Wolpe, 1969</cite></li>
-      <li>Across studies, water sounds lifted mood most and birdsong eased stress and annoyance most. <cite>Buxton et al., PNAS, 2021</cite></li>
-      <li>These are self-help practices. If anxiety is severe or does not ease, please talk to a doctor or therapist.</li>
-      <li>Not included: binaural beats. Studies disagree on whether they do anything beyond what relaxing sound already does.</li>
-    </ul>
-  </section>
+  <details class="about">
+    <summary><svg class="ic" aria-hidden="true"><use href="#i-info"/></svg>How it works, and the research behind it<svg class="ic chev" aria-hidden="true"><use href="#i-chevron-down"/></svg></summary>
+    <div class="about-body">
+      <div class="foot">
+        <div><h4>Drops on water</h4><p>A raindrop hitting a puddle traps a tiny air bubble that rings at the Minnaert frequency, about 3.3 kHz divided by its radius in mm, and rises in pitch as it settles. That chirp is the "plink" in real rain.</p></div>
+        <div><h4>Thunder timing</h4><p>Sound covers a kilometre in about 2.9 seconds. Each strike flashes on the screen, then the rumble arrives after the matching delay, duller and longer the farther away it is.</p></div>
+        <div><h4>Tuned to real recordings</h4><p>Every sound is synthesized, never sampled. Birds sing through a physical model of the songbird syrinx, thunder comes from a model of a lightning channel, and each sound was tuned against real field recordings using two AI listeners and the statistics the human ear uses to recognise natural textures.</p></div>
+        <div><h4>Your mix</h4><p>Volumes and settings are saved in this browser. Turn on any combination of sounds, then shape each one with its own controls.</p></div>
+      </div>
+      <div class="research">
+        <h4>The research behind the modes and practices</h4>
+        <ul>
+          <li>Slow breathing near 6 breaths a minute raises heart-rate variability and lowers anxiety. <cite>Lehrer &amp; Gevirtz, 2014; Zaccaro et al., 2018</cite></li>
+          <li>Five minutes a day of cyclic sighing improved mood and slowed resting breathing more than mindfulness meditation. <cite>Balban et al., Cell Reports Medicine, 2023</cite></li>
+          <li>People tend to breathe along with a slow rhythm they hear, which is why the sound itself swells and settles with the pacer and ocean waves break on each in-breath. <cite>Bernardi et al., Heart, 2006</cite></li>
+          <li>Nature sounds speed physiological recovery from stress compared with traffic noise, and turn attention outward rather than inward. <cite>Alvarsson, Wiens &amp; Nilsson, 2010; Gould van Praag et al., 2017</cite></li>
+          <li>Gentle, effortless interest ("soft fascination") lets tired directed attention recover, hence the slow drift of the weather in Relax mode. <cite>Kaplan, 1995</cite></li>
+          <li>Birdsong is among the sounds people find most restorative, and listening to it lowered anxiety in a controlled study. <cite>Ratcliffe, Gatersleben &amp; Sowden, 2013; Stobbe et al., Scientific Reports, 2022</cite></li>
+          <li>Sudden noise events that rise above the background, more than steady sound, are what wake sleepers. The startle guard caps how far any event can rise. <cite>Basner et al., 2011; WHO Environmental Noise Guidelines, 2018</cite></li>
+          <li>Background speech is the most disruptive sound for reading and memory; a steady masking sound reduces it. <cite>Banbury et al., 2001</cite></li>
+          <li>Attention training (focusing on one sound, switching between sounds, then hearing them all at once) reduced worry, anxiety and low mood across clinical and non-clinical studies. <cite>Wells, 1990; Knowles, Foden, El-Deredy &amp; Wells, 2016</cite></li>
+          <li>Letting thoughts pass, as in "leaves on a stream", is a core exercise of acceptance and commitment therapy, which helps with anxiety and depression in controlled trials. <cite>Hayes, Strosahl &amp; Wilson, 1999; A-Tjak et al., 2015</cite></li>
+          <li>Relaxation training, progressive muscle relaxation included, reliably lowers anxiety. <cite>Jacobson, 1938; Manzoni et al., BMC Psychiatry, 2008</cite></li>
+          <li>Picturing a stream of unrelated, harmless objects ("cognitive shuffling") is proposed to ease the slide into sleep by crowding out worry; the evidence is still early. <cite>Beaudoin, 2013</cite></li>
+          <li>Writing a specific to-do list for five minutes at bedtime helped people fall asleep faster in a sleep-lab study. <cite>Scullin et al., Journal of Experimental Psychology: General, 2018</cite></li>
+          <li>Rating tension from 0 to 10 before and after practice comes from behaviour therapy and helps you notice what works for you. <cite>Wolpe, 1969</cite></li>
+          <li>Across studies, water sounds lifted mood most and birdsong eased stress and annoyance most. <cite>Buxton et al., PNAS, 2021</cite></li>
+          <li>These are self-help practices. If anxiety is severe or does not ease, please talk to a doctor or therapist.</li>
+          <li>Not included: binaural beats. Studies disagree on whether they do anything beyond what relaxing sound already does.</li>
+        </ul>
+      </div>
+    </div>
+  </details>
 </div>
 <div class="dock" id="dock" aria-label="Playback">
-  <button class="play" id="dock-play" type="button" aria-label="Play"><svg viewBox="0 0 24 24" aria-hidden="true"><path id="dock-ico" d="M8 5v14l11-7z"/></svg></button>
+  <button class="play" id="dock-play" type="button" aria-label="Play"><svg class="ic" aria-hidden="true"><use id="dock-ico" href="#i-play"/></svg></button>
   <div class="dock-now"><span id="dock-now">Nothing playing</span><small id="dock-sub"></small></div>
-  <button class="ghost" id="dock-zen" type="button">Focus</button>
+  <button class="icon-btn" id="dock-zen" type="button" aria-label="Focus view" title="Focus view"><svg class="ic" aria-hidden="true"><use href="#i-maximize-2"/></svg></button>
 </div>
 <div class="zen" id="zen" hidden>
   <div class="zen-inner">
@@ -366,38 +427,35 @@ function seedRandom(seed) { let t = seed >>> 0; rnd = () => { t = (t + 0x6D2B79F
 // recordings (texture statistics, AI listeners, loudness); the test tools can override them.
 const K = {
   // rain
-  r_gs: 0.35, r_hgs: 0.5, r_col: 3, r_wKnock: 1, r_wClick: 1, r_wClickF: 1, r_wHi: 1, r_wEqLo: 6, r_click: 1, r_clickQ: 1, r_dens: 1, r_bedQ: 1, r_hiDens: 0.6,
-  r_hi: 1, r_hiQ: 1, r_bub: 1.5, r_slow: 0.05,
+  r_gs: 0.35, r_hgs: 0.5, r_col: 3, r_wEqLo: 6, r_hiDens: 0.6, r_bub: 1.5, r_slow: 0.05,
   // thunder
-  t_ic: 1, t_dir: 0.15, t_tau: 1, t_absK: 1300, t_absE: 0.62, t_shadow: 6, t_rise: 1, t_tail: 1, t_echo: 1,
+  t_dir: 0.15, t_absK: 1300, t_absE: 0.62, t_shadow: 6,
   // wind
-  w_leafRate: 6000, w_leafG: 0.01, w_whis: 1.4, w_gdb: 14, w_locdb: 1, w_fast: 1.2, w_fexp: 0.35, w_chp: 280, w_clp: 3400, w_lf: 4500, w_lq: 0.55,
-  w_ca: 0.82, w_sexp: 0.72, w_la: 0.53, w_lexp: 3, w_flut2: 0.2, w_rumble: 1.35, w_col: 5,
+  w_leafRate: 6000, w_leafG: 0.01, w_whis: 1.4, w_gdb: 14, w_fast: 1.2, w_fexp: 0.35, w_chp: 280, w_clp: 3400, w_lf: 4500, w_lq: 0.55, w_ca: 0.82,
+  w_sexp: 0.72, w_la: 0.53, w_lexp: 3, w_flut2: 0.2, w_rumble: 1.35, w_col: 5,
   // ocean
   o_tb: 0.5001, o_att: 1.114, o_tau: 1.505, o_A: 1.875, o_fc0: 280.7, o_fcB: 734.3, o_fcK: 6640, o_fcExp: 3.668, o_q: 0.3328, o_xlp: 1566,
   o_sub: 0.1147, o_back: 0.1767, o_foamRate: 3.001, o_foamG: 0.02074, o_ba: 0.7538, o_sa: 1.172, o_saLp: 1379, o_farRate: 0.4914, o_farG: 0.3451,
-  o_set2: 1.102, o_peel: 1, o_sets: 0.3, o_hp: 130, o_fzTick: 0.35, o_fizz: 0.3, o_fzTop: 9000,
+  o_set2: 1.102, o_sets: 0.3, o_hp: 130, o_fzTick: 0.35, o_fizz: 0.3, o_fzTop: 9000,
   // stream
   s_wd: 0.6, s_gw: 0.4876, s_band: 0.08, s_bandQ: 2.143, s_wLo: 600, s_wHi: 2410, s_wQ: 1.962, s_base: 1.354, s_bubA: 0.06924, s_bubDF: 0.9534,
   s_bubEps: 0.3559, s_smallA: 0.2945, s_splash: 0.1411, s_splashRate: 1.454, s_la: 1.317, s_ga: 1.292, s_gurg: 1.461, s_turb: 12.98, s_mDepth: 5.915,
   s_spGs: 0.5, s_eqPres: 7,
   // fire
   f_rate0: 0.2925, f_rate: 123.1, f_m: 3.803, f_ampPow: 3.563, f_amp: 1.694, f_fbLo: 2511, f_fbHi: 4881, f_exLo: 0.0001381, f_exHi: 0.001175,
-  f_q: 2.654, f_snap: 0.1406, f_span: 1.608, f_actS: 0.06, f_actM: 0.3, f_actD: 2, f_actL: 0.9, f_crackP: 0.3, f_crackA: 1, f_pop: 1.722,
-  f_roar: 1.149, f_roarLp: 2.99, f_lick: 0.009958, f_lickRate: 1.364, f_siz: 0.01791, f_flurry: 0.04542,
+  f_q: 2.654, f_snap: 0.1406, f_span: 1.608, f_actS: 0.06, f_actM: 0.3, f_actD: 2, f_actL: 0.9, f_crackP: 0.3, f_pop: 1.722, f_roar: 1.149,
+  f_roarLp: 2.99, f_lick: 0.009958, f_lickRate: 1.364, f_siz: 0.01791, f_flurry: 0.04542,
   // birds (syrinx voices, stereo placement, ambience)
-  b_width: 0.6, b_itd: 0.00045, b_doveQ: 6, b_doveOec: 1, b_doveLp: 0.6, b_owlQ: 3, b_owlOec: 0.9, b_owlLp: 1, b_sbOec: 0.8, b_syr: 1, b_sa: 0.007,
-  b_sb: 0.02, b_wet: 1.437, b_press: 0.4128, b_jit: 0.01022, b_tubeR: 0.1296, b_oecQ: 1.5, b_breath: 0.5, b_off: -0.03, b_flutP: 2.585,
-  b_flutD: 3.201, b_airLo: 0.01822, b_airHf: 0.006144, b_far: 6.193, b_ambDove: 0.25, b_farDove: 0.5, b_ambOwl: 0.3, b_pressDove: 1,
-  b_breathDove: 0.5, b_hp: 294.9, b_noise: 0.0004792, b_air: 0.01929,
+  b_width: 0.6, b_itd: 0.00045, b_doveQ: 6, b_doveLp: 0.6, b_owlQ: 3, b_owlOec: 0.9, b_sbOec: 0.8, b_sa: 0.007, b_sb: 0.02, b_wet: 1.437,
+  b_press: 0.4128, b_jit: 0.01022, b_tubeR: 0.1296, b_oecQ: 1.5, b_breath: 0.5, b_off: -0.03, b_flutP: 2.585, b_flutD: 3.201, b_airLo: 0.01822,
+  b_airHf: 0.006144, b_far: 6.193, b_ambDove: 0.25, b_farDove: 0.5, b_ambOwl: 0.3, b_breathDove: 0.5, b_hp: 294.9, b_noise: 0.0004792,
+  b_air: 0.01929,
   // frogs
-  fr_width: 0.9, fr_itd: 0.0009, fr_peepH: 1, fr_treeH: 1, fr_treePr: 1, fr_treePd: 1, fr_far: 2.5, fr_farMax: 20, fr_treeF: 1, fr_treeLo: 1,
-  fr_pulseSm: 0.7, fr_pulseJ: 0.08,
+  fr_width: 0.9, fr_itd: 0.0009, fr_far: 2.5, fr_farMax: 20, fr_pulseSm: 0.7, fr_pulseJ: 0.08,
   // crickets
   c_width: 0.4,
   // after the rain (drips)
-  d_dist: 1, d_pow: 1.5, d_leafEx: 1, d_leafF: 1, d_leafQ: 1, d_thud: 1, d_plinkF: 1, d_plink: 0.6, d_plinkDF: 4, d_wet: 1, d_bubP: 0.3,
-  d_splash: 1.5, d_bg: 0.08, d_bgRate: 120, d_bgLo: 900, d_bgHi: 5000, d_bgQ: 2.2,
+  d_pow: 1.5, d_plink: 0.6, d_plinkDF: 4, d_bubP: 0.3, d_splash: 1.5, d_bg: 0.08, d_bgRate: 120, d_bgLo: 900, d_bgHi: 5000, d_bgQ: 2.2,
 };
 const rr = (a, b) => a + rnd() * (b - a);
 const lr = (a, b) => a * Math.pow(b / a, rnd());
@@ -632,14 +690,14 @@ function Rain() {
     switch (s.near) {
       case 'drop': // body of the impact plus a faint bright splash
         nc.add(lr(400, 2200) * fs, rr(2, 3.5), amp * (rnd() < 0.5 ? 1 : -1), pan);
-        voices.push(vNoise(i, amp * 0.6 * K.r_click, pan, 0.00015, lr(6000, 12000), 0.8 * K.r_clickQ)); break;
+        voices.push(vNoise(i, amp * 0.6, pan, 0.00015, lr(6000, 12000), 0.8)); break;
       case 'leaf':
         voices.push(vNoise(i, amp * 0.7, pan, lr(0.0015, 0.005), lr(1500, 5000) * fs, rr(1, 2)));
         if (rnd() < 0.4) nc.add(lr(350, 900) * fs, 3, amp * 0.5, pan); break;
       case 'glass': // a tap on the pane: a dull knock of the glass plus a short click
-        nc.add(lr(300, 1400) * fs, rr(1.2, 2.2), amp * 0.5 * K.r_wKnock, pan);
-        if (rnd() < 0.5) nc.add(lr(900, 2600) * fs, rr(2, 4), amp * 0.3 * K.r_wKnock, pan);
-        voices.push(vNoise(i, amp * 0.8 * K.r_wClick, pan, lr(0.0003, 0.0009), lr(2000, 9000) * K.r_wClickF, rr(0.6, 1.1))); break;
+        nc.add(lr(300, 1400) * fs, rr(1.2, 2.2), amp * 0.5, pan);
+        if (rnd() < 0.5) nc.add(lr(900, 2600) * fs, rr(2, 4), amp * 0.3, pan);
+        voices.push(vNoise(i, amp * 0.8, pan, lr(0.0003, 0.0009), lr(2000, 9000), rr(0.6, 1.1))); break;
       case 'roof': {
         const m = 2 + Math.floor(rnd() * 2), ex = lr(0.0004, 0.0015);
         for (let j = 0; j < m; j++) voices.push(vNoise(i, amp * (j ? 0.35 : 0.6), pan, ex, ROOF[Math.floor(rnd() * ROOF.length)] * rr(0.97, 1.03) * (1.1 - 0.2 * S), rr(6, 16)));
@@ -656,12 +714,12 @@ function Rain() {
     const lpf = s.lp * (0.8 + 0.4 * C);
     if (s !== surf || lpf !== lpKey) { surf = s; lpKey = lpf; lpL.set('lp', lpf, 0.6); lpR.set('lp', lpf, 0.6); hlL.set('lp', s.hlp, 0.6); hlR.set('lp', s.hlp, 0.6); }
     // bed: grain density and level both follow rainfall; per-grain gain normalised so level is independent of density
-    const dens = (1500 + 26000 * Math.pow(I, 1.4)) * s.dn * Math.min(1.5, K.r_dens), bedMean = SR / dens, meanQ = (s.bq[0] + s.bq[1]) / 2 * K.r_bedQ;
+    const dens = (1500 + 26000 * Math.pow(I, 1.4)) * s.dn, bedMean = SR / dens, meanQ = (s.bq[0] + s.bq[1]) / 2;
     const g = (0.01 + 0.13 * Math.pow(I, 1.15)) * s.bg / Math.sqrt(dens * meanQ / (1000 * Math.PI) * 0.125);
     const fsz = 1.15 - 0.3 * S, nearMean = SR / ((1 + 60 * Math.pow(I, 1.3)) * (0.2 + 1.3 * C) * s.nr), nearA = (0.15 + 0.6 * C) * 0.5;
     // air: the crisp top end of rain, a thinner cloud of very short high grains (4-14 kHz)
-    const sHi = s.hi * (s === SURF.window ? K.r_wHi : 1);
-    const hDens = dens * Math.min(1.5, K.r_hiDens), hMean = SR / hDens, gh = HI_LEVEL * K.r_hi * (0.01 + 0.13 * Math.pow(I, 1.15)) * sHi * (0.7 + 0.6 * C) / Math.sqrt(hDens * 1.8 * K.r_hiQ / (1000 * Math.PI) * 0.0714);
+    const sHi = s.hi;
+    const hDens = dens * Math.min(1.5, K.r_hiDens), hMean = SR / hDens, gh = HI_LEVEL * (0.01 + 0.13 * Math.pow(I, 1.15)) * sHi * (0.7 + 0.6 * C) / Math.sqrt(hDens * 1.8 / (1000 * Math.PI) * 0.0714);
     if (gt > bedMean * 6) gt = bedMean;
     if (ht > hMean * 6) ht = hMean;
     if (nt > nearMean * 6) nt = rnd() * nearMean;
@@ -687,20 +745,20 @@ function Rain() {
     const b0 = s.bed[0] * fsz, b1 = s.bed[1] * fsz, q0 = s.bq[0], q1 = s.bq[1];
     // the drops falling everywhere around you add up to a smooth hiss; only a share stays as separate grains
     const aB = Math.min(0.95, K.r_gs * s.gs), aH = Math.min(0.95, K.r_hgs * s.gs), nB = Math.sqrt(1 - aB * aB), nH = Math.sqrt(1 - aH * aH);
-    const lvl = 0.01 + 0.13 * Math.pow(I, 1.15), hiLvl = HI_LEVEL * K.r_hi * lvl * sHi * (0.7 + 0.6 * C);
-    nbL.tune(b0, b1, Math.min(meanQ, 3)); nbR.tune(b0, b1, Math.min(meanQ, 3)); nhL.tune(4000, 16000, 1.8 * K.r_hiQ); nhR.tune(4000, 16000, 1.8 * K.r_hiQ);
+    const lvl = 0.01 + 0.13 * Math.pow(I, 1.15), hiLvl = HI_LEVEL * lvl * sHi * (0.7 + 0.6 * C);
+    nbL.tune(b0, b1, Math.min(meanQ, 3)); nbR.tune(b0, b1, Math.min(meanQ, 3)); nhL.tune(4000, 16000, 1.8); nhR.tune(4000, 16000, 1.8);
     const kB = lvl * s.bg * 0.5 * nB, kH = hiLvl * 0.5 * nH;
     for (let i = 0; i < n; i++) {
       const m = 1 + G * (2 * gust.next() - 1) * 0.45, hs = 1 + K.r_slow * (2 * hsw.next() - 1);
       while (gt < 1) {
         const f = lr(b0, b1), u = rnd();
-        bed.add(f, rr(q0, q1) * K.r_bedQ, g * m * Math.sqrt(f / 1000) * u * Math.sqrt(u) * (rnd() < 0.5 ? 1 : -1), rnd() * 2 - 1);
+        bed.add(f, rr(q0, q1), g * m * Math.sqrt(f / 1000) * u * Math.sqrt(u) * (rnd() < 0.5 ? 1 : -1), rnd() * 2 - 1);
         gt += -Math.log(1 - rnd()) * bedMean / m;
       }
       gt -= 1;
       while (ht < 1) {
         const f = lr(4000, 16000), u = rnd();
-        hi.add(f, rr(1.2, 2.4) * K.r_hiQ, gh * m * hs * Math.sqrt(f / 1000) * u * u * u * (rnd() < 0.5 ? 1 : -1), rnd() * 2 - 1);
+        hi.add(f, rr(1.2, 2.4), gh * m * hs * Math.sqrt(f / 1000) * u * u * u * (rnd() < 0.5 ? 1 : -1), rnd() * 2 - 1);
         ht += -Math.log(1 - rnd()) * hMean / m;
       }
       ht -= 1;
@@ -741,7 +799,7 @@ function makeThunder(km) {
     }
   }
   walk(gx + rr(-900, 900), gy + rr(-900, 900), H, ns() * 0.3, ns() * 0.3, -1, 3000, 1, true, false);
-  const ic = Math.floor(rr(150, 700) * K.t_ic * (rnd() < 0.75 ? 1 : 0)); // horizontal in-cloud discharge, often kilometres long
+  const ic = Math.floor(rr(150, 700) * (rnd() < 0.75 ? 1 : 0)); // horizontal in-cloud discharge, often kilometres long
   if (ic) walk(gx + rr(-1500, 1500), gy + rr(-1500, 1500), H + rr(-200, 600), ns(), ns(), 0, ic, 0.55, false, true);
   let rmin = 1e12, rmax = 0;
   for (const s of segs) { s.r = Math.hypot(s.x, s.y, s.z + 1.6); if (s.r < rmin) rmin = s.r; if (s.r > rmax) rmax = s.r; }
@@ -756,7 +814,7 @@ function makeThunder(km) {
     // so distant thunder swells in instead of starting with a crack
     const el = Math.atan2(s.z + 1.6, Math.hypot(s.x, s.y)) / (K.t_shadow * Math.PI / 180), sh = 0.08 + 0.92 * clamp(el - 0.3, 0, 1) * clamp(el - 0.3, 0, 1) * (3 - 2 * clamp(el - 0.3, 0, 1));
     const a = st.a * s.w * (K.t_dir + dir) * 1000 / s.r * sh, t0 = Math.floor(((s.r - rmin) / C + st.t + rr(0, 0.002)) * SR);
-    const tau = rr(0.003, 0.012) * K.t_tau * (s.main ? 1 : 0.6) * (1 + 0.1 * s.r / 1000), len = Math.max(6, Math.floor(tau * SR));
+    const tau = rr(0.003, 0.012) * (s.main ? 1 : 0.6) * (1 + 0.1 * s.r / 1000), len = Math.max(6, Math.floor(tau * SR));
     // air absorption, fitted to ISO 9613-1 (20 C, humid): about -16 dB at 2 kHz and -46 dB at 4 kHz over 1.6 km
     const fc = Math.max(110, K.t_absK * Math.pow(s.r / 1600, -K.t_absE)), c1 = 1 - Math.exp(-TAU * fc / SR), tail = Math.min(4096 - len, Math.ceil(7 * SR / (TAU * fc)));
     const pan = clamp(Math.sin(Math.atan2(s.y, s.x) - az) * 0.8 + ns() * 0.2, -1, 1), gl = Math.cos((pan + 1) * Math.PI / 4), gr = Math.sin((pan + 1) * Math.PI / 4);
@@ -766,13 +824,13 @@ function makeThunder(km) {
   }
   // beyond about a kilometre, scattering by turbulence and the refraction shadow smear the leading edge: the first arrivals
   // come in as faint crackle and the rumble swells up over a fraction of a second (only close strikes start with a crack)
-  if (km > 1.2) { const nr = Math.min(N, Math.floor(rr(0.25, 0.7) * Math.min(3, 0.5 + 0.25 * km) * K.t_rise * SR)); for (let i = 0; i < nr; i++) { const u = i / nr, g = 0.1 + 0.9 * u * u * (3 - 2 * u); L[i] *= g; R[i] *= g; } }
+  if (km > 1.2) { const nr = Math.min(N, Math.floor(rr(0.25, 0.7) * Math.min(3, 0.5 + 0.25 * km) * SR)); for (let i = 0; i < nr; i++) { const u = i / nr, g = 0.1 + 0.9 * u * u * (3 - 2 * u); L[i] *= g; R[i] *= g; } }
   // the long roll: a diffuse tail that follows the energy of the direct sound and decays over seconds,
   // plus a handful of discrete echoes from hills and cloud base
   const env = new Float32Array(N); let e = 0, tl = 0; const ae = 1 - Math.exp(-1 / (0.05 * SR)), dec = Math.exp(-1 / (rr(2.2, 3.5) * SR));
   for (let i = 0; i < N; i++) { e += (Math.abs(L[i]) + Math.abs(R[i]) - e) * ae; tl = Math.max(tl * dec, e); env[i] = tl; }
-  const bL = new Brown(), bR = new Brown(), tL = new BQ('lp', 350 + 900 * Math.pow(0.7, km), 0.6), tR = new BQ('lp', 350 + 900 * Math.pow(0.7, km), 0.6), gT = rr(0.35, 0.6) * K.t_tail;
-  const echoes = []; for (let k = 0, n = 5 + Math.floor(rnd() * 6); k < n; k++) echoes.push([Math.floor(rr(0.3, 4) * SR), rr(0.12, 0.35) * K.t_echo]);
+  const bL = new Brown(), bR = new Brown(), tL = new BQ('lp', 350 + 900 * Math.pow(0.7, km), 0.6), tR = new BQ('lp', 350 + 900 * Math.pow(0.7, km), 0.6), gT = rr(0.35, 0.6);
+  const echoes = []; for (let k = 0, n = 5 + Math.floor(rnd() * 6); k < n; k++) echoes.push([Math.floor(rr(0.3, 4) * SR), rr(0.12, 0.35)]);
   const dry = new Float32Array(N); for (let i = 0; i < N; i++) dry[i] = (L[i] + R[i]) * 0.5;
   const eL = new BQ('lp', 700, 0.6), eR = new BQ('lp', 600, 0.6);
   for (let i = 0; i < N; i++) {
@@ -842,7 +900,7 @@ function Wind() {
         for (const t of trees) {
           const gl = hist[(hp - 1 - t.lag + HL) % HL]; // the same gust reaches each tree a moment later
           // a swell in decibels: bounded, typically +-2 dB, up to about +-6 dB in gusty weather
-          const off = K.w_gdb * (0.35 + 0.65 * gu) * (2 * gl - 1) + K.w_locdb * (2 * t.loc.next() - 1), rel = Math.pow(10, off / 50); // level ~ U^2.5
+          const off = K.w_gdb * (0.35 + 0.65 * gu) * (2 * gl - 1) + (2 * t.loc.next() - 1), rel = Math.pow(10, off / 50); // level ~ U^2.5
           const v = clamp(sp * rel, 0.02, 1.3);
           t.v = v; vAvg += v / NT;
           const sc = Math.pow(v / 0.4, K.w_fexp); // aeolian pitch follows the wind (Strouhal)
@@ -884,7 +942,7 @@ function vWave(off, Z, D, ov, fe) { // ov: optional {tb, att, tau} to time the w
   let tb = rr(1.8, 3.4) * (0.8 + 0.4 * Z) * K.o_tb, att = rr(0.6, 1.2) * (1 + 0.8 * D) * K.o_att, tau = rr(1.5, 2.6) * (0.7 + 0.6 * Z) * K.o_tau;
   if (ov) { tb = ov.tb; att = ov.att; tau = ov.tau; }
   const A = rr(0.55, 1) * (0.35 + 0.65 * Z) * K.o_A, bright = (1 - 0.7 * D) * (0.6 + 0.4 * Z);
-  const life = Math.ceil((tb + att + tau * 6) * SR), p0 = rr(-0.8, 0.8) * K.o_peel, p1 = clamp(p0 + (rnd() < 0.5 ? -1 : 1) * rr(0.4, 1.0) * K.o_peel, -0.9, 0.9), peel = 1 / ((tb + att + 2 * tau) * SR);
+  const life = Math.ceil((tb + att + tau * 6) * SR), p0 = rr(-0.8, 0.8), p1 = clamp(p0 + (rnd() < 0.5 ? -1 : 1) * rr(0.4, 1.0), -0.9, 0.9), peel = 1 / ((tb + att + 2 * tau) * SR);
   let gl = 1, gr = 1;
   const pL = new Pink(), pR = new Pink(), sL = new SVF(), sR = new SVF(), xL = new BQ('lp', K.o_xlp, 0.6), xR = new BQ('lp', K.o_xlp, 0.6);
   const sb = new Brown(), sl = new BQ('lp', 110, 0.7), foamRate = (0.2 + 0.4 * Z) * (1 - 0.6 * D) * K.o_foamRate, fz = new GrainCloud(400), fg = K.o_foamG * A * (1 - 0.5 * D);
@@ -1024,7 +1082,7 @@ function Fire() {
       const m = 1 + Math.floor(Math.pow(rnd(), 1.5) * K.f_m), span = lr(0.003, 0.08) * K.f_span * SR, base = Math.pow(rnd(), K.f_ampPow) * K.f_amp * actA, pan = rr(-0.8, 0.8), fb = lr(K.f_fbLo, K.f_fbHi), sharp = rnd() < K.f_crackP;
       for (let j = 0; j < m; j++) {
         const o = off + Math.floor(rnd() * span), a = base * rr(0.3, 1), pp = clamp(pan + rr(-0.08, 0.08), -1, 1);
-        if (sharp) voices.push(vCrack(o, a * K.f_crackA, pp, lr(0.00004, 0.0003), lr(600, 2500)));
+        if (sharp) voices.push(vCrack(o, a, pp, lr(0.00004, 0.0003), lr(600, 2500)));
         else voices.push(vNoise(o, a, pp, lr(K.f_exLo, K.f_exHi), fb * rr(0.7, 1.4), rr(0.5, 1.0) * K.f_q));
       }
       if (rnd() < 0.25) voices.push(vNoise(off, base * K.f_snap, pan, lr(0.0006, 0.0015), lr(400, 1100), 1.2)); // woody snap
@@ -1217,14 +1275,14 @@ const SONG = {
   },
   peeper() { // spring peeper: one clear rising "peep" with a faint second harmonic
     const f = lr(2800, 3200), d = rr(0.09, 0.16);
-    return { notes: [N(0, d, f * lr(0.84, 0.9), f, { c: rr(0.55, 0.9), h: [1, rr(0.025, 0.05) * K.fr_peepH, 0.008 * K.fr_peepH], a: 1, at: rr(0.012, 0.025), rl: rr(0.01, 0.02), cr: rr(0, 0.5) })], dur: d };
+    return { notes: [N(0, d, f * lr(0.84, 0.9), f, { c: rr(0.55, 0.9), h: [1, rr(0.025, 0.05), 0.008], a: 1, at: rr(0.012, 0.025), rl: rr(0.01, 0.02), cr: rr(0, 0.5) })], dur: d };
   },
   treefrog() { // European tree frog: bouts of "krek" notes, 6-9 a second, each a burst of vocal-cord pulses carried on two
     // vocal-sac bands near 1.1 and 2.3 kHz, with little above 3.5 kHz (as in Dutch and German choir recordings)
-    const notes = [], f = lr(1050, 1300) * K.fr_treeF, rate = rr(6, 9), n = 12 + Math.floor(rnd() * 30), lo = rr(0.25, 0.5) * K.fr_treeLo, pr = rr(66, 102) * K.fr_treePr; let t = 0;
+    const notes = [], f = lr(1050, 1300), rate = rr(6, 9), n = 12 + Math.floor(rnd() * 30), lo = rr(0.25, 0.5), pr = rr(66, 102); let t = 0;
     for (let i = 0; i < n; i++) {
       const d = rr(0.06, 0.09), warm = Math.min(1, (i + 1) / 4); // the first notes of a bout are softer and slower
-      notes.push(N(t, d, f * lr(0.99, 1.02), f * lr(0.95, 0.98), { h: [lo, 1, rr(0.04, 0.1) * K.fr_treeH], a: (0.8 + 0.2 * Math.sin(i / n * Math.PI)) * (0.45 + 0.55 * warm), at: 0.004, rl: 0.012, pr: pr * lr(0.95, 1.05), pd: 5 * K.fr_treePd }));
+      notes.push(N(t, d, f * lr(0.99, 1.02), f * lr(0.95, 0.98), { h: [lo, 1, rr(0.04, 0.1)], a: (0.8 + 0.2 * Math.sin(i / n * Math.PI)) * (0.45 + 0.55 * warm), at: 0.004, rl: 0.012, pr: pr * lr(0.95, 1.05), pd: 5 }));
       t += 1 / rate * rr(0.92, 1.08) * (1.35 - 0.35 * warm);
     }
     return { notes, dur: t };
@@ -1269,12 +1327,12 @@ class Caller { // one animal at its own place
     this.wet = clamp(0.08 + r / 140, 0.08, 0.9) * this.amp * K.b_wet; this.lp = 1 - Math.exp(-TAU * (22000 / (1 + r / 40)) / SR);
     this.reps = Array.from({ length: S.types }, () => SONG[sp]()); this.cur = 0; this.next = 0; this.busy = 0;
     this.notes = []; this.z1 = 0; this.z2 = 0; this.nz = 0; this.jit = new Drift(18);
-    if (S.syr && K.b_syr && !light) { // two sides of the syrinx, a tracheal tube with reflections, a throat resonance that follows the pitch, beak radiation
+    if (S.syr && !light) { // two sides of the syrinx, a tracheal tube with reflections, a throat resonance that follows the pitch, beak radiation
       this.dove = sp === 'woodpigeon' || sp === 'collared';
       this.sides = [new SyrSide(), new SyrSide()]; this.T = Math.max(2, Math.round(2 * S.syr.L / 343 * SR)); this.tube = new Float32Array(256); this.tp = 0;
-      this.oec = new SVF(); this.brF = new SVF(); this.radF = new BQ('hp', K.b_hp, 0.7); this.owl = sp === 'owl'; this.lpT = S.syr.lp ? 1 - Math.exp(-TAU * S.syr.lp * (this.dove ? K.b_doveLp : this.owl ? K.b_owlLp : 1) / SR) : 0;
+      this.oec = new SVF(); this.brF = new SVF(); this.radF = new BQ('hp', K.b_hp, 0.7); this.owl = sp === 'owl'; this.lpT = S.syr.lp ? 1 - Math.exp(-TAU * S.syr.lp * (this.dove ? K.b_doveLp : 1) / SR) : 0;
       // doves coo with the beak closed through an inflated oesophagus, a sharp resonance on the note: hence their pure tone
-      this.oq = this.dove ? K.b_doveQ : this.owl ? K.b_owlQ : K.b_oecQ; this.om = this.dove ? K.b_doveOec : this.owl ? K.b_owlOec : (K.b_sbOec > 0 ? K.b_sbOec : S.syr.oec); this.lz = 0; this.cnt = 0;
+      this.oq = this.dove ? K.b_doveQ : this.owl ? K.b_owlQ : K.b_oecQ; this.om = this.dove ? 1 : this.owl ? K.b_owlOec : (K.b_sbOec > 0 ? K.b_sbOec : S.syr.oec); this.lz = 0; this.cnt = 0;
     }
   }
   sing(at) {
@@ -1294,7 +1352,7 @@ class Caller { // one animal at its own place
           let nt = null; for (const q of act) if ((q.v2 ? 1 : 0) === side && at >= q.s && at < q.s + q.n) nt = q;
           sd.nt = nt;
           let a = K.b_off, b = sd.b || 0.4, e = 0;
-          const dl = S.dl * (this.dove ? K.b_pressDove : K.b_press); sd.dl = dl;
+          const dl = S.dl * (this.dove ? 1 : K.b_press); sd.dl = dl;
           if (nt) {
             const k = at - nt.s, tt = k / SR, u = k / nt.n;
             let f = nt.sh === 'arch' ? (nt.fa + (nt.fb - nt.fa) * u) * (1 + nt.pk * Math.sin(Math.PI * u)) : nt.fa * Math.pow(nt.fb / nt.fa, nt.c === 1 ? u : Math.pow(u, nt.c));
@@ -1466,10 +1524,10 @@ function Drips() {
     const showerMul = shower > 0 ? 6 + 10 * p.shake : 1; shower -= n;
     const tmpL = new Float32Array(n), tmpR = new Float32Array(n);
     if (voices.length < 600) sp.run(base * showerMul, n, off => {
-      const r = lr(1.5, 18 * K.d_dist), a = Math.pow(rnd(), K.d_pow) * Math.min(1, 3 / r) * 0.5, pan = rr(-1, 1), onLeaf = p.surface === 'leaves' ? 0.85 : p.surface === 'puddles' ? 0.15 : 0.55;
-      if (rnd() < onLeaf) { voices.push(vNoise(off, a, pan, lr(0.0015, 0.006) * K.d_leafEx, lr(1200, 4500) * K.d_leafF, rr(1, 2.5) * K.d_leafQ)); if (rnd() < 0.4) voices.push(vNoise(off, a * 0.5 * K.d_thud, pan, lr(0.004, 0.012), lr(350, 800), 2)); }
+      const r = lr(1.5, 18), a = Math.pow(rnd(), K.d_pow) * Math.min(1, 3 / r) * 0.5, pan = rr(-1, 1), onLeaf = p.surface === 'leaves' ? 0.85 : p.surface === 'puddles' ? 0.15 : 0.55;
+      if (rnd() < onLeaf) { voices.push(vNoise(off, a, pan, lr(0.0015, 0.006), lr(1200, 4500), rr(1, 2.5))); if (rnd() < 0.4) voices.push(vNoise(off, a * 0.5, pan, lr(0.004, 0.012), lr(350, 800), 2)); }
       else { // into a puddle: always a small splash; only some drops trap a bubble, and it rings only briefly
-        if (rnd() < K.d_bubP) voices.push(vBub(off, lr(650, 2200) * K.d_plinkF, a * 0.8 * K.d_plink, pan, rr(0.1, 0.2) * K.d_plinkDF, rr(0.1, 0.3)));
+        if (rnd() < K.d_bubP) voices.push(vBub(off, lr(650, 2200), a * 0.8 * K.d_plink, pan, rr(0.1, 0.2) * K.d_plinkDF, rr(0.1, 0.3)));
         voices.push(vNoise(off, a * 0.35 * K.d_splash, pan, 0.0015, lr(1500, 4000), 0.8));
       }
     });
@@ -1481,7 +1539,7 @@ function Drips() {
       bg.step(); tmpL[i] += bgL.run(bg.l); tmpR[i] += bgR.run(bg.r);
     }
     const wL = cx && cx.wL, wR = cx && cx.wR;
-    for (let i = 0; i < n; i++) { L[i] += tmpL[i]; R[i] += tmpR[i]; if (wL) { const w = (tmpL[i] + tmpR[i]) * 0.35 * K.d_wet; wL[i] += w; wR[i] += w; } }
+    for (let i = 0; i < n; i++) { L[i] += tmpL[i]; R[i] += tmpR[i]; if (wL) { const w = (tmpL[i] + tmpR[i]) * 0.35; wL[i] += w; wR[i] += w; } }
   } };
 }
 
@@ -1711,6 +1769,9 @@ function effective(id, p, t, M) {
 }
 const STORE = 'rainmaker-mix-v1', CH = 8192, FADE_S = 0.5, GD = 128, GB = 480; // GD: startle-guard look-ahead in samples
 const $ = s => document.querySelector(s);
+const icon = n => `<svg class="ic" aria-hidden="true"><use href="#i-${n}"/></svg>`; // Lucide icons, inlined by build.py
+const ICON = { rain: 'cloud-rain', thunder: 'cloud-lightning', wind: 'wind', ocean: 'waves', stream: 'droplets', fire: 'flame', birds: 'bird', frogs: 'flower-2', drips: 'cloud-drizzle', crickets: 'bug' };
+const MODE_ICON = { listen: 'ear', relax: 'feather', focus: 'focus', sleep: 'moon' }, SPACE_ICON = { open: 'sun', forest: 'trees', indoors: 'house', valley: 'mountain' };
 const DEF = Object.fromEntries(SOUNDS.map(d => [d.id, d]));
 
 function defaults() {
@@ -1943,19 +2004,14 @@ function pause() {
   eng.setMaster(0, 0.18);
   setTimeout(() => { if (!playing) eng.ctx.suspend(); }, 900);
 }
-const ICON_PLAY = 'M8 5v14l11-7z', ICON_PAUSE = 'M7 5h4v14H7zM13 5h4v14h-4z';
 function updateTransport() {
-  $('#play-lbl').textContent = playing ? 'Pause' : 'Play';
-  $('#play-ico').setAttribute('d', playing ? ICON_PAUSE : ICON_PLAY);
+  const label = playing ? 'Pause' : 'Play', sc = SCENES.find(x => x.id === activeScene), live = SOUNDS.filter(d => state.sounds[d.id].on), on = live.map(d => d.name);
+  for (const id of ['#play-ico', '#dock-ico']) $(id).setAttribute('href', playing ? '#i-pause' : '#i-play');
+  $('#play').setAttribute('aria-label', label); $('#dock-play').setAttribute('aria-label', label); $('#zen-play').textContent = label;
   $('#idle').hidden = playing || !!eng;
-  $('#zen-play').textContent = playing ? 'Pause' : 'Play';
   $('#breath-desc').textContent = BREATH[state.breath.pattern].desc + (state.sounds.ocean.on ? ' The ocean\u2019s waves break on each in-breath.' : '');
-  const on = SOUNDS.filter(d => state.sounds[d.id].on).map(d => d.name);
-  const now = $('#now');
-  now.textContent = on.length ? (playing ? '' : 'Paused · ') + on.join(' · ') : 'Nothing selected';
-  now.classList.toggle('live', playing && on.length > 0);
-  const sc = SCENES.find(x => x.id === activeScene);
-  $('#dock-ico').setAttribute('d', playing ? ICON_PAUSE : ICON_PLAY); $('#dock-play').setAttribute('aria-label', playing ? 'Pause' : 'Play');
+  $('#now-title').textContent = sc ? sc.name : on.length ? 'Your mix' : 'Nothing selected';
+  $('#now').innerHTML = live.length ? live.map(d => icon(ICON[d.id]) + `<span>${d.name}</span>`).join('') : '<span>Turn on a sound below</span>';
   $('#dock-now').textContent = sc ? sc.name : on.join(' \u00b7 ') || 'Nothing selected';
   $('#dock-sub').textContent = (playing ? '' : 'Paused \u00b7 ') + MODES[state.mode].name + ' mode';
   mediaSession(sc, on);
@@ -2012,35 +2068,49 @@ function choiceRow(id, q, value, onPick) {
   }
   return row;
 }
+function statusOf(d) { // a short reading of the sound's main setting, shown on its tile
+  if (!state.sounds[d.id].on) return 'Off';
+  const q = d.params.find(x => x.type !== 'action'), v = state.sounds[d.id].p[q.id];
+  return q.type === 'choice' ? q.options.find(o => o[0] === v)[1] : q.fmt(v).split(' · ')[0];
+}
+function refreshTile(id) { const t = document.querySelector(`.tile[data-id="${id}"]`); if (t) t.querySelector('.tile-name small').textContent = statusOf(DEF[id]); }
 function buildCards() {
   const wrap = $('#cards'); wrap.innerHTML = '';
   for (const d of SOUNDS) {
-    const st = state.sounds[d.id];
-    const card = document.createElement('article'); card.className = 'card' + (d.wide ? ' wide' : ''); card.dataset.on = st.on; card.dataset.id = d.id;
-    card.innerHTML = `<div class="card-head"><h3 id="h-${d.id}">${d.name}</h3><span class="meter" aria-hidden="true"><i></i></span>
-      <button class="switch" type="button" role="switch" id="sw-${d.id}" aria-labelledby="h-${d.id}" aria-checked="${st.on}"><span></span></button></div>
-      <p class="blurb">${d.blurb}</p><div class="params"></div>`;
-    const params = card.querySelector('.params');
-    params.append(rangeRow(`vol-${d.id}`, 'Volume', { fmt: pct }, st.vol, v => { st.vol = v; eng && eng.setVol(d.id); touched(); }));
+    const st = state.sounds[d.id], tile = document.createElement('article');
+    tile.className = 'tile'; tile.dataset.id = d.id; tile.dataset.on = st.on; tile.dataset.open = 'false';
+    tile.innerHTML = `<div class="tile-head"><button class="tile-on" type="button" id="sw-${d.id}" aria-pressed="${st.on}"><span class="badge">${icon(ICON[d.id])}</span>
+        <span class="tile-name"><b>${d.name}</b><small>${statusOf(d)}</small></span></button>
+        <button class="more" type="button" aria-expanded="false" aria-controls="body-${d.id}" aria-label="${d.name} settings" title="Settings">${icon('sliders-horizontal')}</button></div>
+      <span class="meter" aria-hidden="true"><i></i></span><div class="tile-vol"></div>
+      <div class="tile-body" id="body-${d.id}" hidden><p class="blurb">${d.blurb}</p><div class="params"></div></div>`;
+    tile.querySelector('.tile-vol').append(rangeRow(`vol-${d.id}`, 'Volume', { fmt: pct }, st.vol, v => { st.vol = v; if (!st.on) setOn(d.id, true); else if (eng) eng.setVol(d.id); touched(); }));
+    const params = tile.querySelector('.params'), set = (k, v) => { st.p[k] = v; touched(); refreshTile(d.id); };
     if (PLACE.has(d.id)) params.append(rangeRow(`pos-${d.id}`, 'Where it is', { min: -0.8, max: 0.8, step: 0.05, fmt: v => v < -0.45 ? 'to your left' : v < -0.15 ? 'front left' : v <= 0.15 ? 'in front' : v <= 0.45 ? 'front right' : 'to your right' }, st.pos || 0, v => { st.pos = v; touched(); }));
     for (const q of d.params) {
       const pid = `${d.id}-${q.id}`;
-      if (q.type === 'choice') params.append(choiceRow(pid, q, st.p[q.id], v => { st.p[q.id] = v; touched(); }));
+      if (q.type === 'choice') params.append(choiceRow(pid, q, st.p[q.id], v => set(q.id, v)));
       else if (q.type === 'action') {
         const row = document.createElement('div'); row.className = 'row span action';
-        row.innerHTML = `<button class="btn" type="button" id="${pid}">${q.label}</button><span class="status" id="strike-status">Waiting for the next strike</span>`;
+        row.innerHTML = `<button class="btn" type="button" id="${pid}">${icon('zap')}${q.label}</button><span class="status" id="strike-status">Waiting for the next strike</span>`;
         row.querySelector('button').addEventListener('click', strikeNow);
         params.append(row);
-      } else params.append(rangeRow(pid, q.label, q, st.p[q.id], v => { st.p[q.id] = v; touched(); }));
+      } else params.append(rangeRow(pid, q.label, q, st.p[q.id], v => set(q.id, v)));
     }
-    card.querySelector('.switch').addEventListener('click', e => setOn(d.id, !state.sounds[d.id].on));
-    wrap.append(card);
+    tile.querySelector('.tile-on').addEventListener('click', () => setOn(d.id, !state.sounds[d.id].on));
+    tile.querySelector('.more').addEventListener('click', () => openTile(d.id));
+    wrap.append(tile);
+  }
+}
+function openTile(id) { // one sound's finer controls at a time, across the full width
+  for (const t of document.querySelectorAll('.tile')) {
+    const open = t.dataset.id === id && t.dataset.open !== 'true';
+    t.dataset.open = open; t.querySelector('.more').setAttribute('aria-expanded', open); t.querySelector('.tile-body').hidden = !open;
   }
 }
 function setOn(id, on) {
   state.sounds[id].on = on;
-  const card = document.querySelector(`.card[data-id="${id}"]`); card.dataset.on = on;
-  card.querySelector('.switch').setAttribute('aria-checked', on);
+  const t = document.querySelector(`.tile[data-id="${id}"]`); t.dataset.on = on; t.querySelector('.tile-on').setAttribute('aria-pressed', on); refreshTile(id);
   if (!on && eng) eng.mute(id);
   touched(); updateTransport();
   if (on && !playing) play();
@@ -2059,7 +2129,7 @@ function buildScenes() {
     wrap.innerHTML = `<div class="lbl">${grp}</div><div class="chips"></div>`;
     for (const sc of SCENES.filter(x => x.g === grp)) {
       const b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.dataset.id = sc.id; b.setAttribute('aria-pressed', 'false');
-      b.innerHTML = `<b>${sc.name}</b><small>${sc.sub}</small>`;
+      b.innerHTML = `<span class="chip-icons">${Object.keys(sc.mix).slice(0, 3).map(id => icon(ICON[id])).join('')}</span><b>${sc.name}</b><small>${sc.sub}</small>`;
       b.addEventListener('click', () => applyScene(sc));
       wrap.querySelector('.chips').append(b);
     }
@@ -2146,7 +2216,7 @@ function loop(ts) {
     while (ch.q.length && ch.q[0][0] <= now) lv = ch.q.shift()[1];
     if (lv !== null) ch.level = lv * chanGain(d.id);
     if (!state.sounds[d.id].on || !playing) ch.level *= 0.85;
-    const el = document.querySelector(`.card[data-id="${d.id}"] .meter`);
+    const el = document.querySelector(`.tile[data-id="${d.id}"] .meter`);
     if (el) el.style.setProperty('--lv', Math.max(0, Math.min(1, (20 * Math.log10(ch.level + 1e-6) + 50) / 40)).toFixed(3));
   }
   if (playing) drawScope();
@@ -2169,7 +2239,7 @@ requestAnimationFrame(loop);
 $('#play').addEventListener('click', () => (playing ? pause() : play()));
 $('#dock-play').addEventListener('click', () => (playing ? pause() : play()));
 $('#dock-zen').addEventListener('click', () => { zen(true); if (!playing) play(); });
-if (window.IntersectionObserver) new IntersectionObserver(([e]) => $('#dock').classList.toggle('show', !e.isIntersecting)).observe($('.transport'));
+if (window.IntersectionObserver) new IntersectionObserver(([e]) => $('#dock').classList.toggle('show', !e.isIntersecting)).observe($('#play'));
 const mi = $('#master');
 mi.value = state.master; const showMaster = () => { $('#master-out').textContent = pct(+mi.value); setPct(mi); };
 showMaster();
@@ -2219,8 +2289,8 @@ $('#reset').addEventListener('click', () => {
 /* ---------- mode, breathing, focus view ---------- */
 function segButtons(box, items, current, onPick) {
   box.innerHTML = '';
-  for (const [k, label] of items) {
-    const b = document.createElement('button'); b.type = 'button'; b.id = box.id + '-' + k; b.textContent = label; b.setAttribute('aria-pressed', k === current);
+  for (const [k, label, ic] of items) {
+    const b = document.createElement('button'); b.type = 'button'; b.id = box.id + '-' + k; b.innerHTML = (ic ? icon(ic) : '') + label; b.setAttribute('aria-pressed', k === current);
     b.addEventListener('click', () => { box.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b)); onPick(k); });
     box.append(b);
   }
@@ -2242,8 +2312,8 @@ function setBreath(on) {
   else if (eng && eng.breath.on) eng.breath.stop();
 }
 function buildSession() {
-  segButtons($('#modes'), Object.entries(MODES).map(([k, m]) => [k, m.name]), state.mode, setMode);
-  segButtons($('#spaces'), Object.entries(SPACES).map(([k, m]) => [k, m.name]), state.space, setSpace);
+  segButtons($('#modes'), Object.entries(MODES).map(([k, m]) => [k, m.name, MODE_ICON[k]]), state.mode, setMode);
+  segButtons($('#spaces'), Object.entries(SPACES).map(([k, m]) => [k, m.name, SPACE_ICON[k]]), state.space, setSpace);
   $('#space-desc').textContent = SPACE_DESC[state.space];
   $('#mode-desc').textContent = MODES[state.mode].desc;
   segButtons($('#patterns'), Object.entries(BREATH).map(([k, b]) => [k, b.name]), state.breath.pattern, k => { state.breath.pattern = k; save(); updateTransport(); });
