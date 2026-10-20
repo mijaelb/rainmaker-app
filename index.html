@@ -650,12 +650,12 @@ class GrainCloud {
     this.gl[k] = a2; this.gr[k] = Math.sqrt(1 - a2 * a2); this.life[k] = Math.ceil(tau * 5 * SR);
   }
   step() {
-    let l = 0, r = 0; const p = this.p, q = this.q, c = this.c, r2 = this.r2, gl = this.gl, gr = this.gr, life = this.life;
-    for (let k = 0; k < this.n; k++) {
+    let l = 0, r = 0, n = this.n; const p = this.p, q = this.q, c = this.c, r2 = this.r2, gl = this.gl, gr = this.gr, life = this.life;
+    for (let k = 0; k < n; k++) {
       const y = p[k], nx = c[k] * q[k] - r2[k] * y; p[k] = q[k]; q[k] = nx; l += y * gl[k]; r += y * gr[k];
-      if (--life[k] <= 0) { const j = --this.n; p[k] = p[j]; q[k] = q[j]; c[k] = c[j]; r2[k] = r2[j]; gl[k] = gl[j]; gr[k] = gr[j]; life[k] = life[j]; k--; }
+      if (--life[k] <= 0) { const j = --n; p[k] = p[j]; q[k] = q[j]; c[k] = c[j]; r2[k] = r2[j]; gl[k] = gl[j]; gr[k] = gr[j]; life[k] = life[j]; k--; }
     }
-    this.l = l; this.r = r;
+    this.n = n; this.l = l; this.r = r;
   }
 }
 class ResBank { // fixed resonators driven by independent noise: the dense limit of a grain cloud with the same resonances
@@ -1420,35 +1420,39 @@ class Caller { // one animal at its own place
     const m = SCRATCH.m; m.fill(0, 0, n);
     if (this.sides) this.renderSyrinx(m, n, frame);
     else for (const nt of this.notes) {
-      const psa = 1 - Math.exp(-1 / (K.fr_pulseSm * 0.001 * SR)), i0 = Math.max(nt.s, frame), i1 = Math.min(nt.s + nt.n, frame + n), h = nt.h, nh = h.length;
-      let s1 = nt.s1 === undefined ? 0 : nt.s1, c1 = nt.s1 === undefined ? 1 : nt.c1, rs = nt.rs || 0, rc = nt.rc || 1;
+      const psa = 1 - Math.exp(-1 / (K.fr_pulseSm * 0.001 * SR)), i0 = Math.max(nt.s, frame), i1 = Math.min(nt.s + nt.n, frame + n), h = nt.h, nh = h.length, ns = nt.s, lim = SR * 0.45;
+      let s1 = nt.s1 === undefined ? 0 : nt.s1, c1 = nt.s1 === undefined ? 1 : nt.c1, rs = nt.rs || 0, rc = nt.rc || 1, inc = nt.inc, env = nt.env, f0 = nt.f, nq = nt.nq;
+      let pp = nt.pp || 0, pe = nt.pe, ps = nt.ps || 0, pdk = nt.pdk, pj = nt.pj; // pulse train state
+      const pr = nt.pr, br = nt.br;
       for (let i = i0; i < i1; i++) {
-        const k = i - nt.s;
-        if ((k & 7) === 0 || nt.inc === undefined) { // pitch and loudness contours at a 6 kHz control rate
+        const k = i - ns;
+        if ((k & 7) === 0 || inc === undefined) { // pitch and loudness contours at a 6 kHz control rate
           const tt = k / SR, u = k / nt.n;
           let f = nt.sh === 'arch' ? (nt.fa + (nt.fb - nt.fa) * u) * (1 + nt.pk * Math.sin(Math.PI * u)) : nt.fa * Math.pow(nt.fb / nt.fa, nt.c === 1 ? u : Math.pow(u, nt.c));
           if (nt.vd) f *= 1 + nt.vd * Math.sin(TAU * nt.vr * tt);
           if (nt.f2d) f *= 1 + nt.f2d * Math.sin(TAU * nt.f2r * tt);
           f *= 1 + 0.008 * (this.jit.next() - 0.5); // no living voice holds a perfectly steady pitch
-          nt.f = Math.min(f, SR * 0.45); nt.inc = TAU * nt.f / SR; rs = Math.sin(nt.inc); rc = Math.cos(nt.inc);
+          f0 = Math.min(f, lim); inc = TAU * f0 / SR; rs = Math.sin(inc); rc = Math.cos(inc);
+          nq = 1; while (nq < nh && (nq + 1) * f0 < lim) nq++; // overtones that stay below the top of the band
           const gn = 1.5 - 0.5 * (s1 * s1 + c1 * c1); s1 *= gn; c1 *= gn; // keep the phasor on the unit circle
           const a1 = Math.min(1, tt / nt.at), a2 = Math.min(1, (nt.n - k) / SR / nt.rl);
           let e = a1 * a1 * (3 - 2 * a1) * a2 * a2 * (3 - 2 * a2) * (1 + nt.cr * (u - 0.5)) * nt.a;
           if (nt.tr) e *= 1 - nt.td * (0.5 + 0.5 * Math.cos(TAU * nt.tr * tt * (1 - 0.3 * u)));
-          nt.env = e;
+          env = e;
         }
         const sn = s1 * rc + c1 * rs; c1 = c1 * rc - s1 * rs; s1 = sn;
         let sk = s1, ck = c1, y = h[0] * s1;
-        for (let q = 1; q < nh && (q + 1) * nt.f < SR * 0.45; q++) { const sn = sk * c1 + ck * s1; ck = ck * c1 - sk * s1; sk = sn; y += h[q] * sk; }
-        let e = nt.env;
-        if (nt.pr) { // pulse train: each pulse starts sharply and decays
-          nt.pp = (nt.pp || 0) + nt.pr * (nt.pj || 1) / SR; if (nt.pp >= 1 || nt.pe === undefined) { nt.pp %= 1; nt.pe = 1; nt.pdk = Math.exp(-nt.pd * nt.pr / SR); nt.pj = 1 + K.fr_pulseJ * (2 * rnd() - 1); }
-          nt.ps = (nt.ps || 0) + (nt.pe - (nt.ps || 0)) * psa; e *= nt.ps; nt.pe *= nt.pdk; // vocal-cord pulses start softly, not as clicks
+        for (let q = 1; q < nq; q++) { const sn = sk * c1 + ck * s1; ck = ck * c1 - sk * s1; sk = sn; y += h[q] * sk; }
+        let e = env;
+        if (pr) { // pulse train: each pulse starts sharply and decays
+          pp = pp + pr * (pj || 1) / SR; if (pp >= 1 || pe === undefined) { pp %= 1; pe = 1; pdk = Math.exp(-nt.pd * pr / SR); pj = 1 + K.fr_pulseJ * (2 * rnd() - 1); }
+          ps = ps + (pe - ps) * psa; e *= ps; pe *= pdk; // vocal-cord pulses start softly, not as clicks
         }
-        if (nt.br) { this.nz += ((rnd() * 2 - 1) - this.nz) * 0.12; y += this.nz * nt.br * 4; }
+        if (br) { this.nz += ((rnd() * 2 - 1) - this.nz) * 0.12; y += this.nz * br * 4; }
         m[i - frame] += y * e;
       }
-      nt.s1 = s1; nt.c1 = c1; nt.rs = rs; nt.rc = rc;
+      nt.s1 = s1; nt.c1 = c1; nt.rs = rs; nt.rc = rc; nt.inc = inc; nt.env = env; nt.f = f0; nt.nq = nq;
+      nt.pp = pp; nt.pe = pe; nt.ps = ps; nt.pdk = pdk; nt.pj = pj;
     }
     for (let j = this.notes.length - 1; j >= 0; j--) if (this.notes[j].s + this.notes[j].n <= frame + n) this.notes.splice(j, 1);
     const a = this.lp, gl = this.g[0] * this.amp, gr = this.g[1] * this.amp, w = this.wet, ib = this.ib, dl = this.dl, dr = this.dr; let z1 = this.z1, z2 = this.z2, ip = this.ip;
