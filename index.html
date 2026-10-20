@@ -181,6 +181,9 @@ h2 { font-size: var(--size-h2); line-height: 1.1; }
 .scope canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; transition: opacity 2s;
   -webkit-mask-image: linear-gradient(#000 60%, transparent); mask-image: linear-gradient(#000 60%, transparent); }
 body.sleepy .scope canvas { opacity: 0.35; } /* bedtime: the light dims to a faint glow */
+:root.relook, :root.relook *, :root.relook *::before, :root.relook *::after { /* a new look (or Sleep mode) arrives like dusk, not like a switch */
+  transition: background-color 0.6s var(--ease), color 0.6s var(--ease), border-color 0.6s var(--ease), outline-color 0.6s var(--ease), fill 0.6s var(--ease), stroke 0.6s var(--ease), box-shadow 0.6s var(--ease) !important; }
+@media (prefers-reduced-motion: reduce) { :root.relook, :root.relook *, :root.relook *::before, :root.relook *::after { transition: none !important; } }
 .scope-meta { position: absolute; right: 16px; top: 16px; display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
 .pill { padding: 7px 13px; border-radius: var(--radius-pill); background: color-mix(in oklab, var(--stage-solid) 72%, transparent); border: 1px solid var(--stage-line); color: var(--stage-ink);
   font-size: var(--size-xs); font-weight: 500; letter-spacing: 0.01em; font-variant-numeric: tabular-nums; -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
@@ -381,7 +384,10 @@ input[type=range]:active::-webkit-slider-thumb { transform: scale(1.15); }
 .zen { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; color: var(--stage-ink);
   background: radial-gradient(60% 55% at 50% 42%, color-mix(in oklab, var(--accent) 9%, transparent), transparent 72%), var(--stage);
   padding-block: env(safe-area-inset-top, 0px) env(safe-area-inset-bottom, 0px); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
-.zen-inner { display: flex; flex-direction: column; align-items: center; gap: 28px; }
+.zen-inner { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 28px; }
+.zen-cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: 0.7; transition: opacity 2s;
+  -webkit-mask-image: radial-gradient(130% 95% at 50% 45%, #000 50%, transparent); mask-image: radial-gradient(130% 95% at 50% 45%, #000 50%, transparent); }
+body.sleepy .zen-cv { opacity: 0.35; }
 .zen .pacer { position: relative; left: auto; top: auto; margin: 0; width: min(60vmin, 340px); height: min(60vmin, 340px); }
 .zen .pacer b { font-size: 26px; }
 .zen-time { font-size: var(--size-sm); letter-spacing: 0.04em; color: var(--stage-muted); text-align: center; font-variant-numeric: tabular-nums; }
@@ -651,6 +657,7 @@ body.zen-on { overflow: hidden; }
   <button class="play" id="dock-play" type="button" aria-label="Play"><svg class="ic" aria-hidden="true"><use id="dock-ico" href="#i-play"/></svg></button>
 </div>
 <div class="zen" id="zen" hidden>
+  <canvas class="zen-cv" id="zcv" aria-hidden="true"></canvas>
   <div class="zen-inner">
     <div class="pacer" id="zpacer"><div class="glow"></div><div class="ring"></div><div><b>Listening</b><small></small></div></div>
     <div class="zen-guide" id="zguide" hidden><b></b><small></small></div>
@@ -3052,32 +3059,35 @@ function applyScene(sc, start = true) {
    Five glows (each with a fainter twin), low sounds at the bottom and high ones at the top. Each brightens with the
    sound in its band and drifts slowly, eased so the light moves like weather, not like a meter. The canvas is drawn at
    a third of its size and scaled up, which blurs it for free. The colours are the look's --aura tokens. */
-const cv = $('#cv'), g2 = cv.getContext('2d');
+const cv = $('#cv'), g2 = cv.getContext('2d'), zcv = $('#zcv'), zg = zcv.getContext('2d'); let zenLit = false; // zcv: the same light, full screen
 const BANDS = [[30, 160], [160, 500], [500, 1600], [1600, 5000], [5000, 15000]], REST = [0.5, 0.44, 0.5, 0.4, 0.3]; // Hz, and the glow at rest
 const auraLv = Float32Array.from(REST), lessMotion = matchMedia('(prefers-reduced-motion: reduce)');
 let aura = null, auraBins = null, auraT = 0, auraLast = 0;
-function readAura() { // the look's colours, read again whenever the look changes
+function readAura() { // the look's colours, read again whenever the look changes; while the light is live, the old colours glide to the new
   const cs = getComputedStyle(document.documentElement), v = n => cs.getPropertyValue(n).trim();
-  aura = { c: BANDS.map((_, i) => (v('--aura-' + (i + 1)).replace('#', '').match(/../g) || ['80', '80', '80']).map(h => parseInt(h, 16))), add: v('--aura-blend') === 'add', k: parseFloat(v('--aura-strength')) || 1 };
+  const to = BANDS.map((_, i) => (v('--aura-' + (i + 1)).replace('#', '').match(/../g) || ['80', '80', '80']).map(h => parseInt(h, 16)));
+  aura = { c: aura && eng && !lessMotion.matches ? aura.c : to.map(x => x.slice()), to, add: v('--aura-blend') === 'add', k: parseFloat(v('--aura-strength')) || 1 };
   const m = document.querySelector('meta[name="theme-color"]'); if (m) m.content = v('--bg'); // the phone's status bar follows the look
   paintAura();
 }
-function paintAura() {
-  const W = cv.width, H = cv.height; if (!aura || !g2) return; // no 2D canvas (blocked, or a test DOM): the stage keeps its gradient
-  g2.setTransform(1, 0, 0, 1, 0, 0); g2.globalCompositeOperation = 'source-over'; g2.clearRect(0, 0, W, H);
-  g2.globalCompositeOperation = aura.add ? 'lighter' : 'source-over';
+function paintAura(g = g2, W = cv.width, H = cv.height) {
+  if (!aura || !g) return; // no 2D canvas (blocked, or a test DOM): the stage keeps its gradient
+  g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'source-over'; g.clearRect(0, 0, W, H);
+  g.globalCompositeOperation = aura.add ? 'lighter' : 'source-over';
   for (let i = 0; i < BANDS.length; i++) {
     const v = auraLv[i], e = v > 0.6 ? 0.6 + (v - 0.6) * 0.5 : v; // loud bands brighten less: calm, never glaring
-    const c = aura.c[i].join(','), a = Math.min(0.66, (0.12 + 0.72 * e) * aura.k), gr = g2.createRadialGradient(0, 0, 0, 0, 0, 1);
+    const c = aura.c[i].map(Math.round).join(','), a = Math.min(0.66, (0.12 + 0.72 * e) * aura.k), gr = g.createRadialGradient(0, 0, 0, 0, 0, 1);
     if (!gr) return; // a stand-in canvas (tests) draws nothing
     gr.addColorStop(0, `rgba(${c},${a})`); gr.addColorStop(0.5, `rgba(${c},${a * 0.42})`); gr.addColorStop(1, `rgba(${c},0)`);
     const rx = W * (0.3 + 0.16 * e), ry = H * (0.62 + 0.24 * e), y = H * (0.74 - 0.12 * i);
-    g2.fillStyle = gr;
-    g2.setTransform(rx, 0, 0, ry, W * (0.5 + 0.33 * Math.sin(auraT * (0.05 + 0.013 * i) + i * 2.1)), y); g2.fillRect(-1, -1, 2, 2);
-    g2.globalAlpha = 0.55; g2.setTransform(rx * 0.7, 0, 0, ry * 0.8, W * (0.5 + 0.33 * Math.sin(auraT * (0.031 + 0.009 * i) + i * 4.3 + 2)), y - H * 0.08); g2.fillRect(-1, -1, 2, 2); g2.globalAlpha = 1;
+    g.fillStyle = gr;
+    g.setTransform(rx, 0, 0, ry, W * (0.5 + 0.33 * Math.sin(auraT * (0.05 + 0.013 * i) + i * 2.1)), y); g.fillRect(-1, -1, 2, 2);
+    g.globalAlpha = 0.55; g.setTransform(rx * 0.7, 0, 0, ry * 0.8, W * (0.5 + 0.33 * Math.sin(auraT * (0.031 + 0.009 * i) + i * 4.3 + 2)), y - H * 0.08); g.fillRect(-1, -1, 2, 2); g.globalAlpha = 1;
   }
-  g2.setTransform(1, 0, 0, 1, 0, 0);
+  g.setTransform(1, 0, 0, 1, 0, 0);
 }
+function sizeZen() { zcv.width = Math.max(16, Math.round(innerWidth / 6)); zcv.height = Math.max(16, Math.round(innerHeight / 6)); paintAura(zg, zcv.width, zcv.height); }
+addEventListener('resize', () => { if (zenLit) sizeZen(); });
 function drawAura(ts) { // one frame: each band's level from the analyser, eased; at rest or paused the glows settle
   const dt = Math.min(0.1, (ts - (auraLast || ts)) / 1000), an = eng && playing ? eng.an : null, calm = lessMotion.matches; auraLast = ts;
   if (an && (!auraBins || auraBins.length !== an.frequencyBinCount)) auraBins = new Uint8Array(an.frequencyBinCount);
@@ -3089,12 +3099,17 @@ function drawAura(ts) { // one frame: each band's level from the analyser, eased
     const d = to - auraLv[i]; auraLv[i] += d * Math.min(1, dt * (d > 0 ? 3 : 1.2) * (calm ? 0.35 : 1));
     if (Math.abs(d) > 0.003) moving = true;
   }
+  if (aura) for (const [i, c] of aura.c.entries()) for (let j = 0; j < 3; j++) { // a new look's colours arrive over about half a second
+    const d = aura.to[i][j] - c[j]; if (d) { c[j] = Math.abs(d) < 1 ? aura.to[i][j] : c[j] + d * Math.min(1, dt * 5); moving = true; }
+  }
   if (an && !calm) auraT += dt; // the slow drift; none with reduced motion
-  if (an || moving) paintAura();
+  if (an || moving) { paintAura(); if (zenLit) paintAura(zg, zcv.width, zcv.height); }
 }
 function sizeScope() { const r = cv.getBoundingClientRect(); cv.width = Math.max(16, Math.round(r.width / 3)); cv.height = Math.max(8, Math.round(r.height / 3)); paintAura(); }
 new ResizeObserver(sizeScope).observe(cv);
 const looked = () => { readAura(); showLook(); };
+let relookT = 0;
+function relook() { const r = document.documentElement; r.classList.add('relook'); clearTimeout(relookT); relookT = setTimeout(() => r.classList.remove('relook'), 700); }
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', looked);
 new MutationObserver(looked).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'data-look'] });
 new MutationObserver(readAura).observe(document.body, { attributes: true, attributeFilter: ['class'] }); // Sleep mode turns the look to Night
@@ -3111,7 +3126,7 @@ function buildLook() {
   for (const k in LOOKS) {
     const b = document.createElement('button'); b.type = 'button'; b.dataset.look = k;
     b.innerHTML = `<i class="sw sw-${k}" aria-hidden="true"></i>${T(LOOKS[k])}`;
-    b.addEventListener('click', () => { state.look = k; save(); document.documentElement.dataset.look = k; }); // the observer above repaints and marks it
+    b.addEventListener('click', () => { relook(); state.look = k; save(); document.documentElement.dataset.look = k; }); // the observer above repaints and marks it
     $('#look-pop').append(b);
   }
   showLook();
@@ -3208,7 +3223,7 @@ function segButtons(box, items, current, onPick) {
   }
 }
 function setMode(k) {
-  state.mode = k; save(); $('#mode-desc').textContent = MODES[k].desc; document.body.classList.toggle('sleepy', k === 'sleep');
+  state.mode = k; save(); $('#mode-desc').textContent = MODES[k].desc; if (document.body.classList.contains('sleepy') !== (k === 'sleep')) relook(); document.body.classList.toggle('sleepy', k === 'sleep');
   if (k === 'sleep' && !timer) { $('#sleep').value = '45'; setTimer(45); }
   updateTransport(); // the dock and the lock screen show the new mode
 }
@@ -3252,7 +3267,7 @@ let zenT = 0;
 function zenWake() { const z = $('#zen'); z.classList.remove('calm'); clearTimeout(zenT); zenT = setTimeout(() => z.classList.add('calm'), 6000); }
 for (const ev of ['pointerdown', 'pointermove', 'keydown']) $('#zen').addEventListener(ev, zenWake);
 function zen(on) {
-  $('#zen').hidden = !on; document.body.classList.toggle('zen-on', on); if (on) zenWake(); else clearTimeout(zenT); updateWake();
+  $('#zen').hidden = !on; document.body.classList.toggle('zen-on', on); zenLit = on; if (on) { sizeZen(); zenWake(); } else clearTimeout(zenT); updateWake();
   if (on) { try { const p = document.documentElement.requestFullscreen && document.documentElement.requestFullscreen(); if (p) p.catch(() => {}); } catch (e) {} $('#zen-exit').focus(); timerTick(); }
   else { try { if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); } catch (e) {} $('#zen-btn').focus(); }
 }
