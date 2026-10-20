@@ -485,7 +485,7 @@ const K = {
   // crickets
   c_width: 0.4,
   // after the rain (drips)
-  d_pow: 1.5, d_plink: 0.6, d_plinkDF: 4, d_bubP: 0.3, d_splash: 1.5, d_bg: 0.08, d_bgRate: 120, d_bgLo: 900, d_bgHi: 5000, d_bgQ: 2.2,
+  d_pow: 1.5, d_plink: 0.6, d_plinkDF: 3, d_bubP: 0.6, d_splash: 1.5, d_bg: 0.04, d_bgRate: 120, d_bgLo: 900, d_bgHi: 5000, d_bgQ: 2.2,
 };
 const rr = (a, b) => a + rnd() * (b - a);
 const lr = (a, b) => a * Math.pow(b / a, rnd());
@@ -568,6 +568,21 @@ function vNoise(off, amp, pan, ex, f, q) { // decaying noise burst through a res
     return k < life;
   } };
 }
+function vDrop(off, amp, pan, tc, modes) { // a drop landing: a soft contact pulse rings the water or leaf it hits [[Hz, tau s, gain]]
+  const [gl, gr] = panG(pan), nc = Math.max(2, Math.round(tc * SR));
+  let life = 0, k = 0; const ms = modes.map(([f, tau, a]) => { const w = TAU * f / SR, r = Math.exp(-1 / (tau * SR)); life = Math.max(life, Math.ceil(tau * 6.9 * SR)); return [2 * r * Math.cos(w), r * r, a * Math.sin(w) * 2 / nc, 0, 0]; });
+  return { off, run(L, R, n) {
+    if (this.off >= n) { this.off -= n; return true; }
+    let i = this.off; this.off = 0;
+    for (; i < n && k < life; i++, k++) {
+      const x = k < nc ? amp * 0.5 * (1 - Math.cos(TAU * k / nc)) : 0; let y = x * 0.3; // the contact
+      for (const m of ms) { const v = m[0] * m[3] - m[1] * m[4] + m[2] * x; m[4] = m[3]; m[3] = v; y += v; } // the surface rings
+      L[i] += y * gl; R[i] += y * gr;
+    }
+    return k < life;
+  } };
+}
+const vPlop = (off, amp, pan) => vDrop(off, amp, pan, lr(0.0004, 0.001), [[lr(250, 600), lr(0.003, 0.008), 1]]); // the low plop of a drop into water
 function vBub(off, f0, amp, pan, dF, eps) { // Minnaert bubble: rising-pitch damped sine (van den Doel)
   const d = (0.13 * f0 + 0.0072 * Math.pow(f0, 1.5)) * dF, life = Math.ceil(6.9 / d * SR);
   const [gl, gr] = panG(pan), inc0 = TAU * f0 / SR, sig = eps * d / SR, dec = Math.exp(-d / SR), att = 0.0004 * SR;
@@ -761,8 +776,8 @@ function Rain() {
       let t = d.left;
       while (t < n) {
         const o = Math.floor(t), a = rr(0.05, 0.11) * (0.5 + 0.5 * p.drips);
-        voices.push(vBub(o, d.f * rr(0.93, 1.07), a, d.pan, rr(0.1, 0.16), rr(0.12, 0.3)));
-        voices.push(vNoise(o, a * 0.3, d.pan, 0.0015, lr(1500, 3500), 0.8));
+        if (rnd() < 0.75) voices.push(vBub(o, d.f * lr(0.83, 1.2), a, d.pan, rr(0.18, 0.29), rr(0.04, 0.105))); // not every drop traps a bubble, and each rings at its own pitch
+        voices.push(vNoise(o, a * 0.39, d.pan, 0.0015, lr(1500, 3500), 0.8)); voices.push(vPlop(o, a * 0.2, d.pan)); // the splash and the plop
         t += d.mean / (0.35 + I) * rr(0.75, 1.25) * SR;
       }
       d.left = t - n;
@@ -1547,7 +1562,7 @@ function Frogs() { // the three choruses play at matched loudness, so switching 
    The forest after rain: big drops let go from the canopy and land on leaves below or in
    puddles; when the wind shakes the trees, a brief shower of drips follows. */
 function Drips() {
-  const voices = [], sp = new Spawner(), gust = new Drift(0.12), bg = new GrainCloud(300), bgL = new BQ('lp', 5000, 0.6), bgR = new BQ('lp', 5000, 0.6); let shower = 0;
+  const voices = [], sp = new Spawner(), gust = new Drift(0.12), bg = new GrainCloud(300), bgL = new BQ('lp', 3000, 0.6), bgR = new BQ('lp', 3000, 0.6); let shower = 0;
   return { render(L, R, n, p, cx) {
     for (let k = 0; k < n; k += 32) gust.next();
     const base = 0.2 * Math.pow(100, p.rate), g = gust.v;
@@ -1556,10 +1571,10 @@ function Drips() {
     const tmpL = new Float32Array(n), tmpR = new Float32Array(n);
     if (voices.length < 600) sp.run(base * showerMul, n, off => {
       const r = lr(1.5, 18), a = Math.pow(rnd(), K.d_pow) * Math.min(1, 3 / r) * 0.5, pan = rr(-1, 1), onLeaf = p.surface === 'leaves' ? 0.85 : p.surface === 'puddles' ? 0.15 : 0.55;
-      if (rnd() < onLeaf) { voices.push(vNoise(off, a, pan, lr(0.0015, 0.006), lr(1200, 4500), rr(1, 2.5))); if (rnd() < 0.4) voices.push(vNoise(off, a * 0.5, pan, lr(0.004, 0.012), lr(350, 800), 2)); }
-      else { // into a puddle: always a small splash; only some drops trap a bubble, and it rings only briefly
-        if (rnd() < K.d_bubP) voices.push(vBub(off, lr(650, 2200), a * 0.8 * K.d_plink, pan, rr(0.1, 0.2) * K.d_plinkDF, rr(0.1, 0.3)));
-        voices.push(vNoise(off, a * 0.35 * K.d_splash, pan, 0.0015, lr(1500, 4000), 0.8));
+      if (rnd() < onLeaf) { voices.push(vNoise(off, a * 0.7, pan, lr(0.0022, 0.009), lr(800, 2800), rr(1, 2.5))); if (rnd() < 0.4) voices.push(vNoise(off, a * 0.5, pan, lr(0.004, 0.012), lr(350, 800), 2)); } // a dull pat on a leaf
+      else { // into a puddle: a splash and a low plop; some drops trap a bubble, which rings briefly with a slight rise
+        if (rnd() < K.d_bubP) voices.push(vBub(off, lr(650, 2200), a * 0.8 * K.d_plink, pan, rr(0.1, 0.2) * K.d_plinkDF, rr(0.035, 0.105)));
+        voices.push(vNoise(off, a * 0.35 * K.d_splash, pan, 0.0015, lr(1500, 4000), 0.8)); voices.push(vPlop(off, a * 0.25, pan));
       }
     });
     runVoices(voices, tmpL, tmpR, n);
@@ -1718,7 +1733,7 @@ const SOUNDS = [
       { id: 'activity', label: 'Activity', def: 0.5, fmt: pct },
       { id: 'distance', label: 'Distance', def: 0.35, fmt: v => tpl('about {n} m away', { n: birdDist(v) }) },
     ] },
-  { id: 'drips', name: 'After the rain', vol: 0.6, trim: 6.5, send: 0.1, wet: true, create: Drips,
+  { id: 'drips', name: 'After the rain', vol: 0.6, trim: 7.3, send: 0.1, wet: true, create: Drips,
     blurb: 'The rain has stopped, but the canopy still lets go of its water: single heavy drops onto leaves and puddles, and a short shower whenever the wind shakes the trees.',
     params: [
       { id: 'rate', label: 'Drips', def: 0.6, fmt: v => { const r = 0.2 * Math.pow(100, v); return tpl('{n} drops/s', { n: r < 10 ? r.toFixed(1) : Math.round(r) }); } },
