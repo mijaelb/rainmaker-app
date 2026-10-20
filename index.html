@@ -63,7 +63,8 @@ select { background: var(--surface); border: 1px solid var(--line); border-radiu
 
 /* scope */
 .scope { position: relative; background: var(--scope-bg); border-radius: 12px; overflow: hidden; height: 210px; color: var(--scope-ink); }
-.scope canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.scope canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; transition: opacity 2s; }
+body.sleepy .scope canvas { opacity: 0.3; } /* bedtime: the moving display dims to a soft glow */
 .axis { position: absolute; left: 0; top: 0; bottom: 0; width: 64px; pointer-events: none; }
 .axis span { position: absolute; left: 12px; transform: translateY(-50%); font: 500 10px/1 var(--mono); letter-spacing: 0.04em; color: var(--scope-ink); opacity: 0.8; }
 .axis span::after { content: ""; position: absolute; left: 44px; top: 50%; width: 9999px; border-top: 1px dashed var(--scope-line); }
@@ -257,7 +258,7 @@ body.zen-on { overflow: hidden; }
     <div class="pacer" id="pacer" hidden><div class="glow"></div><div class="ring"></div><div><b>Breathe out</b><small></small></div></div>
     <div class="guide" id="guide" hidden aria-live="polite"><b></b><small></small></div>
     <div class="scope-meta"><span class="pill" id="now">Nothing playing</span><span class="pill" id="sleep-pill" hidden></span></div>
-    <div class="idle" id="idle"><strong>Press Play to start the rain</strong><span>The spectrogram scrolls here once sound is running. Low frequencies sit at the bottom, bright detail like drops and crackles at the top.</span></div>
+    <div class="idle" id="idle"><strong>Press Play to begin</strong><span>The spectrogram scrolls here once sound is running. Low frequencies sit at the bottom, bright detail like drops and crackles at the top.</span></div>
   </section>
 
   <section class="session" aria-label="Mode, space and breathing">
@@ -379,7 +380,7 @@ const K = {
   // stream
   s_wd: 0.6, s_gw: 0.4876, s_band: 0.08, s_bandQ: 2.143, s_wLo: 600, s_wHi: 2410, s_wQ: 1.962, s_base: 1.354, s_bubA: 0.06924, s_bubDF: 0.9534,
   s_bubEps: 0.3559, s_smallA: 0.2945, s_splash: 0.1411, s_splashRate: 1.454, s_la: 1.317, s_ga: 1.292, s_gurg: 1.461, s_turb: 12.98, s_mDepth: 5.915,
-  s_spGs: 0.5, s_eqPres: 5,
+  s_spGs: 0.5, s_eqPres: 7,
   // fire
   f_rate0: 0.2925, f_rate: 123.1, f_m: 3.803, f_ampPow: 3.563, f_amp: 1.694, f_fbLo: 2511, f_fbHi: 4881, f_exLo: 0.0001381, f_exHi: 0.001175,
   f_q: 2.654, f_snap: 0.1406, f_span: 1.608, f_actS: 0.06, f_actM: 0.3, f_actD: 2, f_actL: 0.9, f_crackP: 0.3, f_crackA: 1, f_pop: 1.722,
@@ -1522,7 +1523,7 @@ const SOUNDS = [
       { id: 'period', label: 'Wave period', def: 9, min: 5, max: 16, step: 0.5, fmt: v => v + ' s between waves' },
       { id: 'distance', label: 'Distance', def: 0.3, fmt: v => Math.round(5 + 295 * Math.pow(v, 1.5)) + ' m from the surf' },
     ] },
-  { id: 'stream', field: true, name: 'Stream', vol: 0.6, trim: 1.54, send: 0.12, create: Stream,
+  { id: 'stream', field: true, name: 'Stream', vol: 0.6, trim: 1.36, send: 0.12, create: Stream,
     blurb: 'Hundreds of collapsing bubbles a second over the low body of moving water. Babble makes them arrive in bursts.',
     params: [
       { id: 'flow', label: 'Flow', def: 0.45, fmt: v => { const q = 0.2 * Math.pow(500, v); return (q < 10 ? q.toFixed(1) : Math.round(q)) + ' L/s'; } },
@@ -2225,7 +2226,7 @@ function segButtons(box, items, current, onPick) {
   }
 }
 function setMode(k) {
-  state.mode = k; save(); $('#mode-desc').textContent = MODES[k].desc;
+  state.mode = k; save(); $('#mode-desc').textContent = MODES[k].desc; document.body.classList.toggle('sleepy', k === 'sleep');
   if (k === 'sleep' && !timer) { $('#sleep').value = '45'; setTimer(45); }
   timerTick();
 }
@@ -2352,6 +2353,7 @@ $('#prac-voice').addEventListener('change', e => { state.prac.voice = e.target.c
 if ('speechSynthesis' in window) { speechSynthesis.getVoices(); speechSynthesis.addEventListener && speechSynthesis.addEventListener('voiceschanged', () => {}); }
 
 buildScenes(); buildCards(); buildSession(); buildPractices(); buildAxis(); updateTransport(); timerTick();
+document.body.classList.toggle('sleepy', state.mode === 'sleep');
 </script>
 <script src="site.js"></script>
 </body>
