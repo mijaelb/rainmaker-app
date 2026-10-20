@@ -479,8 +479,8 @@ const K = {
   o_set2: 1.102, o_sets: 0.3, o_hp: 130, o_fzTick: 0.35, o_fizz: 0.3, o_fzTop: 9000,
   // stream
   s_wd: 0.6, s_gw: 0.4876, s_band: 0.08, s_bandQ: 2.143, s_wLo: 600, s_wHi: 2410, s_wQ: 1.962, s_base: 1.354, s_bubA: 0.06924, s_bubDF: 0.9534,
-  s_bubEps: 0.3559, s_smallA: 0.15, s_splash: 0.1411, s_splashRate: 1.454, s_la: 1.317, s_ga: 1.292, s_gurg: 1.461, s_turb: 12.98, s_mDepth: 5.915,
-  s_spGs: 0.2, s_eqPres: 7,
+  s_bubEps: 0.3559, s_smallA: 0.09, s_splash: 0.0635, s_splashRate: 1.454, s_la: 1.317, s_ga: 1.292, s_gurg: 1.461, s_turb: 12.98, s_mDepth: 5.915,
+  s_spGs: 0.08, s_eqPres: 3,
   // fire
   f_rate0: 0.2925, f_rate: 123.1, f_m: 3.803, f_ampPow: 3.563, f_amp: 1.694, f_fbLo: 2511, f_fbHi: 4881, f_exLo: 0.0001381, f_exHi: 0.001175,
   f_q: 2.654, f_snap: 0.1406, f_span: 1.608, f_actS: 0.06, f_actM: 0.3, f_actD: 2, f_actL: 0.9, f_pop: 1.722, f_roar: 1.149,
@@ -595,7 +595,7 @@ function vDrop(off, amp, pan, tc, modes) { // a drop landing: a soft contact pul
 const vPlop = (off, amp, pan) => vDrop(off, amp, pan, lr(0.0004, 0.001), [[lr(250, 600), lr(0.003, 0.008), 1]]); // the low plop of a drop into water
 function vBub(off, f0, amp, pan, dF, eps) { // Minnaert bubble: rising-pitch damped sine (van den Doel)
   const d = (0.13 * f0 + 0.0072 * Math.pow(f0, 1.5)) * dF, life = Math.ceil(6.9 / d * SR);
-  const [gl, gr] = panG(pan), inc0 = TAU * f0 / SR, sig = eps * d / SR, dec = Math.exp(-d / SR), att = 0.0004 * SR;
+  const [gl, gr] = panG(pan), inc0 = TAU * f0 / SR, sig = eps * d / SR, dec = Math.exp(-d / SR), att = 0.0015 * SR; // a bubble forms in about 1.5 ms
   let k = 0, re = 1, im = 0, cr = 1, ci = 0, e = amp;
   return { off, run(L, R, n) {
     if (this.off >= n) { this.off -= n; return true; }
@@ -606,7 +606,7 @@ function vBub(off, f0, amp, pan, dF, eps) { // Minnaert bubble: rising-pitch dam
         cr = Math.cos(inc); ci = Math.sin(inc);
       }
       const nr = re * cr - im * ci; im = re * ci + im * cr; re = nr;
-      const y = im * e * (k < att ? k / att : 1); e *= dec;
+      const y = im * e * (k < att ? 0.5 - 0.5 * Math.cos(Math.PI * k / att) : 1); e *= dec;
       L[i] += y * gl; R[i] += y * gr;
     }
     return k < life;
@@ -1075,12 +1075,13 @@ function Ocean() {
 /* ================= STREAM =================
    Tuned against stream recordings: a dense body of tiny water impacts with a broad
    low pocket resonance, bubbles and bright splashes on top, little low rumble.
-   The spray is mostly a smooth fizz with only a few distinct droplet ticks, and the smallest bubbles are kept
-   soft: heard close up, single bright ticks read as crackle or static rather than water. */
+   The spray is a quiet, steady fizz with only a few distinct droplet ticks, the smallest bubbles are soft, and the
+   dense body of tiny impacts is kept below 3.5 kHz: heard close up, their sharp onsets read as crackle and a pulsing
+   hiss ("shhh shhh") rather than water. Hiss and fine texture match a calm river recording. */
 function Stream() {
   const pL = new Pink(), pR = new Pink(), bL = new Brown(), bR = new Brown(), tone = new Tone([[2400, 0.9, K.s_eqPres]]); // the 2-3 kHz sparkle of real streams
   const bpL = new BQ('bp', 900, 0.7), bpR = new BQ('bp', 900, 0.7), lL = new BQ('lp', 260, 0.7), lR = new BQ('lp', 260, 0.7);
-  const splash = new GrainCloud(400), water = new GrainCloud(1200), szL = new ResBank(6), szR = new ResBank(6), turb = new Drift(K.s_turb), bands = [lr(260, 360), lr(260, 360), lr(3400, 4600)].map(f => ({ f, d: new Drift(0.15) })), slow = new Drift(0.2), sp = new Spawner(), sp2 = new Spawner(), spG = new Spawner(), voices = [];
+  const wlL = new BQ('lp', 3500, 0.7), wlR = new BQ('lp', 3500, 0.7), splash = new GrainCloud(400), water = new GrainCloud(1200), szL = new ResBank(6), szR = new ResBank(6), turb = new Drift(K.s_turb), bands = [lr(260, 360), lr(260, 360), lr(3400, 4600)].map(f => ({ f, d: new Drift(0.15) })), slow = new Drift(0.2), sp = new Spawner(), sp2 = new Spawner(), spG = new Spawner(), voices = [];
   return { render(L, R, n, p) {
     const F = p.flow, Z = p.size, T = p.babble, base = (8 + 220 * Math.pow(F, 1.4)) * K.s_base, ga = (0.003 + 0.015 * F) * K.s_ga, la = (0.012 + 0.07 * Math.pow(F, 1.5)) * K.s_la;
     const sr = (150 + 1500 * F) * K.s_splashRate / SR, wd = (4000 + 30000 * F) * K.s_wd, fz = 1.2 - 0.4 * Z;
@@ -1111,12 +1112,12 @@ function Stream() {
           let f, q;
           if (rnd() < K.s_band) { const bd = bands[Math.floor(rnd() * 3)]; f = bd.f * (0.8 + 0.4 * bd.d.v) * rr(0.9, 1.1); q = rr(2.5, 4.5) * K.s_bandQ; }
           else { f = lr(K.s_wLo, K.s_wHi) * fz; q = rr(2, 4) * K.s_wQ; }
-          const u = rnd(); water.add(f, q, gw * Math.sqrt(f / 1000) * u * Math.sqrt(u) * (rnd() < 0.5 ? 1 : -1), rr(-1, 1));
+          const u = rnd(); water.add(f, q, gw * Math.sqrt(f / 1000) * u * 0.866 * (rnd() < 0.5 ? 1 : -1), rr(-1, 1)); // an even spread of sizes: no single grain stands out
         }
         splash.step(); water.step();
-        const ms = kS * Math.sqrt(m);
-        L[i] += bpL.run(pL.next()) * ga + lL.run(bL.next()) * la + splash.l * aS + szL.next() * ms + water.l;
-        R[i] += bpR.run(pR.next()) * ga + lR.run(bR.next()) * la + splash.r * aS + szR.next() * ms + water.r;
+        const ms = kS * Math.sqrt(0.8 + 0.2 * m); // the fizz stays steady; it barely follows the babble
+        L[i] += bpL.run(pL.next()) * ga + lL.run(bL.next()) * la + splash.l * aS + szL.next() * ms + wlL.run(water.l);
+        R[i] += bpR.run(pR.next()) * ga + lR.run(bR.next()) * la + splash.r * aS + szR.next() * ms + wlR.run(water.r);
       }
     }
     runVoices(voices, L, R, n);
@@ -1913,7 +1914,7 @@ const SOUNDS = [
       { id: 'period', label: 'Wave period', def: 9, min: 5, max: 16, step: 0.5, fmt: v => tpl('{n} s between waves', { n: v }) },
       { id: 'distance', label: 'Distance', def: 0.3, fmt: v => tpl('{n} m from the surf', { n: Math.round(5 + 295 * Math.pow(v, 1.5)) }) },
     ] },
-  { id: 'stream', field: true, name: 'Stream', vol: 0.6, trim: 1.42, send: 0.12, create: Stream,
+  { id: 'stream', field: true, name: 'Stream', vol: 0.6, trim: 2.15, send: 0.12, create: Stream,
     blurb: 'Hundreds of collapsing bubbles a second over the low body of moving water. Babble makes them arrive in bursts.',
     params: [
       { id: 'flow', label: 'Flow', def: 0.45, fmt: v => { const q = 0.2 * Math.pow(500, v); return (q < 10 ? q.toFixed(1) : Math.round(q)) + ' L/s'; } },
@@ -1943,7 +1944,7 @@ const SOUNDS = [
       { id: 'activity', label: 'Activity', def: 0.5, fmt: pct },
       { id: 'distance', label: 'Distance', def: 0.35, fmt: v => tpl('about {n} m away', { n: birdDist(v) }) },
     ] },
-  { id: 'drips', name: 'After the rain', vol: 0.6, trim: 7.3, send: 0.1, wet: true, create: Drips,
+  { id: 'drips', name: 'After the rain', vol: 0.6, trim: 7.9, send: 0.1, wet: true, create: Drips,
     blurb: 'The rain has stopped, but the canopy still lets go of its water: single heavy drops onto leaves and puddles, and a short shower whenever the wind shakes the trees.',
     params: [
       { id: 'rate', label: 'Drips', def: 0.6, fmt: v => { const r = 0.2 * Math.pow(100, v); return tpl('{n} drops/s', { n: r < 10 ? r.toFixed(1) : Math.round(r) }); } },
@@ -2184,7 +2185,7 @@ function effective(id, p, t, M) {
   }
   return q || p;
 }
-const STORE = 'rainmaker-mix-v1', CH = 8192, FADE_S = 2, GD = 128, GB = 480; // GD: startle-guard look-ahead in samples
+const STORE = 'rainmaker-mix-v1', CH = 8192, FADE_S = 3, GLIDE_S = 2.5, GD = 128, GB = 480; // fades and glides in seconds; GD: startle-guard look-ahead in samples
 const $ = s => document.querySelector(s);
 const icon = n => `<svg class="ic" aria-hidden="true"><use href="#i-${n}"/></svg>`; // Lucide icons, inlined by build.py
 const ICON = { rain: 'cloud-rain', thunder: 'cloud-lightning', wind: 'wind', ocean: 'waves', stream: 'droplets', fire: 'flame', birds: 'bird', frogs: 'flower-2', drips: 'cloud-drizzle', crickets: 'bug', bowl: 'bell', noise: 'audio-waveform', purr: 'cat', womb: 'baby', fan: 'fan', chimes: 'bell-ring', cabin: 'plane' };
@@ -2329,8 +2330,31 @@ class Engine {
       if (!st.on && !(ch.out > 0)) { ch.live = false; continue; } // off, and its fade-out has finished
       if (st.on && ch.out > 0) { ch.fade = ch.out; ch.out = 0; } // switched back on while fading out: rise again from where it is
       if (!ch.live) { ch.live = true; ch.fade = 0; ch.tL = new Float32Array(GD); ch.tR = new Float32Array(GD); ch.twL = new Float32Array(GD); ch.twR = new Float32Array(GD); for (const gn of [ch.g, ch.wg]) if (gn) { gn.gain.cancelScheduledValues(t); gn.gain.setValueAtTime(chanGain(d.id), t); } }
+      // every change happens the way weather does: settings glide over a few seconds, and a new kind (another surface,
+      // another bird, another colour) crossfades in while the old one fades away
+      const tgt = effective(d.id, st.p, t, M), key = d.params.filter(q => q.type === 'choice').map(q => tgt[q.id]).join('|');
+      if (!ch.pv || ch.fade === 0) ch.pv = Object.assign({}, tgt); // just starting: begin exactly where it is set
+      else if (key !== ch.key) { ch.old = { inst: ch.inst, p: Object.assign({}, ch.pv), x: 0 }; ch.inst = d.create(); } // a new kind: keep the old one playing to fade it out
+      ch.key = key;
+      const glide = 1 - Math.exp(-CH / SR / GLIDE_S), pv = ch.pv;
+      for (const q of d.params) {
+        if (q.type === 'action') continue;
+        if (q.type === 'choice') { pv[q.id] = tgt[q.id]; continue; }
+        const v = (pv[q.id] ?? tgt[q.id]) + (tgt[q.id] - (pv[q.id] ?? tgt[q.id])) * glide; pv[q.id] = Math.abs(tgt[q.id] - v) < 1e-4 ? tgt[q.id] : v;
+      }
+      const cur = Object.assign({}, pv); for (const q of d.params) if (q.step) cur[q.id] = Math.round(pv[q.id] / q.step) * q.step; // counted things change one at a time
       const L = new Float32Array(CH), R = new Float32Array(CH), wL = d.wet ? new Float32Array(CH) : null, wR = d.wet ? new Float32Array(CH) : null;
-      ch.inst.render(L, R, CH, effective(d.id, st.p, t, M), Object.assign({}, cx, { wL, wR }));
+      ch.inst.render(L, R, CH, cur, Object.assign({}, cx, { wL, wR }));
+      if (ch.old) { // the crossfade: equal power, so the level holds steady through it
+        const o = ch.old, oL = new Float32Array(CH), oR = new Float32Array(CH), owL = wL && new Float32Array(CH), owR = wR && new Float32Array(CH);
+        const op = Object.assign({}, o.p); for (const q of d.params) if (q.step) op[q.id] = Math.round(op[q.id] / q.step) * q.step;
+        o.inst.render(oL, oR, CH, op, Object.assign({}, cx, { wL: owL, wR: owR }));
+        for (let i = 0; i < CH; i++) {
+          const x = Math.min(1, (o.x + i) / this.fadeN), a = Math.sin(x * Math.PI / 2), b = Math.cos(x * Math.PI / 2);
+          L[i] = L[i] * a + oL[i] * b; R[i] = R[i] * a + oR[i] * b; if (wL) { wL[i] = wL[i] * a + owL[i] * b; wR[i] = wR[i] * a + owR[i] * b; }
+        }
+        if ((o.x += CH) >= this.fadeN) ch.old = null;
+      }
       if (ch.sf) ch.sf.run(L, R, CH);
       if (st.pos && PLACE.has(d.id)) place(L, R, CH, st.pos);
       for (let i = 0, f = ch.fade; i < CH && f < this.fadeN; i++, f++) { const a = f / this.fadeN; L[i] *= a; R[i] *= a; if (wL) { wL[i] *= a; wR[i] *= a; } }
@@ -2387,8 +2411,8 @@ class Engine {
   setSpace(key) { // crossfade to a new acoustic space
     const c = this.ctx, now = c.currentTime, nx = 1 - this.cvOn, old = this.cvOn;
     this.cv[nx].buffer = spaceBuffer(c, key);
-    this.cvg[nx].gain.cancelScheduledValues(now); this.cvg[nx].gain.setValueAtTime(0, now); this.cvg[nx].gain.linearRampToValueAtTime(SPACES[key].level, now + 1.5);
-    this.cvg[old].gain.cancelScheduledValues(now); this.cvg[old].gain.setValueAtTime(this.cvg[old].gain.value, now); this.cvg[old].gain.linearRampToValueAtTime(0, now + 1.5);
+    this.cvg[nx].gain.cancelScheduledValues(now); this.cvg[nx].gain.setValueAtTime(0, now); this.cvg[nx].gain.linearRampToValueAtTime(SPACES[key].level, now + FADE_S);
+    this.cvg[old].gain.cancelScheduledValues(now); this.cvg[old].gain.setValueAtTime(this.cvg[old].gain.value, now); this.cvg[old].gain.linearRampToValueAtTime(0, now + FADE_S);
     this.cvOn = nx;
   }
   ringBell() { // one bowl strike at the listening volume, outside the session fade so it is heard at the very end
