@@ -1777,18 +1777,20 @@ const MODE_ICON = { listen: 'ear', relax: 'feather', focus: 'focus', sleep: 'moo
 const DEF = Object.fromEntries(SOUNDS.map(d => [d.id, d]));
 
 function defaults() {
-  const s = { master: 0.8, mode: 'listen', space: 'open', breath: { on: false, pattern: 'slow', depth: 0.5 }, prac: { id: 'att', voice: false }, sounds: {} };
+  const s = { master: 0.8, scene: null, mode: 'listen', space: 'open', breath: { on: false, pattern: 'slow', depth: 0.5 }, prac: { id: 'att', voice: false }, sounds: {} };
   for (const d of SOUNDS) {
     const p = {}; for (const q of d.params) if (q.type !== 'action') p[q.id] = q.def;
     s.sounds[d.id] = { on: d.id === 'rain', vol: d.vol, pos: 0, p };
   }
   return s;
 }
-let state = defaults();
+let state = defaults(), firstRun = true;
 try {
   const saved = JSON.parse(localStorage.getItem(STORE) || 'null');
   if (saved && saved.sounds) {
+    firstRun = false;
     if (typeof saved.master === 'number') state.master = saved.master;
+    if (SCENES.some(x => x.id === saved.scene)) state.scene = saved.scene;
     if (MODES[saved.mode]) state.mode = saved.mode;
     if (SPACES[saved.space]) state.space = saved.space;
     if (saved.prac) { if (PRACTICES[saved.prac.id]) state.prac.id = saved.prac.id; state.prac.voice = !!saved.prac.voice; }
@@ -2018,7 +2020,7 @@ function updateTransport() {
   $('#now').innerHTML = live.length ? live.map(d => icon(ICON[d.id]) + `<span>${d.name}</span>`).join('') : '<span>Turn on a sound below</span>';
   $('#dock-now').textContent = sc ? sc.name : on.join(' \u00b7 ') || 'Nothing selected';
   $('#dock-sub').textContent = (playing ? '' : 'Paused \u00b7 ') + MODES[state.mode].name + ' mode';
-  mediaSession(sc, on);
+  mediaSession(sc, on); updateWake();
 }
 
 /* ---------- playing on with the screen locked, and lock-screen controls ----------
@@ -2123,8 +2125,8 @@ function strikeNow() {
   if (!state.sounds.thunder.on) setOn('thunder', true);
   if (eng && playing) eng.ch.thunder.inst.force = true; else { pendingStrike = true; if (!playing) play(); }
 }
-let activeScene = null;
-function touched() { save(); if (activeScene) { activeScene = null; markScene(); } }
+let activeScene = state.scene;
+function touched() { if (activeScene) { activeScene = state.scene = null; markScene(); } save(); }
 function markScene() { document.querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed', c.dataset.id === activeScene)); }
 function buildScenes() {
   const box = $('#chips'); box.innerHTML = '';
@@ -2140,7 +2142,7 @@ function buildScenes() {
     box.append(wrap);
   }
 }
-function applyScene(sc) {
+function applyScene(sc, start = true) {
   const fresh = defaults();
   for (const d of SOUNDS) {
     const st = state.sounds[d.id], m = sc.mix[d.id], was = st.on;
@@ -2150,8 +2152,8 @@ function applyScene(sc) {
   }
   if (sc.space && sc.space !== state.space) setSpace(sc.space);
   buildSession();
-  save(); activeScene = sc.id; markScene(); buildCards(); updateTransport();
-  if (!playing) play();
+  activeScene = state.scene = sc.id; save(); markScene(); buildCards(); updateTransport();
+  if (start && !playing) play();
 }
 
 /* ---------- spectrogram ---------- */
@@ -2314,6 +2316,7 @@ function setBreath(on) {
   $('#zen-breath').innerHTML = icon('heart-pulse') + (on ? 'Stop breathing guide' : 'Breathe with the sound');
   if (on) { if (!playing) play(); else if (eng && !eng.breath.on) eng.breath.start(); }
   else if (eng && eng.breath.on) eng.breath.stop();
+  updateWake();
 }
 function buildSession() {
   segButtons($('#modes'), Object.entries(MODES).map(([k, m]) => [k, m.name, MODE_ICON[k]]), state.mode, setMode);
@@ -2342,7 +2345,7 @@ let zenT = 0;
 function zenWake() { const z = $('#zen'); z.classList.remove('calm'); clearTimeout(zenT); zenT = setTimeout(() => z.classList.add('calm'), 6000); }
 for (const ev of ['pointerdown', 'pointermove', 'keydown']) $('#zen').addEventListener(ev, zenWake);
 function zen(on) {
-  $('#zen').hidden = !on; document.body.classList.toggle('zen-on', on); if (on) zenWake(); else clearTimeout(zenT);
+  $('#zen').hidden = !on; document.body.classList.toggle('zen-on', on); if (on) zenWake(); else clearTimeout(zenT); updateWake();
   if (on) { try { const p = document.documentElement.requestFullscreen && document.documentElement.requestFullscreen(); if (p) p.catch(() => {}); } catch (e) {} $('#zen-exit').focus(); timerTick(); }
   else { try { if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); } catch (e) {} $('#zen-btn').focus(); }
 }
@@ -2351,6 +2354,17 @@ $('#zen-exit').addEventListener('click', () => zen(false));
 $('#zen-play').addEventListener('click', () => (playing ? pause() : play()));
 $('#zen-breath').addEventListener('click', () => setBreath(!state.breath.on));
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#zen').hidden) zen(false); });
+
+/* ---------- the screen stays on only while a guided practice runs or breathing is shown in focus view ---------- */
+let wakeLock = null;
+async function updateWake() {
+  const want = !!prac || (!$('#zen').hidden && state.breath.on && playing);
+  try {
+    if (want && !wakeLock && navigator.wakeLock && !document.hidden) { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); }
+    else if (!want && wakeLock) { const w = wakeLock; wakeLock = null; await w.release(); }
+  } catch (e) { wakeLock = null; }
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden) updateWake(); });
 
 /* ---------- calm practices ---------- */
 let prac = null, ciBefore = null, ciAfter = false, ciPrac = '';
@@ -2377,7 +2391,7 @@ async function startPractice() {
   if (!eng) return;
   const steps = PRACTICES[state.prac.id].steps(), last = steps[steps.length - 1];
   prac = { id: state.prac.id, t0: eng.ctx.currentTime, steps, i: 0, end: last.t + (last.hold || 20) }; ciPrac = prac.id; ciAfter = false;
-  $('#prac-go').textContent = 'Stop'; renderCheckin(); practiceTick();
+  $('#prac-go').textContent = 'Stop'; renderCheckin(); practiceTick(); updateWake();
 }
 function stopPractice(finished) {
   if (!prac) return;
@@ -2385,7 +2399,7 @@ function stopPractice(finished) {
   if ('speechSynthesis' in window) speechSynthesis.cancel();
   $('#prac-go').textContent = 'Start'; $('#prac-status').textContent = finished ? 'Well done' : '';
   if (ran > 90) ciAfter = true; // ask how it feels now, after a real session
-  renderCheckin();
+  renderCheckin(); updateWake();
 }
 function practiceTick() { // runs on the audio ticker, so a paused session pauses the practice too
   if (!prac || !eng) return;
@@ -2427,6 +2441,7 @@ $('#prac-voice').addEventListener('change', e => { state.prac.voice = e.target.c
 if ('speechSynthesis' in window) { speechSynthesis.getVoices(); speechSynthesis.addEventListener && speechSynthesis.addEventListener('voiceschanged', () => {}); }
 
 buildScenes(); buildCards(); buildSession(); buildPractices(); buildAxis(); updateTransport(); timerTick();
+if (firstRun) applyScene(SCENES.find(x => x.id === 'soft'), false); else markScene(); // first visit: Soft rain, ready to play
 document.body.classList.toggle('sleepy', state.mode === 'sleep');
 </script>
 <script src="site.js"></script>
