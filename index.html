@@ -207,6 +207,7 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
 .zen .pacer b { font-size: 24px; }
 .zen-time { font: 500 13px/1.4 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; text-align: center; }
 .zen-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.zen button .ic { width: 18px; height: 18px; }
 .zen button { display: inline-flex; align-items: center; gap: 8px; background: transparent; color: var(--scope-4); border: 1px solid var(--scope-line); border-radius: 999px; padding: 10px 18px; font-weight: 600; }
 .zen-row, .zen-time { transition: opacity 0.4s; }
 .zen.calm .zen-row, .zen.calm .zen-time { opacity: 0.08; transition: opacity 2.5s; }
@@ -409,7 +410,7 @@ body.zen-on { overflow: hidden; }
     <div class="pacer" id="zpacer"><div class="glow"></div><div class="ring"></div><div><b>Listening</b><small></small></div></div>
     <div class="zen-guide" id="zguide" hidden aria-live="polite"><b></b><small></small></div>
     <div class="zen-time" id="zen-time"></div>
-    <div class="zen-row"><button type="button" id="zen-play">Pause</button><button type="button" id="zen-breath">Breathe with the sound</button><button type="button" id="zen-exit">Exit focus view</button></div>
+    <div class="zen-row"><button type="button" id="zen-play">Pause</button><button type="button" id="zen-breath"><svg class="ic" aria-hidden="true"><use href="#i-heart-pulse"/></svg>Breathe with the sound</button><button type="button" id="zen-exit"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg>Exit focus view</button></div>
   </div>
 </div>
 
@@ -1767,7 +1768,7 @@ function effective(id, p, t, M) {
   }
   return q || p;
 }
-const STORE = 'rainmaker-mix-v1', CH = 8192, FADE_S = 0.5, GD = 128, GB = 480; // GD: startle-guard look-ahead in samples
+const STORE = 'rainmaker-mix-v1', CH = 8192, FADE_S = 2, GD = 128, GB = 480; // GD: startle-guard look-ahead in samples
 const $ = s => document.querySelector(s);
 const icon = n => `<svg class="ic" aria-hidden="true"><use href="#i-${n}"/></svg>`; // Lucide icons, inlined by build.py
 const ICON = { rain: 'cloud-rain', thunder: 'cloud-lightning', wind: 'wind', ocean: 'waves', stream: 'droplets', fire: 'flame', birds: 'bird', frogs: 'flower-2', drips: 'cloud-drizzle', crickets: 'bug' };
@@ -1901,7 +1902,8 @@ class Engine {
     const cx = { t, cycles: this.breath.on ? this.breath.cyclesIn(t, t + CH / SR) : null }, live = [];
     for (const d of SOUNDS) {
       const st = state.sounds[d.id], ch = this.ch[d.id];
-      if (!st.on) { ch.live = false; continue; }
+      if (!st.on && !(ch.out > 0)) { ch.live = false; continue; } // off, and its fade-out has finished
+      if (st.on && ch.out > 0) { ch.fade = ch.out; ch.out = 0; } // switched back on while fading out: rise again from where it is
       if (!ch.live) { ch.live = true; ch.fade = 0; ch.tL = new Float32Array(GD); ch.tR = new Float32Array(GD); ch.twL = new Float32Array(GD); ch.twR = new Float32Array(GD); for (const gn of [ch.g, ch.wg]) if (gn) { gn.gain.cancelScheduledValues(t); gn.gain.setValueAtTime(chanGain(d.id), t); } }
       const L = new Float32Array(CH), R = new Float32Array(CH), wL = d.wet ? new Float32Array(CH) : null, wR = d.wet ? new Float32Array(CH) : null;
       ch.inst.render(L, R, CH, effective(d.id, st.p, t, M), Object.assign({}, cx, { wL, wR }));
@@ -1909,6 +1911,7 @@ class Engine {
       if (st.pos && PLACE.has(d.id)) place(L, R, CH, st.pos);
       for (let i = 0, f = ch.fade; i < CH && f < this.fadeN; i++, f++) { const a = f / this.fadeN; L[i] *= a; R[i] *= a; if (wL) { wL[i] *= a; wR[i] *= a; } }
       ch.fade = Math.min(this.fadeN, ch.fade + CH);
+      if (!st.on) { for (let i = 0; i < CH; i++) { const a = Math.max(0, ch.out - i) / this.fadeN; L[i] *= a; R[i] *= a; if (wL) { wL[i] *= a; wR[i] *= a; } } ch.out -= CH; }
       live.push([ch, L, R, chanGain(d.id), wL, wR]);
     }
     // startle guard: one gain curve from the whole mix caps how far any event can rise above the
@@ -1956,7 +1959,7 @@ class Engine {
     const ch = this.ch[id]; if (!state.sounds[id].on || !ch.live) return;
     const now = this.ctx.currentTime; for (const gn of [ch.g, ch.wg]) if (gn) { gn.gain.cancelScheduledValues(now); gn.gain.setTargetAtTime(chanGain(id), now, 0.05); }
   }
-  mute(id) { const now = this.ctx.currentTime, ch = this.ch[id]; for (const gn of [ch.g, ch.wg]) if (gn) { gn.gain.cancelScheduledValues(now); gn.gain.setTargetAtTime(0, now, 0.12); } }
+  mute(id) { const ch = this.ch[id]; if (ch.live) { ch.out = Math.min(this.fadeN, ch.fade); ch.fade = this.fadeN; } } // fade out from wherever it is
   setSpace(key) { // crossfade to a new acoustic space
     const c = this.ctx, now = c.currentTime, nx = 1 - this.cvOn, old = this.cvOn;
     this.cv[nx].buffer = spaceBuffer(c, key);
@@ -1996,7 +1999,7 @@ async function play() {
   try { await eng.ctx.resume(); } catch (e) {}
   if (pendingStrike) { pendingStrike = false; eng.ch.thunder.inst.force = true; }
   if (state.breath.on && !eng.breath.on) eng.breath.start();
-  eng.tick(); eng.setMaster(masterGain(), eng.started ? 0.3 : 1.2); eng.started = true; // a slow first fade-in: nothing should start abruptly
+  eng.tick(); eng.setMaster(masterGain(), eng.started ? 0.5 : 1.2); eng.started = true; // a slow first fade-in: nothing should start abruptly
 }
 function pause() {
   if (!eng) return; playing = false; updateTransport(); backgroundAudio(false);
@@ -2007,7 +2010,7 @@ function pause() {
 function updateTransport() {
   const label = playing ? 'Pause' : 'Play', sc = SCENES.find(x => x.id === activeScene), live = SOUNDS.filter(d => state.sounds[d.id].on), on = live.map(d => d.name);
   for (const id of ['#play-ico', '#dock-ico']) $(id).setAttribute('href', playing ? '#i-pause' : '#i-play');
-  $('#play').setAttribute('aria-label', label); $('#dock-play').setAttribute('aria-label', label); $('#zen-play').textContent = label;
+  $('#play').setAttribute('aria-label', label); $('#dock-play').setAttribute('aria-label', label); $('#zen-play').innerHTML = icon(playing ? 'pause' : 'play') + label;
   $('#idle').hidden = playing || !!eng;
   $('#breath-desc').textContent = BREATH[state.breath.pattern].desc + (state.sounds.ocean.on ? ' The ocean\u2019s waves break on each in-breath.' : '');
   $('#now-title').textContent = sc ? sc.name : on.length ? 'Your mix' : 'Nothing selected';
@@ -2307,7 +2310,7 @@ function setSpace(k) {
 }
 function setBreath(on) {
   state.breath.on = on; save(); $('#breath-sw').setAttribute('aria-checked', on);
-  $('#zen-breath').textContent = on ? 'Stop breathing guide' : 'Breathe with the sound';
+  $('#zen-breath').innerHTML = icon('heart-pulse') + (on ? 'Stop breathing guide' : 'Breathe with the sound');
   if (on) { if (!playing) play(); else if (eng && !eng.breath.on) eng.breath.start(); }
   else if (eng && eng.breath.on) eng.breath.stop();
 }
