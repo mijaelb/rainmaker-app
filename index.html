@@ -1,0 +1,2330 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Nature soundscapes for calm, focus and sleep, synthesized live in your browser: no recordings, no loops.">
+<meta name="theme-color" content="#0D1317">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Rainmaker">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/favicon-64.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>Rainmaker</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: a field recorder. A dark "scope" screen up top that never changes theme,
+   transport beside the name, scenes as presets, then one channel strip per sound. */
+:root {
+  --bg: #E6EBEE; --surface: #F5F7F8; --ink: #142029; --muted: #55646F; --line: #C8D1D7;
+  --accent: #A65F05; --accent-soft: #F1DFC4; --on-accent: #FFFFFF; --focus: #2F6690;
+  --scope-bg: #0F1A22; --scope-1: #1F4766; --scope-2: #3F8AB8; --scope-3: #E9A23B; --scope-4: #FFF2DA; --scope-ink: #B9C7D1; --scope-line: #24333F;
+  --display: 'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif;
+  --body: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0D1317; --surface: #151E25; --ink: #E0E7EB; --muted: #8A99A3; --line: #25323B;
+  --accent: #E9A23B; --accent-soft: #3A2A13; --on-accent: #1A1207; --focus: #7DB4DB;
+  --scope-bg: #091015; --scope-1: #183A55; --scope-2: #3F8AB8; --scope-3: #E9A23B; --scope-4: #FFF2DA; --scope-ink: #9FB0BC; --scope-line: #1B2832;
+  color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0D1317; --surface: #151E25; --ink: #E0E7EB; --muted: #8A99A3; --line: #25323B;
+  --accent: #E9A23B; --accent-soft: #3A2A13; --on-accent: #1A1207; --focus: #7DB4DB;
+  --scope-bg: #091015; --scope-1: #183A55; --scope-2: #3F8AB8; --scope-3: #E9A23B; --scope-4: #FFF2DA; --scope-ink: #9FB0BC; --scope-line: #1B2832;
+  color-scheme: dark; }
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--body); }
+.wrap { max-width: 1180px; margin: 0 auto; padding-block: 28px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 22px; }
+button, select, input { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* head + transport */
+.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 18px 28px; }
+.brand h1 { font: 800 clamp(40px, 7vw, 68px)/0.9 var(--display); letter-spacing: -0.035em; margin: 0; }
+.brand p { margin: 10px 0 0; color: var(--muted); max-width: 52ch; text-wrap: pretty; }
+.transport { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 18px; }
+.play { display: inline-flex; align-items: center; gap: 10px; border: 0; border-radius: 999px; padding: 12px 22px 12px 16px;
+  background: var(--accent); color: var(--on-accent); font-weight: 600; cursor: pointer; min-width: 128px; justify-content: center; }
+.play svg { width: 20px; height: 20px; fill: currentColor; }
+.play:hover { filter: brightness(1.06); }
+.knob { display: flex; flex-direction: column; gap: 4px; min-width: 150px; }
+.knob label, .lbl { font: 500 11px/1.2 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+select { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; }
+
+/* scope */
+.scope { position: relative; background: var(--scope-bg); border-radius: 12px; overflow: hidden; height: 210px; color: var(--scope-ink); }
+.scope canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.axis { position: absolute; left: 0; top: 0; bottom: 0; width: 64px; pointer-events: none; }
+.axis span { position: absolute; left: 12px; transform: translateY(-50%); font: 500 10px/1 var(--mono); letter-spacing: 0.04em; color: var(--scope-ink); opacity: 0.8; }
+.axis span::after { content: ""; position: absolute; left: 44px; top: 50%; width: 9999px; border-top: 1px dashed var(--scope-line); }
+.scope-meta { position: absolute; right: 14px; top: 12px; display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; font: 500 11px/1 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; }
+.pill { padding: 6px 9px; border-radius: 999px; background: rgba(255,255,255,0.06); border: 1px solid var(--scope-line); }
+.pill.live { color: var(--scope-3); }
+.pill.live::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--scope-3); margin-right: 7px; vertical-align: 0; }
+.idle { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 10px; text-align: center; padding: 16px 16px 16px 64px; }
+.idle strong { font: 700 22px/1.15 var(--display); color: var(--scope-4); letter-spacing: -0.01em; }
+.idle span { max-width: 46ch; font-size: 13px; }
+.bolt { position: absolute; inset: 0; background: var(--scope-4); opacity: 0; pointer-events: none; }
+.bolt.on { animation: bolt 0.9s ease-out; }
+@keyframes bolt { 0% { opacity: 0.85 } 8% { opacity: 0.1 } 14% { opacity: 0.6 } 100% { opacity: 0 } }
+.flash { position: fixed; inset: 0; background: #FFFFFF; opacity: 0; pointer-events: none; z-index: 20; }
+.flash.on { animation: flash 0.8s ease-out; }
+@keyframes flash { 0% { opacity: 0.22 } 10% { opacity: 0.02 } 16% { opacity: 0.14 } 100% { opacity: 0 } }
+
+/* scenes */
+.scenes { display: flex; flex-direction: column; gap: 10px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.scene-groups { display: flex; flex-direction: column; gap: 12px; }
+.chip-group { display: flex; flex-direction: column; gap: 6px; }
+.chip { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 8px 12px; cursor: pointer; text-align: left; }
+.chip b { font-weight: 600; font-size: 14px; }
+.chip small { color: var(--muted); font-size: 12px; }
+.chip:hover { border-color: var(--muted); }
+.chip[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+
+/* channel strips */
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 14px; align-items: start; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 16px 18px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.card[data-on="true"] { border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); }
+@media (min-width: 700px) { .card.wide { grid-column: span 2; } .card.wide .params { grid-template-columns: 1fr 1fr; } }
+.card-head { display: flex; align-items: center; gap: 12px; }
+.card-head h3 { margin: 0; font: 700 22px/1 var(--display); letter-spacing: -0.015em; flex: 1; }
+.meter { width: 54px; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.meter i { display: block; height: 100%; width: calc(var(--lv, 0) * 100%); background: var(--accent); border-radius: 3px; }
+.switch { width: 44px; height: 26px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); padding: 2px; cursor: pointer; flex: none; }
+.switch span { display: block; width: 20px; height: 20px; border-radius: 50%; background: var(--muted); transition: transform 0.15s, background 0.15s; }
+.switch[aria-checked="true"] { background: var(--accent); border-color: var(--accent); }
+.switch[aria-checked="true"] span { transform: translateX(18px); background: var(--on-accent); }
+.blurb { margin: 0; color: var(--muted); font-size: 13.5px; text-wrap: pretty; }
+.params { display: grid; gap: 12px 22px; transition: opacity 0.2s; }
+.card[data-on="false"] .params { opacity: 0.55; }
+.row { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.row-top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.row-top label, .row-top .lbl { font: 500 13px/1.2 var(--body); text-transform: none; letter-spacing: 0; color: var(--ink); }
+output { font: 400 12px/1.2 var(--mono); color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+.row.span { grid-column: 1 / -1; }
+
+input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 20px; background: transparent; cursor: pointer; margin: 0; }
+input[type=range]::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: linear-gradient(to right, var(--ink) var(--pct, 50%), var(--line) var(--pct, 50%)); }
+input[type=range]::-moz-range-track { height: 4px; border-radius: 2px; background: var(--line); }
+input[type=range]::-moz-range-progress { height: 4px; border-radius: 2px; background: var(--ink); }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--surface); border: 2px solid var(--ink); margin-top: -6px; }
+input[type=range]::-moz-range-thumb { width: 12px; height: 12px; border-radius: 50%; background: var(--surface); border: 2px solid var(--ink); }
+.seg { display: flex; flex-wrap: wrap; gap: 4px; }
+.seg button { border: 1px solid var(--line); background: var(--bg); border-radius: 6px; padding: 5px 10px; font-size: 13px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.action { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.btn { border: 1px solid var(--ink); background: transparent; border-radius: 6px; padding: 6px 12px; font-weight: 600; font-size: 13px; cursor: pointer; }
+.btn:hover { background: var(--ink); color: var(--surface); }
+.status { font: 400 12px/1.35 var(--mono); color: var(--muted); }
+.status.hot { color: var(--accent); }
+
+/* session: mode + breathing */
+.session { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 14px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 16px 18px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.panel h3 { margin: 0; font: 700 22px/1 var(--display); letter-spacing: -0.015em; flex: 1; }
+.desc { margin: 0; color: var(--muted); font-size: 13.5px; text-wrap: pretty; }
+.ghost { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 11px 16px; cursor: pointer; font-weight: 600; }
+.ghost:hover { border-color: var(--muted); }
+.pacer { position: absolute; left: 50%; top: 50%; width: 150px; height: 150px; margin: -75px 0 0 -75px; pointer-events: none; display: grid; place-items: center; text-align: center; }
+.pacer .ring { position: absolute; inset: 0; border-radius: 50%; border: 2px solid var(--scope-4); opacity: 0.55; transform: scale(var(--s, 0.6)); }
+.pacer .glow { position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--scope-3) 40%, transparent) 0%, transparent 70%); transform: scale(var(--s, 0.6)); }
+.pacer b { position: relative; display: block; font: 600 16px/1.2 var(--display); color: var(--scope-4); text-shadow: 0 1px 8px rgba(0,0,0,0.6); }
+.pacer small { position: relative; display: block; font: 500 11px/1.4 var(--mono); color: var(--scope-ink); }
+.zen { position: fixed; inset: 0; z-index: 30; background: var(--scope-bg); color: var(--scope-ink); display: grid; place-items: center;
+  padding-block: env(safe-area-inset-top, 0px) env(safe-area-inset-bottom, 0px); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.zen-inner { display: flex; flex-direction: column; align-items: center; gap: 26px; }
+.zen .pacer { position: relative; left: auto; top: auto; margin: 0; width: min(60vmin, 340px); height: min(60vmin, 340px); }
+.zen .pacer b { font-size: 24px; }
+.zen-time { font: 500 13px/1.4 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; text-align: center; }
+.zen-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.zen button { background: transparent; color: var(--scope-4); border: 1px solid var(--scope-line); border-radius: 999px; padding: 10px 18px; cursor: pointer; font-weight: 600; }
+body.zen-on { overflow: hidden; }
+.scope.guided { height: 270px; }
+.guide { position: absolute; left: 64px; right: 14px; bottom: 12px; text-align: center; pointer-events: none; display: grid; gap: 3px; justify-items: center; }
+.guide b { font: 600 18px/1.25 var(--display); color: var(--scope-4); text-shadow: 0 1px 10px rgba(0,0,0,0.75); max-width: 46ch; text-wrap: balance; }
+.guide small { font-size: 13px; line-height: 1.4; color: var(--scope-ink); text-shadow: 0 1px 8px rgba(0,0,0,0.75); max-width: 70ch; text-wrap: balance; }
+.zen-guide { max-width: 44ch; text-align: center; display: grid; gap: 8px; justify-items: center; }
+.zen-guide b { font: 600 clamp(20px, 3.4vw, 28px)/1.25 var(--display); color: var(--scope-4); text-wrap: balance; }
+.zen-guide small { font-size: 15px; line-height: 1.45; text-wrap: balance; }
+.guide.fresh b, .guide.fresh small, .zen-guide.fresh b, .zen-guide.fresh small { animation: fadein 1.2s ease-out; }
+@keyframes fadein { from { opacity: 0 } to { opacity: 1 } }
+#prac-panel { grid-column: 1 / -1; }
+.prac-body { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 14px 36px; }
+.prac-col { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.ci { gap: 3px; }
+.ci { flex-wrap: nowrap; }
+#list { width: 100%; min-height: 110px; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 9px 11px; font: 14px/1.55 var(--body); resize: vertical; }
+#list:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+.ci button { flex: 1 1 0; min-width: 0; padding: 5px 0; text-align: center; font-variant-numeric: tabular-nums; }
+.ci-scale { display: flex; justify-content: space-between; font: 400 11px/1.2 var(--mono); color: var(--muted); }
+.voice { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; color: var(--muted); cursor: pointer; }
+.voice input { width: 16px; height: 16px; accent-color: var(--accent); margin: 0; }
+.research { display: flex; flex-direction: column; gap: 8px; color: var(--muted); font-size: 13.5px; }
+.research h4 { margin: 0; font: 700 15px/1.2 var(--display); color: var(--ink); }
+.research ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; max-width: 95ch; }
+.research cite { font-style: normal; color: var(--ink); }
+.foot { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 18px 28px; border-top: 1px solid var(--line); padding-top: 20px; color: var(--muted); font-size: 13.5px; }
+.foot h4 { margin: 0 0 4px; font: 700 15px/1.2 var(--display); color: var(--ink); }
+.foot p { margin: 0; text-wrap: pretty; }
+.linkish { background: none; border: 0; padding: 0; color: var(--muted); text-decoration: underline; cursor: pointer; font-size: 13px; }
+/* phones */
+.dock { position: fixed; left: 0; right: 0; bottom: 0; z-index: 25; display: flex; align-items: center; gap: 12px;
+  padding: 10px max(16px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  background: color-mix(in srgb, var(--surface) 88%, transparent); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+  border-top: 1px solid var(--line); transform: translateY(110%); transition: transform 0.25s ease; }
+.dock.show { transform: none; }
+.dock .play { min-width: 0; width: 48px; height: 48px; padding: 0; flex: none; }
+.dock-now { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.dock-now span, .dock-now small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dock-now span { font-weight: 600; font-size: 14px; }
+.dock-now small { font: 500 11px/1.3 var(--mono); letter-spacing: 0.04em; color: var(--muted); }
+.dock .ghost { padding: 10px 14px; flex: none; }
+@media (min-width: 761px) { .dock { display: none; } }
+@media (max-width: 760px) {
+  .wrap { gap: 18px; padding-top: max(20px, env(safe-area-inset-top, 0px)); padding-bottom: calc(92px + env(safe-area-inset-bottom, 0px)); }
+  .brand h1 { font-size: 46px; }
+  .brand p { font-size: 14px; }
+  .transport { width: 100%; gap: 12px 14px; }
+  .transport .knob { flex: 1 1 140px; min-width: 0; }
+  .scope { height: 150px; order: 1; }
+  .scope:has(.idle:not([hidden])) .scope-meta, .idle span { display: none; }
+  .idle { padding-left: 56px; }
+  .scope.guided { height: 230px; }
+  .scenes { order: 2; }
+  .cards { order: 3; }
+  .session { order: 4; }
+  .foot { order: 5; }
+  .research { order: 6; }
+  .scenes .chips { flex-wrap: nowrap; overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none;
+    margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); padding: 2px max(16px, env(safe-area-inset-left, 0px)); scroll-padding-inline: max(16px, env(safe-area-inset-left, 0px)); }
+  .scenes .chips::-webkit-scrollbar { display: none; }
+  .chip { flex: none; width: 152px; scroll-snap-align: start; padding: 10px 13px; border-radius: 10px; }
+  .card-head h3, .panel h3 { font-size: 20px; }
+}
+@media (pointer: coarse) {
+  .seg button { padding: 9px 13px; min-height: 40px; }
+  .ci button { padding-inline: 0; }
+  .btn { padding: 10px 16px; }
+  select { padding: 9px 10px; }
+  input[type=range] { height: 32px; }
+  input[type=range]::-webkit-slider-thumb { width: 24px; height: 24px; margin-top: -10px; }
+  input[type=range]::-moz-range-thumb { width: 20px; height: 20px; }
+  .switch { width: 52px; height: 30px; }
+  .switch span { width: 24px; height: 24px; }
+  .switch[aria-checked="true"] span { transform: translateX(22px); }
+}
+@media (prefers-reduced-motion: reduce) { .dock { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .switch span { transition: none; } .flash { display: none; } .guide.fresh b, .guide.fresh small, .zen-guide.fresh b, .zen-guide.fresh small { animation: none; } }
+</style>
+</head>
+<body>
+
+<div class="flash" id="flash"></div>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1>Rainmaker</h1>
+      <p>Natural ambience synthesized live in your browser. No recordings and no loops, so it can play all night without repeating.</p>
+    </div>
+    <div class="transport">
+      <button class="play" id="play" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path id="play-ico" d="M8 5v14l11-7z"/></svg><span id="play-lbl">Play</span></button>
+      <div class="knob"><label for="master">Master <output id="master-out" for="master"></output></label><input type="range" id="master" min="0" max="1" step="0.01"></div>
+      <div class="knob"><label for="sleep">Fade out after</label>
+        <select id="sleep"><option value="0">Never</option><option value="10">10 min</option><option value="20">20 min</option><option value="30">30 min</option><option value="45">45 min</option><option value="60">1 hour</option><option value="90">90 min</option><option value="120">2 hours</option></select></div>
+      <button class="ghost" id="zen-btn" type="button">Focus view</button>
+    </div>
+  </header>
+
+  <section class="scope" id="scope" aria-label="Live spectrogram">
+    <canvas id="cv"></canvas>
+    <div class="axis" id="axis"></div>
+    <div class="bolt" id="bolt"></div>
+    <div class="pacer" id="pacer" hidden><div class="glow"></div><div class="ring"></div><div><b>Breathe out</b><small></small></div></div>
+    <div class="guide" id="guide" hidden aria-live="polite"><b></b><small></small></div>
+    <div class="scope-meta"><span class="pill" id="now">Nothing playing</span><span class="pill" id="sleep-pill" hidden></span></div>
+    <div class="idle" id="idle"><strong>Press Play to start the rain</strong><span>The spectrogram scrolls here once sound is running. Low frequencies sit at the bottom, bright detail like drops and crackles at the top.</span></div>
+  </section>
+
+  <section class="session" aria-label="Mode, space and breathing">
+    <div class="panel">
+      <div class="card-head"><h3>Mode</h3><span class="status" id="guard-status"></span></div>
+      <div class="seg" id="modes" role="group" aria-label="Mode"></div>
+      <p class="desc" id="mode-desc"></p>
+    </div>
+    <div class="panel">
+      <div class="card-head"><h3>Space</h3></div>
+      <div class="seg" id="spaces" role="group" aria-label="Acoustic space"></div>
+      <p class="desc" id="space-desc"></p>
+    </div>
+    <div class="panel">
+      <div class="card-head"><h3 id="breath-h">Breathe with the sound</h3><button class="switch" type="button" role="switch" id="breath-sw" aria-labelledby="breath-h" aria-checked="false"><span></span></button></div>
+      <div class="seg" id="patterns" role="group" aria-label="Breathing pattern"></div>
+      <p class="desc" id="breath-desc"></p>
+      <div id="depth-row"></div>
+    </div>
+    <div class="panel" id="prac-panel">
+      <div class="card-head"><h3>Calm practices</h3><span class="status" id="prac-status"></span></div>
+      <div class="prac-body">
+        <div class="prac-col">
+          <div class="seg" id="pracs" role="group" aria-label="Practice"></div>
+          <p class="desc" id="prac-desc"></p>
+          <div class="row" id="list-row" hidden>
+            <textarea id="list" aria-label="Your list for the coming days" placeholder="Tomorrow I need to..."></textarea>
+            <div class="ci-scale"><span>Kept in this browser only</span><button class="linkish" id="list-clear" type="button">Clear the list</button></div>
+          </div>
+        </div>
+        <div class="prac-col">
+          <div class="row">
+            <div class="row-top"><span class="lbl" id="ci-q">How tense do you feel right now?</span><output id="ci-val"></output></div>
+            <div class="seg ci" id="ci" role="group" aria-labelledby="ci-q"></div>
+            <div class="ci-scale"><span>0 calm</span><span>10 very tense</span></div>
+          </div>
+          <div class="action"><button class="btn" id="prac-go" type="button">Start</button><label class="voice"><input type="checkbox" id="prac-voice"> Read the steps aloud</label></div>
+          <p class="status" id="prac-hist"></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scenes" aria-labelledby="scenes-h">
+    <div class="lbl" id="scenes-h">Soundscapes</div>
+    <div class="scene-groups" id="chips"></div>
+  </section>
+
+  <section class="cards" id="cards" aria-label="Sounds"></section>
+
+  <footer class="foot">
+    <div><h4>Drops on water</h4><p>A raindrop hitting a puddle traps a tiny air bubble that rings at the Minnaert frequency, about 3.3 kHz divided by its radius in mm, and rises in pitch as it settles. That chirp is the "plink" in real rain.</p></div>
+    <div><h4>Thunder timing</h4><p>Sound covers a kilometre in about 2.9 seconds. Each strike flashes on the scope, then the rumble arrives after the matching delay, duller and longer the farther away it is.</p></div>
+    <div><h4>Tuned to real recordings</h4><p>Every sound is synthesized, never sampled. Birds sing through a physical model of the songbird syrinx, thunder comes from a model of a lightning channel, and each sound was tuned against real field recordings using two AI listeners and the statistics the human ear uses to recognise natural textures.</p></div>
+    <div><h4>Your mix</h4><p>Volumes and settings are saved in this browser. Turn on any combination of sounds, then shape each one with its own controls. <button class="linkish" id="reset" type="button">Reset to defaults</button></p></div>
+  </footer>
+  <section class="research" aria-labelledby="res-h">
+    <h4 id="res-h">The research behind the modes</h4>
+    <ul>
+      <li>Slow breathing near 6 breaths a minute raises heart-rate variability and lowers anxiety. <cite>Lehrer &amp; Gevirtz, 2014; Zaccaro et al., 2018</cite></li>
+      <li>Five minutes a day of cyclic sighing improved mood and slowed resting breathing more than mindfulness meditation. <cite>Balban et al., Cell Reports Medicine, 2023</cite></li>
+      <li>People tend to breathe along with a slow rhythm they hear, which is why the sound itself swells and settles with the pacer and ocean waves break on each in-breath. <cite>Bernardi et al., Heart, 2006</cite></li>
+      <li>Nature sounds speed physiological recovery from stress compared with traffic noise, and turn attention outward rather than inward. <cite>Alvarsson, Wiens &amp; Nilsson, 2010; Gould van Praag et al., 2017</cite></li>
+      <li>Gentle, effortless interest ("soft fascination") lets tired directed attention recover, hence the slow drift of the weather in Relax mode. <cite>Kaplan, 1995</cite></li>
+      <li>Birdsong is among the sounds people find most restorative, and listening to it lowered anxiety in a controlled study. <cite>Ratcliffe, Gatersleben &amp; Sowden, 2013; Stobbe et al., Scientific Reports, 2022</cite></li>
+      <li>Sudden noise events that rise above the background, more than steady sound, are what wake sleepers. The startle guard caps how far any event can rise. <cite>Basner et al., 2011; WHO Environmental Noise Guidelines, 2018</cite></li>
+      <li>Background speech is the most disruptive sound for reading and memory; a steady masking sound reduces it. <cite>Banbury et al., 2001</cite></li>
+      <li>Attention training (focusing on one sound, switching between sounds, then hearing them all at once) reduced worry, anxiety and low mood across clinical and non-clinical studies. <cite>Wells, 1990; Knowles, Foden, El-Deredy &amp; Wells, 2016</cite></li>
+      <li>Letting thoughts pass, as in "leaves on a stream", is a core exercise of acceptance and commitment therapy, which helps with anxiety and depression in controlled trials. <cite>Hayes, Strosahl &amp; Wilson, 1999; A-Tjak et al., 2015</cite></li>
+      <li>Relaxation training, progressive muscle relaxation included, reliably lowers anxiety. <cite>Jacobson, 1938; Manzoni et al., BMC Psychiatry, 2008</cite></li>
+      <li>Picturing a stream of unrelated, harmless objects ("cognitive shuffling") is proposed to ease the slide into sleep by crowding out worry; the evidence is still early. <cite>Beaudoin, 2013</cite></li>
+      <li>Writing a specific to-do list for five minutes at bedtime helped people fall asleep faster in a sleep-lab study. <cite>Scullin et al., Journal of Experimental Psychology: General, 2018</cite></li>
+      <li>Rating tension from 0 to 10 before and after practice comes from behaviour therapy and helps you notice what works for you. <cite>Wolpe, 1969</cite></li>
+      <li>Across studies, water sounds lifted mood most and birdsong eased stress and annoyance most. <cite>Buxton et al., PNAS, 2021</cite></li>
+      <li>These are self-help practices. If anxiety is severe or does not ease, please talk to a doctor or therapist.</li>
+      <li>Not included: binaural beats. Studies disagree on whether they do anything beyond what relaxing sound already does.</li>
+    </ul>
+  </section>
+</div>
+<div class="dock" id="dock" aria-label="Playback">
+  <button class="play" id="dock-play" type="button" aria-label="Play"><svg viewBox="0 0 24 24" aria-hidden="true"><path id="dock-ico" d="M8 5v14l11-7z"/></svg></button>
+  <div class="dock-now"><span id="dock-now">Nothing playing</span><small id="dock-sub"></small></div>
+  <button class="ghost" id="dock-zen" type="button">Focus</button>
+</div>
+<div class="zen" id="zen" hidden>
+  <div class="zen-inner">
+    <div class="pacer" id="zpacer"><div class="glow"></div><div class="ring"></div><div><b>Listening</b><small></small></div></div>
+    <div class="zen-guide" id="zguide" hidden aria-live="polite"><b></b><small></small></div>
+    <div class="zen-time" id="zen-time"></div>
+    <div class="zen-row"><button type="button" id="zen-play">Pause</button><button type="button" id="zen-breath">Breathe with the sound</button><button type="button" id="zen-exit">Exit focus view</button></div>
+  </div>
+</div>
+
+<script>
+/* ================= DSP core =================
+   Every sound is synthesized sample by sample in short chunks and streamed
+   back to back, so nothing is a loop and nothing ever repeats.
+   To add a sound: write a factory returning { render(L, R, n, params) }
+   that ADDS into L/R, then register it in SOUNDS at the bottom. */
+let SR = 48000;
+const TAU = Math.PI * 2;
+let rnd = Math.random;
+function seedRandom(seed) { let t = seed >>> 0; rnd = () => { t = (t + 0x6D2B79F5) >>> 0; let x = Math.imul(t ^ (t >>> 15), 1 | t); x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x; return ((x ^ (x >>> 14)) >>> 0) / 4294967296; }; }
+// K: the inner settings of each sound. Defaults were found by tuning against real recordings
+// (texture statistics plus an AudioSet sound recogniser); render tools can override them.
+const K = {
+  w_fc0: 432.1, w_fcK: 2432, w_fcExp: 0.7091, w_q: 0.2024, w_hp: 196.4, w_body: 0.9745, w_bodyExp: 0.6963, w_brown: 0.3019, w_pink: 2.696, w_gustDepth: 0.5538, w_stretch: 2.576,
+  w_g1: 0.08753, w_g1k: 0.3935, w_g2: 0.2857, w_g2k: 3.379, w_flut: 1.44, w_leafRate: 6000, w_leafG: 0.01, w_leafLo: 1175, w_leafHi: 3537, w_leafQ: 0.6381, w_leafHp: 772.8, w_whis: 1.4,
+  o_tb: 0.5001, o_att: 1.114, o_tau: 1.505, o_A: 1.875, o_fc0: 280.7, o_fcB: 734.3, o_fcK: 6640, o_fcExp: 3.668, o_q: 0.3328, o_xlp: 1566, o_sub: 0.1147, o_back: 0.1767,
+  o_foamRate: 3.001, o_foamG: 0.02074, o_foamLo: 4476, o_foamHi: 3374, o_ba: 0.7538, o_sa: 1.172, o_saLp: 1379, o_farRate: 0.4914, o_farG: 0.3451, o_set2: 1.102,
+  s_wd: 0.6, s_gw: 0.4876, s_band: 0.08, s_bandQ: 2.143, s_wLo: 600, s_wHi: 2410, s_wQ: 1.962, s_base: 1.354, s_bubA: 0.06924, s_bubDF: 0.9534, s_bubEps: 0.3559, s_smallA: 0.2945,
+  s_splash: 0.1411, s_splashRate: 1.454, s_la: 1.317, s_ga: 1.292, s_gurg: 1.461, s_turb: 12.98, s_mDepth: 5.915,
+  f_rate0: 0.2925, f_rate: 123.1, f_m: 3.803, f_ampPow: 3.563, f_amp: 1.694, f_fbLo: 2511, f_fbHi: 4881, f_exLo: 0.0001381, f_exHi: 0.001175, f_q: 2.654, f_snap: 0.1406, f_span: 1.608,
+  d_dist: 1, d_pow: 1.5, d_leafEx: 1, d_leafF: 1, d_leafQ: 1, d_thud: 1, d_plinkF: 1, d_plink: 0.6, d_plinkDF: 4, d_wet: 1,
+  t_ic: 1, t_dir: 0.15, t_tau: 1, t_abs: 12000, t_absK: 1300, t_absE: 0.62, t_shadow: 6, t_rise: 1, t_tail: 1, t_echo: 1,
+  b_width: 0.6, b_itd: 0.00045, fr_width: 0.9, fr_itd: 0.0009, c_width: 0.4, r_gs: 0.35, r_hgs: 0.5, r_col: 3, s_spGs: 0.5, r_wKnock: 1, r_wClick: 1, r_wClickF: 1, r_wHi: 1,
+  w_gdb: 14, w_locdb: 1, w_fast: 1.2, w_loc: 0.08, w_fexp: 0.35, w_chp: 280, w_clp: 3400, w_lf: 4500, w_lq: 0.55, w_ca: 0.82, w_sexp: 0.72, w_cexp: 2.5, w_la: 0.53, w_lexp: 3, w_flut2: 0.2, w_rumble: 1.35, w_col: 5,
+  o_peel: 1, o_sets: 0.3, o_hp: 130, o_fzTick: 0.35, o_fizz: 0.3, o_fzTop: 9000,
+  b_doveQ: 6, b_doveOec: 1, b_doveLp: 0.6, b_owlQ: 3, b_owlOec: 0.9, b_owlLp: 1,
+  fr_peepH: 1, fr_treeH: 1, fr_treePr: 1, fr_treePd: 1,
+  b_sbOec: 0.8,
+  f_actS: 0.06, f_actM: 0.3, f_actD: 2.0, f_actL: 0.9, f_crackP: 0.3, f_crackA: 1.0,
+  d_bubP: 0.3, d_splash: 1.5, d_bg: 0.08, d_bgRate: 120, d_bgLo: 900, d_bgHi: 5000, d_bgQ: 2.2,
+  b_syr: 1, b_sa: 0.007, b_sb: 0.02, b_wet: 1.437, b_press: 0.4128, b_jit: 0.01022, b_tubeR: 0.1296, b_oecQ: 1.5, b_breath: 0.5, b_off: -0.03, b_flutP: 2.585, b_flutD: 3.201, b_airLo: 0.01822, b_airHf: 0.006144, b_far: 6.193, fr_far: 2.5, fr_farMax: 20, fr_treeF: 1, fr_treeLo: 1, fr_pulseSm: 0.7, fr_pulseJ: 0.08, r_click: 1, r_clickQ: 1, r_dens: 1, r_bedQ: 1, r_hiDens: 0.6, r_hi: 1, r_hiQ: 1, r_bub: 1.5, r_slow: 0.05, b_ambDove: 0.25, b_farDove: 0.5, b_ambOwl: 0.3, b_pressDove: 1, b_breathDove: 0.5, b_hp: 294.9, b_noise: 0.0004792, b_air: 0.01929,
+  f_pop: 1.722, f_roar: 1.149, f_roarLp: 2.99, f_lick: 0.009958, f_lickRate: 1.364, f_siz: 0.01791, f_flurry: 0.04542,
+};
+const rr = (a, b) => a + rnd() * (b - a);
+const lr = (a, b) => a * Math.pow(b / a, rnd());
+const ns = () => rnd() * 2 - 1;
+const clamp = (x, a, b) => (x < a ? a : x > b ? b : x);
+function panG(p) { const a = (clamp(p, -1, 1) + 1) * Math.PI / 4; return [Math.cos(a), Math.sin(a)]; }
+
+class Pink { // Paul Kellet's refined pink noise
+  constructor() { this.b0 = this.b1 = this.b2 = this.b3 = this.b4 = this.b5 = this.b6 = 0; }
+  next() {
+    const w = rnd() * 2 - 1;
+    this.b0 = 0.99886 * this.b0 + w * 0.0555179; this.b1 = 0.99332 * this.b1 + w * 0.0750759;
+    this.b2 = 0.969 * this.b2 + w * 0.153852; this.b3 = 0.8665 * this.b3 + w * 0.3104856;
+    this.b4 = 0.55 * this.b4 + w * 0.5329522; this.b5 = -0.7616 * this.b5 - w * 0.016898;
+    const o = this.b0 + this.b1 + this.b2 + this.b3 + this.b4 + this.b5 + this.b6 + w * 0.5362;
+    this.b6 = w * 0.115926; return o * 0.11;
+  }
+}
+class Brown { constructor() { this.y = 0; } next() { this.y = (this.y + 0.02 * (rnd() * 2 - 1)) / 1.02; return this.y * 3.5; } }
+
+class BQ { // RBJ biquad, transposed direct form II
+  constructor(type, f, q = 0.707, db = 0) { this.z1 = 0; this.z2 = 0; this.set(type, f, q, db); }
+  set(type, f, q = 0.707, db = 0) {
+    const w = TAU * Math.min(f, SR * 0.45) / SR, c = Math.cos(w), s = Math.sin(w), al = s / (2 * q);
+    let b0, b1, b2, a0 = 1 + al, a2 = 1 - al;
+    if (type === 'lp') { b0 = (1 - c) / 2; b1 = 1 - c; b2 = b0; }
+    else if (type === 'hp') { b0 = (1 + c) / 2; b1 = -(1 + c); b2 = b0; }
+    else if (type === 'pk') { const A = Math.pow(10, db / 40); b0 = 1 + al * A; b1 = -2 * c; b2 = 1 - al * A; a0 = 1 + al / A; a2 = 1 - al / A; } // peaking EQ
+    else { b0 = al; b1 = 0; b2 = -al; } // band-pass, 0 dB peak
+    this.b0 = b0 / a0; this.b1 = b1 / a0; this.b2 = b2 / a0; this.a1 = -2 * c / a0; this.a2 = a2 / a0;
+  }
+  run(x) { const y = this.b0 * x + this.z1; this.z1 = this.b1 * x - this.a1 * y + this.z2; this.z2 = this.b2 * x - this.a2 * y; return y; }
+}
+class SVF { // trapezoidal state-variable filter, safe to modulate
+  constructor() { this.s1 = 0; this.s2 = 0; this.bp = 0; this.set(1000, 0.7); }
+  set(f, q) { const g = Math.tan(Math.PI * Math.min(f, SR * 0.45) / SR); this.g = g; this.k = 1 / q; this.h = 1 / (1 + this.k * g + g * g); }
+  run(x) {
+    const g = this.g, hp = (x - (this.k + g) * this.s1 - this.s2) * this.h;
+    const bp = g * hp + this.s1; this.s1 = g * hp + bp;
+    const lp = g * bp + this.s2; this.s2 = g * bp + lp; this.bp = bp; return lp;
+  }
+}
+class Drift { // smooth random wander in 0..1, `rate` ~ changes per second
+  constructor(rate) { this.rate = rate; this.t = rnd(); this.a = this.t; this.v = this.t; }
+  next() {
+    const r = this.rate; if (rnd() < r / SR) this.t = rnd();
+    const c = Math.PI * r / SR; this.a += (this.t - this.a) * c; this.v += (this.a - this.v) * c; return this.v;
+  }
+}
+class Spawner { // Poisson event clock that carries over between chunks
+  constructor() { this.left = 0; }
+  run(rate, n, cb, base = 0) {
+    if (!(rate > 0)) return;
+    const mean = SR / rate;
+    if (this.left > mean * 6) this.left = -Math.log(1 - rnd()) * mean;
+    let i = this.left;
+    while (i < n) { cb(base + Math.floor(i)); i += -Math.log(1 - rnd()) * mean; }
+    this.left = i - n;
+  }
+}
+
+/* ---------- voices (short one-shot events) ---------- */
+function vNoise(off, amp, pan, ex, f, q) { // decaying noise burst through a resonance
+  const b = new BQ('bp', f, q), [gl, gr] = panG(pan), dec = Math.exp(-1 / (ex * SR));
+  const exEnd = Math.ceil(ex * 7 * SR), life = exEnd + Math.ceil(q / (Math.PI * f) * 7 * SR) + 4;
+  let e = amp * Math.sqrt(q * SR * 0.5 / f) * 0.35, k = 0;
+  return { off, run(L, R, n) {
+    if (this.off >= n) { this.off -= n; return true; }
+    let i = this.off; this.off = 0;
+    for (; i < n && k < life; i++, k++) {
+      const y = b.run(k < exEnd ? (rnd() * 2 - 1) * e : 0); e *= dec;
+      L[i] += y * gl; R[i] += y * gr;
+    }
+    return k < life;
+  } };
+}
+function vBub(off, f0, amp, pan, dF, eps) { // Minnaert bubble: rising-pitch damped sine (van den Doel)
+  const d = (0.13 * f0 + 0.0072 * Math.pow(f0, 1.5)) * dF, life = Math.ceil(6.9 / d * SR);
+  const [gl, gr] = panG(pan), inc0 = TAU * f0 / SR, sig = eps * d / SR, dec = Math.exp(-d / SR), att = 0.0004 * SR;
+  let k = 0, re = 1, im = 0, cr = 1, ci = 0, e = amp;
+  return { off, run(L, R, n) {
+    if (this.off >= n) { this.off -= n; return true; }
+    let i = this.off; this.off = 0;
+    for (; i < n && k < life; i++, k++) {
+      if ((k & 15) === 0) { // rotating phasor; the chirp rate is slow, so refresh the step every 16 samples
+        const inc = inc0 * (1 + sig * (k + 8)); if (inc > 2.8) { k = life; break; }
+        cr = Math.cos(inc); ci = Math.sin(inc);
+      }
+      const nr = re * cr - im * ci; im = re * ci + im * cr; re = nr;
+      const y = im * e * (k < att ? k / att : 1); e *= dec;
+      L[i] += y * gl; R[i] += y * gr;
+    }
+    return k < life;
+  } };
+}
+function vCrack(off, amp, pan, ex, hp) { // a crack: steam and gas tearing out of wood, a sharp broadband click with no ringing
+  const [gl, gr] = panG(pan), dec = Math.exp(-1 / (ex * SR)), life = Math.ceil(ex * 8 * SR) + 2, a1 = Math.exp(-TAU * hp / SR);
+  let e = amp, k = 0, x1 = 0, y1 = 0;
+  return { off, run(L, R, n) {
+    if (this.off >= n) { this.off -= n; return true; }
+    let i = this.off; this.off = 0;
+    for (; i < n && k < life; i++, k++) { const x = (rnd() * 2 - 1) * e, y = a1 * (y1 + x - x1); x1 = x; y1 = y; e *= dec; L[i] += y * gl; R[i] += y * gr; }
+    return k < life;
+  } };
+}
+function vModal(off, amp, pan, modes, click) { // struck object: sum of decaying partials + contact click
+  const [gl, gr] = panG(pan);
+  const ms = modes.map(m => {
+    const w = TAU * m.f / SR, r = Math.exp(-1 / (m.tau * SR));
+    // undamped-glide partials use a 2-pole recursion (cheap); gliding ones use sin()
+    return { gl: !!m.glide, inc: w, a: m.a * amp, d: r, g: m.glide ? Math.exp(-m.glide / SR) : 1, ph: 0, c: 2 * r * Math.cos(w), r2: r * r, p: 0, q: m.a * amp * r * Math.sin(w) };
+  });
+  let life = 0; for (const m of modes) life = Math.max(life, m.tau); life = Math.ceil(life * 5.5 * SR);
+  const cl = Math.ceil(0.002 * SR), cd = Math.exp(-1 / (0.0004 * SR));
+  let k = 0, ce = amp * click, prev = 0;
+  return { off, run(L, R, n) {
+    if (this.off >= n) { this.off -= n; return true; }
+    let i = this.off; this.off = 0;
+    for (; i < n && k < life; i++, k++) {
+      let y = 0;
+      for (let j = 0; j < ms.length; j++) {
+        const m = ms[j];
+        if (m.gl) { y += Math.sin(m.ph) * m.a; m.ph += m.inc; m.inc *= m.g; m.a *= m.d; }
+        else { y += m.p; const nx = m.c * m.q - m.r2 * m.p; m.p = m.q; m.q = nx; }
+      }
+      if (k < cl) { const w = (rnd() * 2 - 1) * ce; y += w - prev; prev = w; ce *= cd; }
+      L[i] += y * gl; R[i] += y * gr;
+    }
+    return k < life;
+  } };
+}
+class Color { // gentle spectral bumps that wander over minutes: no real place has a perfectly smooth spectrum
+  constructor(n, lo, hi) {
+    this.lo = lo; this.hi = hi; this.b = [];
+    for (let k = 0; k < n; k++) { const p = this.pick(); this.b.push({ cur: Object.assign({}, p), to: p, left: rr(20, 90), L: new BQ('pk', p.f, p.q, 0), R: new BQ('pk', p.f, p.q, 0) }); }
+  }
+  pick() { return { f: lr(this.lo, this.hi), q: rr(0.8, 2.2), g: (rnd() < 0.5 ? -1 : 1) * rr(0.3, 1) }; }
+  run(L, R, n, depth) {
+    const dt = n / SR, a = 1 - Math.exp(-dt / 25);
+    for (const b of this.b) {
+      if ((b.left -= dt) < 0) { b.to = this.pick(); b.left = rr(40, 120); }
+      b.cur.f *= Math.pow(b.to.f / b.cur.f, a); b.cur.q += (b.to.q - b.cur.q) * a; b.cur.g += (b.to.g - b.cur.g) * a;
+      b.L.set('pk', b.cur.f, b.cur.q, b.cur.g * depth); b.R.set('pk', b.cur.f, b.cur.q, b.cur.g * depth);
+      const fl = b.L, fr = b.R; for (let i = 0; i < n; i++) { L[i] = fl.run(L[i]); R[i] = fr.run(R[i]); }
+    }
+  }
+}
+class StereoField { // real stereo recordings keep left and right alike in the lows and let them drift apart in the highs
+  constructor(fc = 6000, low = 0.4, high = 1.3) { this.a = 1 - Math.exp(-TAU * fc / SR); this.s1 = 0; this.s2 = 0; this.low = low; this.high = high; }
+  run(L, R, n) {
+    const a = this.a, lo = this.low, hi = this.high; let s1 = this.s1, s2 = this.s2;
+    for (let i = 0; i < n; i++) {
+      const m = (L[i] + R[i]) * 0.5, sd = (L[i] - R[i]) * 0.5; s1 += (sd - s1) * a; s2 += (s1 - s2) * a;
+      const so = lo * s2 + hi * (sd - s2); L[i] = m + so; R[i] = m - so;
+    }
+    this.s1 = s1; this.s2 = s2;
+  }
+}
+function runVoices(list, L, R, n) { let j = 0; for (let i = 0; i < list.length; i++) if (list[i].run(L, R, n)) list[j++] = list[i]; list.length = j; }
+
+/* ================= RAIN =================
+   Tuned against field recordings: real rain is a dense, nearly steady texture
+   with most energy between ~250 Hz and 3 kHz and a steep fall above ~5 kHz.
+   Its "hiss" is made of countless tiny drop impacts, so the bed here is a cloud
+   of short damped resonances (grains), never raw broadband noise. */
+class GrainCloud {
+  constructor(max) {
+    this.max = max; this.n = 0; this.l = 0; this.r = 0;
+    this.p = new Float64Array(max); this.q = new Float64Array(max); this.c = new Float64Array(max); this.r2 = new Float64Array(max);
+    this.gl = new Float32Array(max); this.gr = new Float32Array(max); this.life = new Int32Array(max);
+  }
+  add(f, Q, a, pan) { // one damped sine: y[n] = a r^n sin(n w)
+    if (this.n >= this.max) return;
+    f = Math.min(f, SR * 0.45);
+    const k = this.n++, w = TAU * f / SR, tau = Q / (Math.PI * f), r = Math.exp(-1 / (tau * SR)), a2 = Math.cos((clamp(pan, -1, 1) + 1) * Math.PI / 4);
+    this.p[k] = 0; this.q[k] = a * r * Math.sin(w); this.c[k] = 2 * r * Math.cos(w); this.r2[k] = r * r;
+    this.gl[k] = a2; this.gr[k] = Math.sqrt(1 - a2 * a2); this.life[k] = Math.ceil(tau * 5 * SR);
+  }
+  step() {
+    let l = 0, r = 0; const p = this.p, q = this.q, c = this.c, r2 = this.r2, gl = this.gl, gr = this.gr, life = this.life;
+    for (let k = 0; k < this.n; k++) {
+      const y = p[k], nx = c[k] * q[k] - r2[k] * y; p[k] = q[k]; q[k] = nx; l += y * gl[k]; r += y * gr[k];
+      if (--life[k] <= 0) { const j = --this.n; p[k] = p[j]; q[k] = q[j]; c[k] = c[j]; r2[k] = r2[j]; gl[k] = gl[j]; gr[k] = gr[j]; life[k] = life[j]; k--; }
+    }
+    this.l = l; this.r = r;
+  }
+}
+class ResBank { // fixed resonators driven by independent noise: the dense limit of a grain cloud with the same resonances
+  constructor(n) {
+    this.n = n; this.y1 = new Float64Array(n); this.y2 = new Float64Array(n); this.c = new Float64Array(n); this.r2 = new Float64Array(n); this.gin = new Float64Array(n);
+    this.x = (rnd() * 4294967296) >>> 0 || 1; this.key = '';
+  }
+  tune(f0, f1, Q) { // log-spaced between f0 and f1 with equal power each; total output power 1
+    const key = f0.toFixed(1) + ',' + f1.toFixed(1) + ',' + Q.toFixed(3); if (key === this.key) return; this.key = key;
+    for (let k = 0; k < this.n; k++) {
+      const f = Math.min(f0 * Math.pow(f1 / f0, (k + 0.5) / this.n), SR * 0.45), w = TAU * f / SR, r = Math.exp(-Math.PI * f / (Q * SR));
+      const c = 2 * r * Math.cos(w), r2 = r * r, pw = (1 + r2) / ((1 - r2) * ((1 + r2) * (1 + r2) - c * c));
+      this.c[k] = c; this.r2[k] = r2; this.gin[k] = Math.sqrt(3 / (pw * this.n)); // uniform noise has variance 1/3
+    }
+  }
+  next() {
+    let x = this.x, o = 0; const c = this.c, r2 = this.r2, gin = this.gin, y1 = this.y1, y2 = this.y2;
+    for (let k = 0; k < this.n; k++) {
+      x ^= x << 13; x ^= x >>> 17; x ^= x << 5;
+      const y = c[k] * y1[k] - r2[k] * y2[k] + (x | 0) * 4.656612873077393e-10 * gin[k]; y2[k] = y1[k]; y1[k] = y; o += y;
+    }
+    this.x = x; return o;
+  }
+}
+const SURF = {
+  ground: { dn: 1, out: 1, bed: [200, 3800], bq: [1.8, 4.5], lp: 6500, bg: 1, hi: 1.1, hlp: 17000, near: 'drop', nr: 1, bub: 1, gs: 1 },
+  leaves: { dn: 1, out: 1, bed: [260, 5200], bq: [2.5, 6], lp: 8000, bg: 1, hi: 1.3, hlp: 17000, near: 'leaf', nr: 1.2, bub: 0.04, gs: 1 },
+  roof: { dn: 0.6, out: 1, bed: [350, 4200], bq: [5, 14], lp: 5500, bg: 0.8, hi: 0.7, hlp: 10000, near: 'roof', nr: 1, bub: 0, gs: 1.6 },
+  window: { dn: 0.6, out: 2, bed: [120, 2000], bq: [1.5, 3.5], lp: 2400, bg: 0.3, hi: 0.45, hlp: 12000, near: 'glass', nr: 1.6, bub: 0, gs: 1.2 },
+  tent: { dn: 0.4, out: 1, bed: [140, 1300], bq: [1.5, 3.5], lp: 2600, bg: 1.1, hi: 0.15, hlp: 6000, near: 'tent', nr: 1, bub: 0, gs: 1.2 },
+};
+let HI_LEVEL = 0.18;
+const ROOF = [612, 948, 1307, 1690, 2210, 2735, 3390, 4120, 5070];
+function Rain() {
+  const bed = new GrainCloud(1200), nc = new GrainCloud(300), hi = new GrainCloud(400), nbL = new ResBank(12), nbR = new ResBank(12), nhL = new ResBank(6), nhR = new ResBank(6), hlL = new BQ('lp', 14000, 0.6), hlR = new BQ('lp', 14000, 0.6), bL = new Brown(), bR = new Brown();
+  const lpL = new BQ('lp', 6500, 0.6), lpR = new BQ('lp', 6500, 0.6), hpL = new BQ('hp', 90, 0.7), hpR = new BQ('hp', 90, 0.7);
+  const rmL = new BQ('lp', 200, 0.7), rmR = new BQ('lp', 200, 0.7);
+  const gust = new Drift(0.15), hsw = new Drift(0.8), spB = new Spawner(), voices = [], drips = [], col = new Color(3, 250, 4000);
+  let surf = null, lpKey = -1, gt = 0, nt = 0, ht = 0, rA = 0;
+  function nearDrop(s, i, C, S, A) {
+    const pan = rr(-1, 1) * (0.55 + 0.45 * C), amp = Math.pow(rnd(), 2) * A, fs = 1.2 - 0.4 * S;
+    switch (s.near) {
+      case 'drop': // body of the impact plus a faint bright splash
+        nc.add(lr(400, 2200) * fs, rr(2, 3.5), amp * (rnd() < 0.5 ? 1 : -1), pan);
+        voices.push(vNoise(i, amp * 0.6 * K.r_click, pan, 0.00015, lr(6000, 12000), 0.8 * K.r_clickQ)); break;
+      case 'leaf':
+        voices.push(vNoise(i, amp * 0.7, pan, lr(0.0015, 0.005), lr(1500, 5000) * fs, rr(1, 2)));
+        if (rnd() < 0.4) nc.add(lr(350, 900) * fs, 3, amp * 0.5, pan); break;
+      case 'glass': // a tap on the pane: a dull knock of the glass plus a short click
+        nc.add(lr(300, 1400) * fs, rr(1.2, 2.2), amp * 0.5 * K.r_wKnock, pan);
+        if (rnd() < 0.5) nc.add(lr(900, 2600) * fs, rr(2, 4), amp * 0.3 * K.r_wKnock, pan);
+        voices.push(vNoise(i, amp * 0.8 * K.r_wClick, pan, lr(0.0003, 0.0009), lr(2000, 9000) * K.r_wClickF, rr(0.6, 1.1))); break;
+      case 'roof': {
+        const m = 2 + Math.floor(rnd() * 2), ex = lr(0.0004, 0.0015);
+        for (let j = 0; j < m; j++) voices.push(vNoise(i, amp * (j ? 0.35 : 0.6), pan, ex, ROOF[Math.floor(rnd() * ROOF.length)] * rr(0.97, 1.03) * (1.1 - 0.2 * S), rr(6, 16)));
+        voices.push(vNoise(i, amp * 0.35, pan, 0.0003, lr(3000, 9000), 0.8)); break;
+      }
+      default: { // tent fabric: a soft drum thump
+        const f = lr(180, 480) * fs;
+        voices.push(vModal(i, amp * 0.4, pan, [{ f, a: 1, tau: rr(0.008, 0.02) }, { f: f * rr(2.2, 2.6), a: rr(0.15, 0.3), tau: rr(0.005, 0.012) }], 0.9));
+      }
+    }
+  }
+  return { render(L, R, n, p) {
+    const s = SURF[p.surface] || SURF.ground, I = p.intensity, C = p.closeness, S = p.size, G = p.gusts;
+    const lpf = s.lp * (0.8 + 0.4 * C);
+    if (s !== surf || lpf !== lpKey) { surf = s; lpKey = lpf; lpL.set('lp', lpf, 0.6); lpR.set('lp', lpf, 0.6); hlL.set('lp', s.hlp, 0.6); hlR.set('lp', s.hlp, 0.6); }
+    // bed: grain density and level both follow rainfall; per-grain gain normalised so level is independent of density
+    const dens = (1500 + 26000 * Math.pow(I, 1.4)) * s.dn * Math.min(1.5, K.r_dens), bedMean = SR / dens, meanQ = (s.bq[0] + s.bq[1]) / 2 * K.r_bedQ;
+    const g = (0.01 + 0.13 * Math.pow(I, 1.15)) * s.bg / Math.sqrt(dens * meanQ / (1000 * Math.PI) * 0.125);
+    const fsz = 1.15 - 0.3 * S, nearMean = SR / ((1 + 60 * Math.pow(I, 1.3)) * (0.2 + 1.3 * C) * s.nr), nearA = (0.15 + 0.6 * C) * 0.5;
+    // air: the crisp top end of rain, a thinner cloud of very short high grains (4-14 kHz)
+    const sHi = s.hi * (s === SURF.window ? K.r_wHi : 1);
+    const hDens = dens * Math.min(1.5, K.r_hiDens), hMean = SR / hDens, gh = HI_LEVEL * K.r_hi * (0.01 + 0.13 * Math.pow(I, 1.15)) * sHi * (0.7 + 0.6 * C) / Math.sqrt(hDens * 1.8 * K.r_hiQ / (1000 * Math.PI) * 0.0714);
+    if (gt > bedMean * 6) gt = bedMean;
+    if (ht > hMean * 6) ht = hMean;
+    if (nt > nearMean * 6) nt = rnd() * nearMean;
+    const full = voices.length > 1200;
+    if (!full && s.bub > 0) spB.run(s.bub * (3 + 140 * Math.pow(I, 1.3)) * (0.3 + C), n, off => {
+      const r = lr(0.45, 1.4 + 2.4 * S);
+      voices.push(vBub(off, 3260 / r, Math.pow(rnd(), 2.2) * 0.1 * K.r_bub * (0.35 + 0.65 * C) * Math.sqrt(r / 1.5), rr(-1, 1) * (0.5 + 0.5 * C), rr(0.15, 0.35), rr(0.05, 0.3)));
+    });
+    const want = Math.round(p.drips * 4); // water falling from eaves into a puddle
+    while (drips.length < want) drips.push({ pan: rr(-0.9, 0.9), mean: rr(0.6, 1.8), f: lr(650, 1400), left: rnd() * SR });
+    drips.length = want;
+    for (const d of drips) {
+      let t = d.left;
+      while (t < n) {
+        const o = Math.floor(t), a = rr(0.05, 0.11) * (0.5 + 0.5 * p.drips);
+        voices.push(vBub(o, d.f * rr(0.93, 1.07), a, d.pan, rr(0.1, 0.16), rr(0.12, 0.3)));
+        voices.push(vNoise(o, a * 0.3, d.pan, 0.0015, lr(1500, 3500), 0.8));
+        t += d.mean / (0.35 + I) * rr(0.75, 1.25) * SR;
+      }
+      d.left = t - n;
+    }
+    const rT = 0.06 * Math.pow(I, 2), r0 = rA; rA = rT;
+    const b0 = s.bed[0] * fsz, b1 = s.bed[1] * fsz, q0 = s.bq[0], q1 = s.bq[1];
+    // the drops falling everywhere around you add up to a smooth hiss; only a share stays as separate grains
+    const aB = Math.min(0.95, K.r_gs * s.gs), aH = Math.min(0.95, K.r_hgs * s.gs), nB = Math.sqrt(1 - aB * aB), nH = Math.sqrt(1 - aH * aH);
+    const lvl = 0.01 + 0.13 * Math.pow(I, 1.15), hiLvl = HI_LEVEL * K.r_hi * lvl * sHi * (0.7 + 0.6 * C);
+    nbL.tune(b0, b1, Math.min(meanQ, 3)); nbR.tune(b0, b1, Math.min(meanQ, 3)); nhL.tune(4000, 16000, 1.8 * K.r_hiQ); nhR.tune(4000, 16000, 1.8 * K.r_hiQ);
+    const kB = lvl * s.bg * 0.5 * nB, kH = hiLvl * 0.5 * nH;
+    for (let i = 0; i < n; i++) {
+      const m = 1 + G * (2 * gust.next() - 1) * 0.45, hs = 1 + K.r_slow * (2 * hsw.next() - 1);
+      while (gt < 1) {
+        const f = lr(b0, b1), u = rnd();
+        bed.add(f, rr(q0, q1) * K.r_bedQ, g * m * Math.sqrt(f / 1000) * u * Math.sqrt(u) * (rnd() < 0.5 ? 1 : -1), rnd() * 2 - 1);
+        gt += -Math.log(1 - rnd()) * bedMean / m;
+      }
+      gt -= 1;
+      while (ht < 1) {
+        const f = lr(4000, 16000), u = rnd();
+        hi.add(f, rr(1.2, 2.4) * K.r_hiQ, gh * m * hs * Math.sqrt(f / 1000) * u * u * u * (rnd() < 0.5 ? 1 : -1), rnd() * 2 - 1);
+        ht += -Math.log(1 - rnd()) * hMean / m;
+      }
+      ht -= 1;
+      while (nt < 1) { if (!full) nearDrop(s, i, C, S, nearA * m); nt += -Math.log(1 - rnd()) * nearMean / m; }
+      nt -= 1;
+      bed.step(); nc.step(); hi.step();
+      const ra = r0 + (rT - r0) * i / n, mb = kB * m, mh = kH * m * hs;
+      L[i] += hpL.run(lpL.run(bed.l * aB + nbL.next() * mb)) + hlL.run(hi.l * aH + nhL.next() * mh) + nc.l + rmL.run(bL.next()) * ra;
+      R[i] += hpR.run(lpR.run(bed.r * aB + nbR.next() * mb)) + hlR.run(hi.r * aH + nhR.next() * mh) + nc.r + rmR.run(bR.next()) * ra;
+    }
+    runVoices(voices, L, R, n);
+    if (K.r_col > 0) col.run(L, R, n, K.r_col);
+    if (s.out !== 1) for (let i = 0; i < n; i++) { L[i] *= s.out; R[i] *= s.out; }
+  } };
+}
+
+/* ================= THUNDER ================= */
+function makeThunder(km) {
+  // Physical model after Ribner & Roy (1982): the lightning channel is a tortuous 3D random walk
+  // from cloud to ground, with side branches and a long horizontal in-cloud discharge. Every segment
+  // launches an N-wave (sharp rise, linear fall) toward the listener: loudest broadside to the line of
+  // sight, arriving after r / 343 s, and dulled by air absorption with distance. Real flashes repeat
+  // down the same channel 2-4 times, and the result rolls on as echoes from terrain and cloud.
+  const C = 343, R0 = Math.max(300, km * 1000), H = rr(2000, 4500), az = rr(0, TAU);
+  const gx = R0 * Math.cos(az), gy = R0 * Math.sin(az); // where the bolt meets the ground
+  const segs = [];
+  function walk(x, y, z, dx, dy, dz, n, w, down, flat) {
+    for (let k = 0; k < n && z > 0; k++) {
+      dx += ns() * 0.32; dy += ns() * 0.32; dz += ns() * 0.32; // ~16 degree turns per step
+      if (down) { dx += (gx - x) / Math.max(z, 50) * 0.08; dy += (gy - y) / Math.max(z, 50) * 0.08; dz -= 0.12; }
+      if (flat) dz *= 0.5;
+      const m = Math.hypot(dx, dy, dz); dx /= m; dy /= m; dz /= m;
+      const L = rr(4, 22), nx = x + dx * L, ny = y + dy * L, nz = z + dz * L;
+      segs.push({ x: (x + nx) / 2, y: (y + ny) / 2, z: (z + nz) / 2, dx, dy, dz, w: w * Math.sqrt(L / 10) * lr(0.4, 1.6), main: down });
+      x = nx; y = ny; z = nz;
+      if (down && rnd() < 0.004 && w > 0.5) walk(x, y, z, dx + ns(), dy + ns(), dz * 0.3, Math.floor(rr(20, 140)), w * 0.45, false, false); // branch
+    }
+  }
+  walk(gx + rr(-900, 900), gy + rr(-900, 900), H, ns() * 0.3, ns() * 0.3, -1, 3000, 1, true, false);
+  const ic = Math.floor(rr(150, 700) * K.t_ic * (rnd() < 0.75 ? 1 : 0)); // horizontal in-cloud discharge, often kilometres long
+  if (ic) walk(gx + rr(-1500, 1500), gy + rr(-1500, 1500), H + rr(-200, 600), ns(), ns(), 0, ic, 0.55, false, true);
+  let rmin = 1e12, rmax = 0;
+  for (const s of segs) { s.r = Math.hypot(s.x, s.y, s.z + 1.6); if (s.r < rmin) rmin = s.r; if (s.r > rmax) rmax = s.r; }
+  const strokes = [{ t: 0, a: 1 }]; // return strokes re-light the main channel tens of ms apart
+  for (let k = 0, n = Math.floor(rr(1, 4)), t = 0; k < n; k++) { t += rr(0.04, 0.2); strokes.push({ t, a: rr(0.35, 0.8) }); }
+  const tailS = 9 + km * 0.3, N = Math.floor(((rmax - rmin) / C + strokes[strokes.length - 1].t + tailS) * SR);
+  const L = new Float32Array(N), R = new Float32Array(N), tmp = new Float32Array(4096);
+  for (const st of strokes) for (const s of segs) {
+    if (st.t > 0 && !s.main) continue;
+    const los = Math.abs((s.x * s.dx + s.y * s.dy + (s.z + 1.6) * s.dz) / s.r), dir = 1 - los * los; // broadside radiates most
+    // storms bend sound upward: the low part of the channel, seen at a shallow angle, sits partly in an acoustic shadow,
+    // so distant thunder swells in instead of starting with a crack
+    const el = Math.atan2(s.z + 1.6, Math.hypot(s.x, s.y)) / (K.t_shadow * Math.PI / 180), sh = 0.08 + 0.92 * clamp(el - 0.3, 0, 1) * clamp(el - 0.3, 0, 1) * (3 - 2 * clamp(el - 0.3, 0, 1));
+    const a = st.a * s.w * (K.t_dir + dir) * 1000 / s.r * sh, t0 = Math.floor(((s.r - rmin) / C + st.t + rr(0, 0.002)) * SR);
+    const tau = rr(0.003, 0.012) * K.t_tau * (s.main ? 1 : 0.6) * (1 + 0.1 * s.r / 1000), len = Math.max(6, Math.floor(tau * SR));
+    // air absorption, fitted to ISO 9613-1 (20 C, humid): about -16 dB at 2 kHz and -46 dB at 4 kHz over 1.6 km
+    const fc = Math.max(110, K.t_absK * Math.pow(s.r / 1600, -K.t_absE)), c1 = 1 - Math.exp(-TAU * fc / SR), tail = Math.min(4096 - len, Math.ceil(7 * SR / (TAU * fc)));
+    const pan = clamp(Math.sin(Math.atan2(s.y, s.x) - az) * 0.8 + ns() * 0.2, -1, 1), gl = Math.cos((pan + 1) * Math.PI / 4), gr = Math.sin((pan + 1) * Math.PI / 4);
+    let y1 = 0, y2 = 0, y3 = 0, y4 = 0; // four poles: distant thunder must lose its highs completely
+    for (let k = 0; k < len + tail; k++) { const v = k < len ? a * (1 - 2 * k / len) : 0; y1 += (v - y1) * c1; y2 += (y1 - y2) * c1; y3 += (y2 - y3) * c1; y4 += (y3 - y4) * c1; tmp[k] = y4; }
+    for (let k = 0; k < len + tail && t0 + k < N; k++) { L[t0 + k] += tmp[k] * gl; R[t0 + k] += tmp[k] * gr; }
+  }
+  // beyond about a kilometre, scattering by turbulence and the refraction shadow smear the leading edge: the first arrivals
+  // come in as faint crackle and the rumble swells up over a fraction of a second (only close strikes start with a crack)
+  if (km > 1.2) { const nr = Math.min(N, Math.floor(rr(0.25, 0.7) * Math.min(3, 0.5 + 0.25 * km) * K.t_rise * SR)); for (let i = 0; i < nr; i++) { const u = i / nr, g = 0.1 + 0.9 * u * u * (3 - 2 * u); L[i] *= g; R[i] *= g; } }
+  // the long roll: a diffuse tail that follows the energy of the direct sound and decays over seconds,
+  // plus a handful of discrete echoes from hills and cloud base
+  const env = new Float32Array(N); let e = 0, tl = 0; const ae = 1 - Math.exp(-1 / (0.05 * SR)), dec = Math.exp(-1 / (rr(2.2, 3.5) * SR));
+  for (let i = 0; i < N; i++) { e += (Math.abs(L[i]) + Math.abs(R[i]) - e) * ae; tl = Math.max(tl * dec, e); env[i] = tl; }
+  const bL = new Brown(), bR = new Brown(), tL = new BQ('lp', 350 + 900 * Math.pow(0.7, km), 0.6), tR = new BQ('lp', 350 + 900 * Math.pow(0.7, km), 0.6), gT = rr(0.35, 0.6) * K.t_tail;
+  const echoes = []; for (let k = 0, n = 5 + Math.floor(rnd() * 6); k < n; k++) echoes.push([Math.floor(rr(0.3, 4) * SR), rr(0.12, 0.35) * K.t_echo]);
+  const dry = new Float32Array(N); for (let i = 0; i < N; i++) dry[i] = (L[i] + R[i]) * 0.5;
+  const eL = new BQ('lp', 700, 0.6), eR = new BQ('lp', 600, 0.6);
+  for (let i = 0; i < N; i++) {
+    let ex = 0; for (const [d, g] of echoes) if (i >= d) ex += dry[i - d] * g * Math.exp(-d / SR / 3);
+    L[i] += tL.run(bL.next()) * env[i] * gT + eL.run(ex);
+    R[i] += tR.run(bR.next()) * env[i] * gT + eR.run(ex);
+  }
+  const fadeS = Math.floor(3 * SR); for (let i = 0; i < fadeS; i++) { const f = i / fadeS; L[N - 1 - i] *= f; R[N - 1 - i] *= f; }
+  let pk = 1e-6; for (let i = 0; i < N; i++) { const a = Math.abs(L[i]), b = Math.abs(R[i]); if (a > pk) pk = a; if (b > pk) pk = b; }
+  const g = 0.8 / (1 + 0.1 * km) / pk; for (let i = 0; i < N; i++) { L[i] *= g; R[i] *= g; }
+  return [L, R, rmin / C];
+}
+// The app sets THUNDER_BUILD to build strikes on a worker thread (each takes ~0.5 s of maths);
+// offline tools leave it null and build synchronously.
+let THUNDER_BUILD = null;
+function Thunder() {
+  const sp = new Spawner(); sp.left = rr(4, 9) * SR;
+  const voices = []; let frame = 0;
+  const self = { force: false, onStrike: null, render(L, R, n, p) {
+    const strike = off => {
+      const km = 0.5 * Math.pow(30, p.distance) * rr(0.65, 1.4), at = frame + off, v = { L: null, start: 0 };
+      voices.push(v);
+      if (self.onStrike) self.onStrike(km, off, Math.round(km * 2.915 * SR)); // flash now; sound follows at about 2.9 s per km
+      const done = b => { v.L = b[0]; v.R = b[1]; v.start = at + Math.round(b[2] * SR); }; // sound leaves from the nearest part of the channel
+      if (THUNDER_BUILD) THUNDER_BUILD(km, done); else done(makeThunder(km));
+    };
+    if (self.force) { self.force = false; strike(0); }
+    sp.run(1 / (360 * Math.pow(1 / 15, p.often)), n, strike);
+    for (const v of voices) {
+      if (!v.L) continue;
+      if (!v.begun && v.start < frame) v.start = frame; // built late on a slow device: start now rather than lose the crack
+      let pos = frame - v.start; if (pos <= -n) continue;
+      v.begun = true;
+      let i = pos < 0 ? -pos : 0, j = pos < 0 ? 0 : pos; const len = v.L.length;
+      for (; i < n && j < len; i++, j++) { L[i] += v.L[j]; R[i] += v.R[j]; }
+    }
+    frame += n;
+    for (let k = voices.length - 1; k >= 0; k--) if (voices[k].L && frame - voices[k].start >= voices[k].L.length) voices.splice(k, 1);
+  } };
+  return self;
+}
+
+/* ================= WIND =================
+   Wind in trees, measured against field recordings: a broad "shhh" of air tearing past needles and twigs
+   (aeolian noise whose pitch and level rise with the local wind speed), leaf rustle that thickens steeply
+   in gusts, and slow swells. A few trees stand across the scene; one gust field drifts over them and
+   reaches each tree a little later, so a swell travels through the canopy. Low rumble and the whistling
+   of edges and wires only come in when the wind is strong. */
+function Wind() {
+  const NT = 4, CR = 32, HL = 8192, hist = new Float32Array(HL).fill(0.5), trees = [];
+  for (let k = 0; k < NT; k++) {
+    const pan = clamp(-0.75 + 1.5 * k / (NT - 1) + rr(-0.12, 0.12), -1, 1);
+    trees.push({ pan, g: panG(pan), lag: Math.floor(rr(0.2, 4) * SR / CR), n: new Pink(), hp: new BQ('hp', 300, 0.7), lp: new BQ('lp', 3000, 0.5), lb: new BQ('bp', 4500, 0.55),
+      loc: new Drift(0.35 * CR), fl: new Drift(9 * CR), a: 0, b: 0, fd: 1, v: 0 });
+  }
+  // Drift is stepped once per control tick here, so its rate is scaled by CR
+  const g1 = new Drift(0.1 * CR), g2 = new Drift(0.25 * CR), g3 = new Drift(0.6 * CR), wd = new Drift(0.25 * CR);
+  const bL = new Brown(), bR = new Brown(), rL = new BQ('lp', 300, 0.6), rR = new BQ('lp', 300, 0.6), pW = new Pink(), w1 = new SVF(), w2 = new SVF(), leaf = new GrainCloud(700), col = new Color(3, 300, 6000);
+  let hp = 0, cnt = 0, vAvg = 0, rum = 0, wsG = 0;
+  return { render(L, R, n, p) {
+    const sp = p.speed, gu = p.gust, wh = p.whistle, tr = p.trees;
+    for (let i = 0; i < n; i++) {
+      if ((cnt++ % CR) === 0) {
+        // slow swells over tens of seconds; gustiness adds quicker, deeper surges on top
+        const G = 0.6 * g1.next() + 0.4 * g2.next() + gu * gu * K.w_fast * (g3.next() - 0.5);
+        hist[hp] = G; hp = (hp + 1) % HL; vAvg = 0;
+        for (const t of trees) {
+          const gl = hist[(hp - 1 - t.lag + HL) % HL]; // the same gust reaches each tree a moment later
+          // a swell in decibels: bounded, typically +-2 dB, up to about +-6 dB in gusty weather
+          const off = K.w_gdb * (0.35 + 0.65 * gu) * (2 * gl - 1) + K.w_locdb * (2 * t.loc.next() - 1), rel = Math.pow(10, off / 50); // level ~ U^2.5
+          const v = clamp(sp * rel, 0.02, 1.3);
+          t.v = v; vAvg += v / NT;
+          const sc = Math.pow(v / 0.4, K.w_fexp); // aeolian pitch follows the wind (Strouhal)
+          t.hp.set('hp', K.w_chp * sc, 0.7); t.lp.set('lp', Math.min(K.w_clp * sc, 16000), 0.5); t.lb.set('bp', Math.min(K.w_lf * Math.sqrt(sc), 12000), K.w_lq);
+          const base = Math.pow(sp, K.w_sexp); // loudness follows the speed setting; the swell rides on top, and leaves thicken more steeply than the canopy hiss
+          t.a = K.w_ca * base * Math.pow(10, off / 20);
+          t.b = tr * K.w_la * base * Math.pow(10, off * K.w_lexp / 50);
+          t.fd = 1 - K.w_flut2 + 2 * K.w_flut2 * t.fl.next(); // leaves flutter
+        }
+        rum = K.w_rumble * Math.pow(Math.max(0, vAvg - 0.45), 1.3); // big branches and large eddies: strong wind roars low
+        const wv = wd.next(), wf = (180 + 1100 * vAvg) * (0.92 + 0.16 * wv); // Aeolian tone rises with wind speed
+        w1.set(wf, 3 + wh * 30); w2.set(wf * 1.47, 3 + wh * 22); wsG = wh * Math.pow(vAvg, 1.8) * K.w_whis;
+        if (wh > 0) wsG *= 1;
+      }
+      let l = 0, r = 0;
+      for (let k = 0; k < NT; k++) {
+        const t = trees[k], x = t.n.next(), y = t.lp.run(t.hp.run(x)) * t.a + t.lb.run(x) * t.b * t.fd;
+        l += y * t.g[0]; r += y * t.g[1];
+      }
+      if (rum > 0) { l += rL.run(bL.next()) * rum; r += rR.run(bR.next()) * rum; }
+      if (wh > 0) { const x = pW.next(); w1.run(x); w2.run(x); const ws = (w1.bp * Math.sqrt(w1.k) * 0.8 + w2.bp * Math.sqrt(w2.k) * 0.45) * wsG; l += ws * 0.8; r += ws * 0.8; }
+      const lr_ = tr * Math.pow(vAvg, 3);
+      if (lr_ > 1e-4 || leaf.n) { // distinct leaf ticks on top of the rustle
+        if (rnd() < (40 + K.w_leafRate * lr_) / SR) { const f = lr(2000, 9000), u = rnd(), t = trees[Math.floor(rnd() * NT)]; leaf.add(f, rr(0.8, 1.6), K.w_leafG * Math.sqrt(f / 1000) * u * u * (rnd() < 0.5 ? 1 : -1), clamp(t.pan + rr(-0.25, 0.25), -1, 1)); }
+        leaf.step(); l += leaf.l; r += leaf.r;
+      }
+      L[i] += l; R[i] += r;
+    }
+    if (K.w_col > 0) col.run(L, R, n, K.w_col);
+  } };
+}
+
+/* ================= OCEAN =================
+   Tuned against beach recordings: energy sits low (170-500 Hz) but falls away below ~130 Hz, the top end is soft,
+   and the surf never fully stops between breakers. Waves come in sets, at irregular
+   intervals, and each one breaks along the beach so its sound runs across the scene.
+   Foam is a dense fizz of tiny bursting bubbles, rolled off above ~9 kHz as heard from the shore. */
+function vWave(off, Z, D, ov, fe) { // ov: optional {tb, att, tau} to time the wave to a breath; fe: shared foam envelope
+  let tb = rr(1.8, 3.4) * (0.8 + 0.4 * Z) * K.o_tb, att = rr(0.6, 1.2) * (1 + 0.8 * D) * K.o_att, tau = rr(1.5, 2.6) * (0.7 + 0.6 * Z) * K.o_tau;
+  if (ov) { tb = ov.tb; att = ov.att; tau = ov.tau; }
+  const A = rr(0.55, 1) * (0.35 + 0.65 * Z) * K.o_A, bright = (1 - 0.7 * D) * (0.6 + 0.4 * Z);
+  const life = Math.ceil((tb + att + tau * 6) * SR), p0 = rr(-0.8, 0.8) * K.o_peel, p1 = clamp(p0 + (rnd() < 0.5 ? -1 : 1) * rr(0.4, 1.0) * K.o_peel, -0.9, 0.9), peel = 1 / ((tb + att + 2 * tau) * SR);
+  let gl = 1, gr = 1;
+  const pL = new Pink(), pR = new Pink(), sL = new SVF(), sR = new SVF(), xL = new BQ('lp', K.o_xlp, 0.6), xR = new BQ('lp', K.o_xlp, 0.6);
+  const sb = new Brown(), sl = new BQ('lp', 110, 0.7), foamRate = (0.2 + 0.4 * Z) * (1 - 0.6 * D) * K.o_foamRate, fz = new GrainCloud(400), fg = K.o_foamG * A * (1 - 0.5 * D);
+  let k = 0;
+  return { off, run(L, R, n) {
+    if (this.off >= n) { this.off -= n; return true; }
+    let i = this.off; this.off = 0;
+    for (; i < n && k < life; i++, k++) {
+      const t = k / SR; let e, crash = 0, foam = 0;
+      if (t < tb) e = 0.2 * (t / tb) * (t / tb); // swell building
+      else {
+        const tt = t - tb;
+        if (tt < att) e = 0.2 + 0.8 * Math.sin(tt / att * Math.PI / 2); // the break
+        else { const u = tt - att, w = (u - 1.9 * tau) / (0.9 * tau); e = Math.exp(-u / tau) + K.o_back * Math.exp(-w * w); } // wash, then backwash
+        crash = tt < att ? Math.sin(tt / att * Math.PI / 2) : Math.exp(-(tt - att) / 1.1);
+        foam = (tt < att ? (tt / att) * (tt / att) : 1) * Math.exp(-tt / (tau * 1.4));
+      }
+      if ((k & 31) === 0) {
+        const fc = K.o_fc0 + bright * (K.o_fcB + K.o_fcK * Math.pow(e, K.o_fcExp)); sL.set(fc, K.o_q); sR.set(fc * 1.06, K.o_q);
+        const pa = (clamp(p0 + (p1 - p0) * Math.min(1, k * peel), -1, 1) + 1) * Math.PI / 4; gl = Math.cos(pa); gr = Math.sin(pa); // the break runs along the beach
+      }
+      let l = xL.run(sL.run(pL.next())) * e * A, r = xR.run(sR.run(pR.next())) * e * A;
+      const s = sl.run(sb.next()) * crash * A * K.o_sub * (1 - 0.5 * D); l += s; r += s;
+      if (rnd() < foam * foamRate * K.o_fzTick) { const f = lr(1200, K.o_fzTop), u = rnd(); fz.add(f, rr(1.5, 4), fg * Math.sqrt(f / 1000) * u * u * u * (rnd() < 0.5 ? 1 : -1), clamp(p0 + (p1 - p0) * Math.min(1, k * peel) + rr(-0.4, 0.4), -1, 1)); }
+      if (fe) fe[i] += foam * A * (1 - 0.5 * D); // the dense part of the fizz: countless tiny bubbles
+      fz.step();
+      L[i] += l * gl * 1.41 + fz.l; R[i] += r * gr * 1.41 + fz.r;
+    }
+    return k < life;
+  } };
+}
+function Ocean() {
+  const bL = new Brown(), bR = new Brown(), lL = new BQ('lp', 180, 0.7), lR = new BQ('lp', 180, 0.7), voices = [];
+  const sL = new Pink(), sR = new Pink(), mL = new BQ('lp', K.o_saLp, 0.6), mR = new BQ('lp', K.o_saLp, 0.6), sw = new Drift(0.12), sw2 = new Drift(0.12);
+  const far = new GrainCloud(600), fzL = new ResBank(8), fzR = new ResBank(8), sets = new Drift(8192 / 70), hp = [new BQ('hp', K.o_hp, 0.7), new BQ('hp', K.o_hp, 0.7)]; let next = Math.floor(0.2 * SR), next2 = Math.floor(rr(2, 5) * SR), fe = null, setV = 0.5;
+  fzL.tune(1200, K.o_fzTop, 1.2); fzR.tune(1200, K.o_fzTop, 1.2);
+  return { render(L, R, n, p, cx) {
+    const D = p.distance; setV = sets.next(); // waves come in sets: a few bigger ones, then a quieter spell (over about a minute)
+    const Z = clamp(p.size * (1 + K.o_sets * (2 * setV - 1)), 0, 1);
+    if (!fe || fe.length !== n) fe = new Float32Array(n); else fe.fill(0);
+    if (cx && cx.cycles) { // breathing along: each wave swells on the in-breath, breaks at its top and washes out over the out-breath
+      for (const c of cx.cycles) {
+        const off = Math.round((c.start - cx.t) * SR), att = Math.min(1.0, c.inhale * 0.3);
+        voices.push(vWave(Math.max(0, off), Z, D, { tb: Math.max(0.5, c.inhale - att), att, tau: c.exhale / 2.4 }, fe));
+      }
+      next = Math.floor(rr(2, 5) * SR); // resume natural timing shortly after breathing stops
+    } else {
+      while (next < n) {
+        voices.push(vWave(next, Z * rr(0.75, 1.1), D, null, fe));
+        next += Math.floor(p.period * (rnd() < 0.15 ? rr(0.3, 0.5) : rr(0.65, 1.45)) * SR); // irregular, with the odd double breaker
+      }
+      next -= n;
+    }
+    while (next2 < n) { voices.push(vWave(next2, Z * K.o_set2 * rr(0.7, 1.1), Math.min(1, D + 0.35), null, fe)); next2 += Math.floor(p.period * rr(0.45, 1.1) * SR); }
+    next2 -= n;
+    const fr = (4000 + 5000 * Z) * (1 - 0.5 * D) * K.o_farRate / SR, fg = K.o_foamG * 0.4 * (0.5 + 0.5 * Z) * K.o_farG;
+    const ba = (0.05 + 0.12 * Z * (0.4 + D)) * 0.4 * K.o_ba, sa = (0.055 + 0.14 * Z) * (0.5 + D) * K.o_sa; // sa: the steady roar of surf further along the beach
+    for (let i = 0; i < n; i++) {
+      if (rnd() < fr * K.o_fzTick) { const f = lr(1200, K.o_fzTop * 0.8), u = rnd(); far.add(f, rr(1.5, 4), fg * Math.sqrt(f / 1000) * u * u * u * (rnd() < 0.5 ? 1 : -1), rr(-1, 1)); }
+      far.step();
+      L[i] += lL.run(bL.next()) * ba + mL.run(sL.next()) * sa * (0.4 + sw.next()) + far.l;
+      R[i] += lR.run(bR.next()) * ba + mR.run(sR.next()) * sa * (0.4 + sw2.next()) + far.r;
+    }
+    runVoices(voices, L, R, n);
+    const kf = K.o_fizz * K.o_foamG * 4;
+    for (let i = 0; i < n; i++) { const e = fe[i] * kf; if (e > 1e-6) { L[i] += fzL.next() * e; R[i] += fzR.next() * e; } else { fzL.next(); fzR.next(); } }
+    for (let i = 0; i < n; i++) { L[i] = hp[0].run(L[i]); R[i] = hp[1].run(R[i]); } // heard from the beach, surf has little below ~130 Hz
+  } };
+}
+
+/* ================= STREAM =================
+   Tuned against stream recordings: a dense body of tiny water impacts with a broad
+   low pocket resonance, bubbles and bright splashes on top, little low rumble. */
+function Stream() {
+  const pL = new Pink(), pR = new Pink(), bL = new Brown(), bR = new Brown();
+  const bpL = new BQ('bp', 900, 0.7), bpR = new BQ('bp', 900, 0.7), lL = new BQ('lp', 260, 0.7), lR = new BQ('lp', 260, 0.7);
+  const splash = new GrainCloud(400), water = new GrainCloud(1200), szL = new ResBank(6), szR = new ResBank(6), turb = new Drift(K.s_turb), bands = [lr(260, 360), lr(260, 360), lr(3400, 4600)].map(f => ({ f, d: new Drift(0.15) })), slow = new Drift(0.2), sp = new Spawner(), sp2 = new Spawner(), spG = new Spawner(), voices = [];
+  return { render(L, R, n, p) {
+    const F = p.flow, Z = p.size, T = p.babble, base = (8 + 220 * Math.pow(F, 1.4)) * K.s_base, ga = (0.003 + 0.015 * F) * K.s_ga, la = (0.012 + 0.07 * Math.pow(F, 1.5)) * K.s_la;
+    const sr = (150 + 1500 * F) * K.s_splashRate / SR, wd = (4000 + 30000 * F) * K.s_wd, fz = 1.2 - 0.4 * Z;
+    const gw = (0.025 + 0.13 * F) * K.s_gw / Math.sqrt(wd * 3.5 / (1000 * Math.PI) * 0.125);
+    // spray power per channel if it were all separate ticks (rate x mean energy); a share stays as ticks, the rest is a dense fizz
+    const aS = Math.min(0.95, K.s_spGs), spPow = sr * SR * K.s_splash * K.s_splash / 7 * 1.75 / (1000 * Math.PI) / 8, kS = Math.sqrt(spPow * (1 - aS * aS));
+    szL.tune(3500, 12000, 1.75); szR.tune(3500, 12000, 1.75);
+    for (let b = 0; b < n; b += 128) {
+      const len = Math.min(128, n - b), tv = turb.v, m = Math.max(0.03, (1 - T) + T * K.s_mDepth * tv * tv * tv * (0.5 + slow.v));
+      if (voices.length < 900) {
+        sp.run(base * m, len, off => { // main bubbles, ~0.7-2.5 kHz
+          const r = lr(1.3, 2.6 + 2.5 * Z);
+          const a = Math.pow(rnd(), 2) * K.s_bubA * Math.sqrt(r), pan = rr(-0.9, 0.9);
+          voices.push(vBub(off, 3260 / r, a, pan, rr(0.25, 0.6) * K.s_bubDF, rr(0.02, 0.1) * K.s_bubEps));
+          if (rnd() < 0.5) voices.push(vNoise(off, a * 0.9, pan, lr(0.0008, 0.003), lr(600, 3000), rr(0.8, 1.6))); // the splash that opens the bubble
+        }, b);
+        sp2.run(base * 0.4 * m, len, off => { // small bubbles, 3-9 kHz
+          voices.push(vBub(off, 3260 / lr(0.65, 1.5), Math.pow(rnd(), 3) * K.s_smallA, rr(-0.9, 0.9), rr(0.3, 0.7) * K.s_bubDF, rr(0.04, 0.2) * K.s_bubEps));
+        }, b);
+      }
+      spG.run((0.3 + 5 * F) * (0.2 + Z) * m * K.s_gurg, len, off => { // low gurgles from larger air pockets
+        voices.push(vBub(off, 3260 / lr(3, 8), rr(0.03, 0.09), rr(-0.7, 0.7), rr(0.07, 0.12), rr(0.2, 0.5)));
+      }, b);
+      for (let i = b; i < b + len; i++) {
+        turb.next(); slow.next(); if ((i & 255) === 0) for (const bd of bands) for (let k = 0; k < 256; k++) bd.d.next();
+        if (rnd() < sr * m) { const f = lr(3500, 12000), u = rnd(); splash.add(f, rr(1, 2.5), K.s_splash * Math.sqrt(f / 1000) * u * u * u * (rnd() < 0.5 ? 1 : -1), rr(-0.9, 0.9)); }
+        if (rnd() < wd * (0.7 + 0.3 * m) / SR) {
+          let f, q;
+          if (rnd() < K.s_band) { const bd = bands[Math.floor(rnd() * 3)]; f = bd.f * (0.8 + 0.4 * bd.d.v) * rr(0.9, 1.1); q = rr(2.5, 4.5) * K.s_bandQ; }
+          else { f = lr(K.s_wLo, K.s_wHi) * fz; q = rr(2, 4) * K.s_wQ; }
+          const u = rnd(); water.add(f, q, gw * Math.sqrt(f / 1000) * u * Math.sqrt(u) * (rnd() < 0.5 ? 1 : -1), rr(-1, 1));
+        }
+        splash.step(); water.step();
+        const ms = kS * Math.sqrt(m);
+        L[i] += bpL.run(pL.next()) * ga + lL.run(bL.next()) * la + splash.l * aS + szL.next() * ms + water.l;
+        R[i] += bpR.run(pR.next()) * ga + lR.run(bR.next()) * la + splash.r * aS + szR.next() * ms + water.r;
+      }
+    }
+    runVoices(voices, L, R, n);
+  } };
+}
+
+/* ================= FIRE =================
+   Tuned against a campfire recording: sharp, bright cracks arriving in clusters,
+   a soft rustle of licking flames, and a quiet low roar underneath. */
+function Fire() {
+  const bL = new Brown(), bR = new Brown(), lL = new BQ('lp', 300, 0.7), lR = new BQ('lp', 300, 0.7);
+  const siz = new GrainCloud(400), lick = new GrainCloud(500), act = new Drift(0.35), aS = new Drift(K.f_actS * 8192), aM = new Drift(K.f_actM * 8192);
+  const fl = new Drift(2), fl2 = new Drift(0.5), fl3 = new Drift(2), hd = new Drift(1.2), sp = new Spawner(), spP = new Spawner(), voices = [];
+  let lastZ = -1;
+  return { render(L, R, n, p) {
+    const Z = p.size, Cr = p.crackle, H = p.hiss;
+    if (Z !== lastZ) { lastZ = Z; lL.set('lp', (250 + 250 * Z) * K.f_roarLp, 0.5); lR.set('lp', (250 + 250 * Z) * K.f_roarLp, 0.5); } // soft low roar of burning gas
+    for (let k = 0; k < n; k += 16) act.next();
+    // a fire waxes and wanes as pieces catch and burn down: activity swells over tens of seconds and seconds
+    const A = 0.6 * aS.next() + 0.4 * aM.next(), actR = Math.exp(K.f_actD * (2 * A - 1)), actA = Math.exp(0.25 * K.f_actD * (2 * A - 1));
+    const fl_ = (1 - K.f_flurry + K.f_flurry * 3 * act.v * act.v) * actR; // crackles come in flurries with quiet spells, unlike steady rain
+    if (voices.length < 1500) sp.run((K.f_rate0 + K.f_rate * Math.pow(Cr, 1.5)) * (0.4 + 0.8 * Z) * fl_, n, off => { // resin pockets burst in quick clusters
+      const m = 1 + Math.floor(Math.pow(rnd(), 1.5) * K.f_m), span = lr(0.003, 0.08) * K.f_span * SR, base = Math.pow(rnd(), K.f_ampPow) * K.f_amp * actA, pan = rr(-0.8, 0.8), fb = lr(K.f_fbLo, K.f_fbHi), sharp = rnd() < K.f_crackP;
+      for (let j = 0; j < m; j++) {
+        const o = off + Math.floor(rnd() * span), a = base * rr(0.3, 1), pp = clamp(pan + rr(-0.08, 0.08), -1, 1);
+        if (sharp) voices.push(vCrack(o, a * K.f_crackA, pp, lr(0.00004, 0.0003), lr(600, 2500)));
+        else voices.push(vNoise(o, a, pp, lr(K.f_exLo, K.f_exHi), fb * rr(0.7, 1.4), rr(0.5, 1.0) * K.f_q));
+      }
+      if (rnd() < 0.25) voices.push(vNoise(off, base * K.f_snap, pan, lr(0.0006, 0.0015), lr(400, 1100), 1.2)); // woody snap
+    });
+    spP.run((0.02 + 0.3 * Cr * Z) * K.f_pop, n, off => { // a log splitting: one loud pop and a scatter of sparks
+      const pan = rr(-0.6, 0.6);
+      voices.push(vNoise(off, rr(0.25, 0.5), pan, lr(0.0006, 0.002), lr(900, 2500), rr(0.7, 1.2)));
+      for (let j = 0; j < 6; j++) voices.push(vNoise(off + Math.floor(rr(0.003, 0.08) * SR), rr(0.05, 0.25), pan, 0.0004, lr(2500, 7000), 1));
+    });
+    const actL = Math.exp(K.f_actL * (2 * A - 1)); // the flames themselves grow and settle with the fire's activity
+    const ra = (0.015 + 0.07 * Z) * K.f_roar * actL, hr = (100 + 7000 * H) / SR, lr_ = (300 + 2500 * Z) * K.f_lickRate * actL / SR;
+    for (let i = 0; i < n; i++) {
+      const f = 0.6 * fl.next() + 0.4 * fl2.next(), f3 = fl3.next(), h = hd.next();
+      if (H > 0 && rnd() < hr * (0.2 + 1.6 * h * h)) { const fq = lr(3000, 8000), u = rnd(); siz.add(fq, rr(1, 2.5), K.f_siz * Math.sqrt(fq / 1000) * u * u * (rnd() < 0.5 ? 1 : -1), rr(-0.7, 0.7)); }
+      if (rnd() < lr_ * (0.5 + f)) { const fq = lr(300, 2500), u = rnd(); lick.add(fq, rr(1, 2.5), K.f_lick * Math.sqrt(fq / 1000) * u * u * (rnd() < 0.5 ? 1 : -1), rr(-0.8, 0.8)); } // flames licking: soft, dense rustle
+      siz.step(); lick.step();
+      L[i] += lL.run(bL.next()) * ra * (0.55 + 0.45 * f) + siz.l + lick.l;
+      R[i] += lR.run(bR.next()) * ra * (0.55 + 0.45 * (0.7 * f + 0.3 * f3)) + siz.r + lick.r;
+    }
+    runVoices(voices, L, R, n);
+  } };
+}
+
+/* ================= CRICKETS ================= */
+function Crickets() {
+  // Field crickets (Gryllus): each wing-closing stroke rubs a file of teeth, giving a 15 ms pulse of a
+  // ~4.7 kHz carrier with real overtones at 2x and 3x. 3-5 pulses make a chirp. Near crickets are joined
+  // by a faint chorus of distant ones, all over the quiet broadband air of a night field.
+  const list = [], far = []; let zl = 0, zr = 0, tL = null, tR = null;
+  const nL = new Pink(), nR = new Pink(), nC = new Pink(), aL = new BQ('hp', 300, 0.7), aR = new BQ('hp', 300, 0.7), bL = new BQ('lp', 7000, 0.6), bR = new BQ('lp', 7000, 0.6);
+  const mk = (farOne) => ({ f: rr(4300, 5100), np: 3 + Math.floor(rnd() * 3), pd: rr(0.012, 0.019), pp: rr(0.027, 0.037), jit: rr(0.9, 1.1), pos: Math.floor(rnd() * SR * 2), pause: 0,
+    ph: 0, h2: rr(0.2, 0.45), h3: rr(0.06, 0.18), p2: rnd() * TAU, p3: rnd() * TAU, amp: farOne ? rr(0.04, 0.14) : rr(0.3, 1), pa: 1, ...cPlace(rr(-1, 1), farOne) });
+  function cPlace(pan, farOne) { const itd = Math.round(K.b_itd * SR * Math.sin(pan * Math.PI / 2)); return { g: panG(pan * (farOne ? 0.8 : K.c_width)), dl: itd > 0 ? itd : 0, dr: itd < 0 ? -itd : 0 }; }
+  function sing(c, n, cps, ts, A) {
+    const cyc = Math.floor(SR / (cps * c.jit)), pdS = c.pd * SR * ts, ppS = c.pp * SR * ts, len = c.np * ppS, inc = TAU * c.f / SR, gl = c.g[0] * c.amp * A, gr = c.g[1] * c.amp * A;
+    for (let i = 0; i < n; i++) {
+      if (c.pause > 0) { c.pause--; continue; }
+      const pos = c.pos;
+      if (pos < len) {
+        const k = Math.floor(pos / ppS), q = pos - k * ppS;
+        if (q === 0) c.pa = rr(0.7, 1.15); // pulses within a chirp vary in strength
+        if (q < pdS) {
+          const x = q / pdS, e = (x < 0.12 ? x / 0.12 : 1 - Math.pow((x - 0.12) / 0.88, 1.6)) * c.pa; // quick onset, tapering stroke
+          c.ph += inc * (1 - 0.04 * x); // the tooth rate slows slightly through each stroke
+          const y = (Math.sin(c.ph) + c.h2 * Math.sin(2 * c.ph + c.p2) + c.h3 * Math.sin(3 * c.ph + c.p3)) * e;
+          tL[i + c.dl] += y * gl; tR[i + c.dr] += y * gr;
+        }
+      }
+      if (++c.pos >= cyc) { c.pos = 0; if (rnd() < 0.03) c.pause = Math.floor(rr(1.5, 7) * SR); }
+    }
+  }
+  return { render(L, R, n, p) {
+    const cnt = Math.round(p.count); while (list.length < cnt) list.push(mk(false)); list.length = cnt;
+    const fc = 4 + Math.round(cnt * 1.5); while (far.length < fc) far.push(mk(true)); far.length = fc;
+    if (!tL || tL.length !== n + 64) { tL = new Float32Array(n + 64); tR = new Float32Array(n + 64); }
+    else { tL.copyWithin(0, n, n + 64); tR.copyWithin(0, n, n + 64); tL.fill(0, 64); tR.fill(0, 64); } // carry the delayed tails over
+    const T = p.temp, D = p.distance, cps = Math.max(0.25, (7.2 * T - 32) / 60), ts = 30 / (T + 10), A = 0.09 * (1 - 0.55 * D);
+    for (const c of list) sing(c, n, cps, ts, A);
+    for (const c of far) sing(c, n, cps * rr(0.97, 1.03), ts, A);
+    const a = 1 - Math.exp(-TAU * (14000 - 9000 * D) / SR), air = 0.0035 * (0.6 + 0.4 * cnt / 16); // night air: quiet, never digital silence
+    for (let i = 0; i < n; i++) {
+      zl += (tL[i] - zl) * a; zr += (tR[i] - zr) * a;
+      const nc = nC.next();
+      L[i] += zl + bL.run(aL.run(0.7 * (nL.next() + nc))) * air; R[i] += zr + bR.run(aR.run(0.7 * (nR.next() + nc))) * air;
+    }
+  } };
+}
+
+/* ================= SPACES =================
+   Acoustic environments as synthesised impulse responses: early reflections from the
+   surroundings, then a diffuse tail whose decay time differs for lows, mids and highs.
+   rt = RT60 in seconds for [below 500 Hz, 500 Hz - 4 kHz, above 4 kHz];
+   er = [number of early reflections, first, last (s)]; echoes = [delay s, gain]. */
+const SPACES = {
+  open: { name: 'Open field', rt: [0.8, 0.6, 0.3], er: [6, 0.012, 0.25], level: 0.22, build: 0.03 },
+  forest: { name: 'Forest', rt: [1.1, 1.35, 0.6], er: [70, 0.004, 0.12], level: 0.5, build: 0.05 },
+  indoors: { name: 'Indoors', rt: [0.6, 0.45, 0.28], er: [26, 0.002, 0.035], level: 0.35, build: 0.008 },
+  valley: { name: 'Valley', rt: [2.6, 2.1, 0.9], er: [10, 0.02, 0.5], echoes: [[0.38, 0.32], [0.9, 0.22], [1.55, 0.13]], level: 0.38, build: 0.06 },
+};
+function makeSpaceIR(key, sr) {
+  const S = SPACES[key] || SPACES.open, len = Math.ceil((Math.max(...S.rt) * 1.15 + (S.echoes ? 1.7 : 0)) * sr), out = [];
+  for (let ch = 0; ch < 2; ch++) {
+    const d = new Float32Array(len); let l1 = 0, l2 = 0;
+    const a5 = 1 - Math.exp(-TAU * 500 / sr), a4 = 1 - Math.exp(-TAU * 4000 / sr);
+    const k = S.rt.map(r => 6.91 / (r * sr));
+    for (let i = 0; i < len; i++) { // diffuse tail: three bands decaying at their own rates
+      const w = Math.random() * 2 - 1; l1 += (w - l1) * a5; l2 += (w - l2) * a4;
+      const lo = l1, hi = w - l2, mid = l2 - l1;
+      d[i] = (lo * Math.exp(-k[0] * i) + mid * Math.exp(-k[1] * i) + hi * Math.exp(-k[2] * i)) * (1 - Math.exp(-i / (S.build * sr)));
+    }
+    let tailE = 0; for (let i = 0; i < len; i++) tailE += d[i] * d[i];
+    for (let i = 0; i < len; i++) d[i] /= Math.sqrt(tailE);
+    const [ne, t0, t1] = S.er; // early reflections: discrete arrivals from trunks, walls or slopes
+    for (let e = 0; e < ne; e++) {
+      const t = t0 * Math.pow(t1 / t0, Math.random()), p = Math.floor(t * sr), g = (Math.random() < 0.5 ? -1 : 1) * (0.25 + 0.75 * Math.random()) * Math.exp(-k[1] * p) * 2.2 / Math.sqrt(ne);
+      for (let j = 0; j < 6 && p + j < len; j++) d[p + j] += g * [0.35, 0.3, 0.17, 0.1, 0.05, 0.03][j];
+    }
+    if (S.echoes) for (const [t, g] of S.echoes) { // distinct echoes from the valley sides, dulled by distance
+      let p = Math.floor((t + (ch ? 0.013 : 0)) * sr), lp = 0; const a = 1 - Math.exp(-TAU * 1800 / sr);
+      for (let j = 0; j < 0.05 * sr && p + j < len; j++) { lp += ((Math.random() * 2 - 1) * Math.exp(-j / (0.012 * sr)) - lp) * a; d[p + j] += lp * g * 3; }
+    }
+    let e2 = 0; for (let i = 0; i < len; i++) e2 += d[i] * d[i];
+    for (let i = 0; i < len; i++) d[i] /= Math.sqrt(e2);
+    out.push(d);
+  }
+  return out;
+}
+
+/* ================= CALLERS: birds and frogs =================
+   Every call is built from notes: a pitch contour (glide or arch), tiny natural pitch jitter,
+   smooth onset and release, a few weak overtones, and optional pulse trains (frogs), tremolo
+   and breath (owls, doves). Each animal sits at its own distance and place: farther ones are
+   quieter, duller and more reverberant. */
+function flut(p, lo, hi) { return rnd() < p * K.b_flutP ? { f2r: rr(60, 180), f2d: rr(lo, hi) * K.b_flutD } : {}; }
+function N(t, dur, fa, fb, o) { return Object.assign({ t, dur, fa, fb, sh: 'glide', c: 1, pk: 0, vr: 0, vd: 0, f2r: 0, f2d: 0, h: [1, 0.08, 0.02], a: 1, at: 0.006, rl: 0.015, cr: 0, br: 0, pr: 0, pd: 6, tr: 0, td: 0 }, o); }
+const SONG = {
+  blackbird() { // mellow fluted phrase, then a soft high twitter
+    const notes = [], base = lr(1700, 2500); let t = 0;
+    for (let i = 0, m = 2 + Math.floor(rnd() * 4); i < m; i++) {
+      const f = base * lr(0.8, 1.35), d = rr(0.12, 0.38), arch = rnd() < 0.5;
+      notes.push(N(t, d, f, f * lr(0.85, 1.22), { sh: arch ? 'arch' : 'glide', pk: arch ? rr(-0.08, 0.12) : 0, c: rr(0.6, 1.6), vr: rr(18, 35), vd: rnd() < 0.4 ? rr(0.003, 0.012) : 0,
+        h: [1, rr(0.1, 0.25), rr(0.02, 0.07)], a: rr(0.6, 1), at: rr(0.01, 0.03), rl: rr(0.02, 0.05), cr: rr(-0.4, 0.4), ...flut(0.2, 0.003, 0.01) }));
+      t += d + rr(0.03, 0.12);
+    }
+    if (rnd() < 0.85) {
+      t += rr(0, 0.08);
+      for (let j = 0, k = 3 + Math.floor(rnd() * 7); j < k; j++) {
+        const f = lr(4200, 8500), d = rr(0.015, 0.07), a = rr(0.25, 0.6);
+        notes.push(N(t, d, f, f * lr(0.55, 1.5), { c: rr(0.5, 2), h: [1, rr(0.02, 0.08)], a, at: 0.003, rl: 0.008, ...flut(0.5, 0.01, 0.04) }));
+        if (rnd() < 0.2) notes.push(N(t, d * rr(0.8, 1.2), f * lr(0.45, 0.7), f * lr(0.4, 0.8), { h: [1, 0.05], a: a * 0.5, at: 0.003, rl: 0.008, v2: 1 })); // the second side of the syrinx
+        t += d + rr(0.005, 0.04);
+      }
+    }
+    return { notes, dur: t };
+  },
+  robin() { // thin, high, liquid phrases that change pitch and tempo suddenly
+    const notes = []; let t = 0;
+    for (let p = 0, np = 2 + Math.floor(rnd() * 3); p < np; p++) {
+      const fb = lr(3000, 6500), loud = rr(0.4, 1), kind = rnd();
+      if (kind < 0.35) { const fa = fb * lr(0.8, 1.25), r = lr(0.6, 1.6), d = rr(0.02, 0.045), gap = rr(0.01, 0.03);
+        for (let k = 0, m = 3 + Math.floor(rnd() * 5); k < m; k++) { notes.push(N(t, d, fa, fa * r, { c: rr(0.6, 1.5), h: [1, 0.06], a: loud, at: 0.003, rl: 0.006 })); t += d + gap; } }
+      else for (let k = 0, m = 3 + Math.floor(rnd() * 4); k < m; k++) {
+        const f = lr(2500, 8000), d = rr(0.04, 0.16), arch = rnd() < 0.4;
+        notes.push(N(t, d, f, f * lr(0.6, 1.7), { sh: arch ? 'arch' : 'glide', pk: arch ? rr(-0.2, 0.25) : 0, c: rr(0.5, 2), vr: rr(25, 60), vd: rnd() < 0.3 ? rr(0.01, 0.04) : 0, h: [1, rr(0.03, 0.12)], a: loud * rr(0.6, 1), at: 0.005, rl: 0.012, ...flut(0.4, 0.01, 0.03) }));
+        t += d + rr(0.01, 0.06);
+      }
+      t += rr(0.08, 0.25);
+    }
+    return { notes, dur: t };
+  },
+  chaffinch() { // accelerating trill, a lower trill, then the flourish
+    const notes = [], A = [lr(4500, 6200), lr(0.55, 0.75), rr(0.03, 0.05)], B = [lr(3200, 4200), lr(0.6, 0.85), rr(0.04, 0.06)];
+    let t = 0, ia = rr(0.065, 0.09);
+    for (let i = 0, n = 4 + Math.floor(rnd() * 5); i < n; i++) { notes.push(N(t, A[2], A[0] * (1 - 0.01 * i), A[0] * A[1], { c: 0.7, h: [1, 0.07], a: 0.55 + 0.05 * i, at: 0.003, rl: 0.008, ...flut(0.3, 0.01, 0.03) })); t += ia; ia *= 0.97; }
+    t += 0.04;
+    for (let i = 0, n = 2 + Math.floor(rnd() * 4); i < n; i++) { notes.push(N(t, B[2], B[0], B[0] * B[1], { c: 0.8, h: [1, 0.08], a: 0.85, at: 0.004, rl: 0.01 })); t += rr(0.09, 0.12); }
+    const f0 = lr(2500, 3200), d = rr(0.12, 0.2);
+    notes.push(N(t + 0.03, d, f0, f0 * rr(0.8, 0.95), { sh: 'arch', pk: rr(0.4, 0.7), h: [1, 0.1, 0.02], a: 1, at: 0.006, rl: 0.02 })); t += 0.03 + d;
+    if (rnd() < 0.6) { notes.push(N(t + 0.02, 0.04, 3000, 5000, { c: 0.6, h: [1, 0.05], a: 0.7, at: 0.003, rl: 0.008 })); t += 0.06; }
+    return { notes, dur: t };
+  },
+  woodpigeon() { // "coo-COOO-coo, coo-coo", repeated three to five times
+    const notes = [], f = lr(420, 540), sc = rr(0.9, 1.1), durs = [0.3, 0.55, 0.3, 0.3, 0.32], gaps = [0.1, 0.18, 0.42, 0.1], reps = 3 + Math.floor(rnd() * 3); let t = 0;
+    for (let r = 0; r < reps; r++) {
+      for (let k = 0; k < 5; k++) {
+        const d = durs[k] * sc;
+        notes.push(N(t, d, f * 0.97, f * 0.95, { sh: 'arch', pk: 0.06, h: [1, rr(0.15, 0.3), 0.05], a: k === 1 ? 1 : 0.7, at: 0.05, rl: 0.08, br: 0.15 }));
+        t += d + (k < 4 ? gaps[k] * sc : 0);
+      }
+      t += rr(0.6, 1.1);
+    }
+    return { notes, dur: t };
+  },
+  collared() { // "coo-COOO-cuk"
+    const notes = [], f = lr(430, 520); let t = 0;
+    for (let r = 0, reps = 3 + Math.floor(rnd() * 5); r < reps; r++) {
+      notes.push(N(t, 0.18, f, f * 1.02, { h: [1, 0.2, 0.04], a: 0.7, at: 0.03, rl: 0.05, br: 0.12 })); t += 0.26;
+      notes.push(N(t, 0.5, f * 1.12, f * 1.06, { sh: 'arch', pk: 0.03, h: [1, 0.22, 0.05], a: 1, at: 0.05, rl: 0.1, br: 0.12 })); t += 0.6;
+      notes.push(N(t, 0.22, f * 0.95, f * 0.9, { h: [1, 0.2, 0.04], a: 0.75, at: 0.03, rl: 0.06, br: 0.12 })); t += 0.22 + rr(1.1, 1.6);
+    }
+    return { notes, dur: t };
+  },
+  owl() { // tawny owl: a long hoot, a pause, then the quavering "hu-hu-hoooo" (about 0.8-1 kHz)
+    const notes = [], f = lr(780, 950); let t = 0;
+    notes.push(N(t, rr(0.5, 0.7), f * 0.97, f * 1.01, { sh: 'arch', pk: 0.03, h: [1, 0.2, 0.05], a: 1, at: 0.05, rl: 0.15, br: 0.15 })); t += rr(2.5, 4);
+    notes.push(N(t, 0.12, f, f * 0.99, { h: [1, 0.2], a: 0.6, at: 0.02, rl: 0.04, br: 0.15 })); t += 0.37;
+    const d = rr(1.2, 1.7);
+    notes.push(N(t, d, f * 0.96, f * 0.93, { sh: 'arch', pk: 0.05, h: [1, 0.22, 0.06], a: 0.95, at: 0.03, rl: 0.3, br: 0.15, vr: rr(6, 8), vd: rr(0.025, 0.045), tr: 7, td: 0.35 })); t += d;
+    return { notes, dur: t };
+  },
+  peeper() { // spring peeper: one clear rising "peep" with a faint second harmonic
+    const f = lr(2800, 3200), d = rr(0.09, 0.16);
+    return { notes: [N(0, d, f * lr(0.84, 0.9), f, { c: rr(0.55, 0.9), h: [1, rr(0.025, 0.05) * K.fr_peepH, 0.008 * K.fr_peepH], a: 1, at: rr(0.012, 0.025), rl: rr(0.01, 0.02), cr: rr(0, 0.5) })], dur: d };
+  },
+  treefrog() { // European tree frog: bouts of "krek" notes, 6-9 a second, each a burst of vocal-cord pulses carried on two
+    // vocal-sac bands near 1.1 and 2.3 kHz, with little above 3.5 kHz (as in Dutch and German choir recordings)
+    const notes = [], f = lr(1050, 1300) * K.fr_treeF, rate = rr(6, 9), n = 12 + Math.floor(rnd() * 30), lo = rr(0.25, 0.5) * K.fr_treeLo, pr = rr(66, 102) * K.fr_treePr; let t = 0;
+    for (let i = 0; i < n; i++) {
+      const d = rr(0.06, 0.09), warm = Math.min(1, (i + 1) / 4); // the first notes of a bout are softer and slower
+      notes.push(N(t, d, f * lr(0.99, 1.02), f * lr(0.95, 0.98), { h: [lo, 1, rr(0.04, 0.1) * K.fr_treeH], a: (0.8 + 0.2 * Math.sin(i / n * Math.PI)) * (0.45 + 0.55 * warm), at: 0.004, rl: 0.012, pr: pr * lr(0.95, 1.05), pd: 5 * K.fr_treePd }));
+      t += 1 / rate * rr(0.92, 1.08) * (1.35 - 0.35 * warm);
+    }
+    return { notes, dur: t };
+  },
+};
+// species: loudness, gap between songs (s), chance of repeating the same song type
+const SPECIES = {
+  blackbird: { g: 0.35, gap: [2.5, 7], rep: 0.6, types: 5, syr: { dl: 0.005, L: 0.035, oec: 0.6 } }, robin: { g: 0.22, gap: [1.5, 5], rep: 0.3, types: 6, syr: { dl: 0.004, L: 0.025, oec: 0.6 } },
+  chaffinch: { g: 0.33, gap: [4, 10], rep: 0.85, types: 3, syr: { dl: 0.007, L: 0.03, oec: 0.5 } },
+  woodpigeon: { g: 0.3, gap: [20, 60], rep: 1, types: 1, syr: { dl: 0.008, L: 0.08, oec: 0.9, lp: 1400 } }, collared: { g: 0.28, gap: [10, 30], rep: 1, types: 1, syr: { dl: 0.008, L: 0.07, oec: 0.9, lp: 1500 } },
+  owl: { g: 0.3, gap: [15, 40], rep: 1, types: 1, syr: { dl: 0.014, L: 0.09, oec: 0.55, lp: 3200, br: 0.8 } },
+  peeper: { g: 0.12, gap: [0.6, 1.1], rep: 0.5, types: 4 }, treefrog: { g: 0.14, gap: [2, 6], rep: 0.5, types: 3 },
+};
+const SCRATCH = { m: new Float32Array(8192) };
+// Syrinx after Amador & Mindlin: x' = y, y' = -a g^2 - b g^2 x - g^2 x^3 - g x^2 y + g^2 x^2 - g x y.
+// Tension b sets pitch (f = g sqrt(b) / 2 pi); pressure a above the onset sets loudness and timbre.
+// Simulating the model from rest showed soft, gradual onsets for b between 0.3 and 1.3, starting at
+// a = 0.003 + 0.006 b; below b = 0.25 onsets turn hard and sticky, so notes avoid that range.
+function syrOnset(b) { return 0.003 + 0.006 * b; }
+class SyrSide { // one side of the syrinx: the labia as a nonlinear oscillator
+  constructor() { this.x = 0.001; this.y = 0; this.g = 24000; this.idle = true; }
+  step(a, b) {
+    const g = this.g, g2 = g * g, h = 1 / (2 * SR); let x = this.x, y = this.y;
+    y += (rnd() * 2 - 1) * K.b_noise * g * h * g;
+    for (let k = 0; k < 2; k++) {
+      const f1 = -a * g2 - b * g2 * x - g2 * x * x * x - g * x * x * y + g2 * x * x - g * x * y;
+      const x2 = x + h / 2 * y, y2 = y + h / 2 * f1, f2 = -a * g2 - b * g2 * x2 - g2 * x2 * x2 * x2 - g * x2 * x2 * y2 + g2 * x2 * x2 - g * x2 * y2;
+      const x3 = x + h / 2 * y2, y3 = y + h / 2 * f2, f3 = -a * g2 - b * g2 * x3 - g2 * x3 * x3 * x3 - g * x3 * x3 * y3 + g2 * x3 * x3 - g * x3 * y3;
+      const x4 = x + h * y3, y4 = y + h * f3, f4 = -a * g2 - b * g2 * x4 - g2 * x4 * x4 * x4 - g * x4 * x4 * y4 + g2 * x4 * x4 - g * x4 * y4;
+      x += h / 6 * (y + 2 * y2 + 2 * y3 + y4); y += h / 6 * (f1 + 2 * f2 + 2 * f3 + f4);
+    }
+    if (!(Math.abs(x) < 20)) { x = 0.001; y = 0; }
+    this.x = x; this.y = y; return y;
+  }
+}
+class Caller { // one animal at its own place
+  constructor(sp, r, pan, light, wide) {
+    const S = SPECIES[sp]; this.sp = sp; this.S = S; this.r = r; this.amp = S.g * Math.min(1, 8 / r);
+    // heard through a spaced stereo pair: a modest level difference plus the arrival-time difference between the microphones
+    this.g = panG(pan * (wide ? K.fr_width : K.b_width)); const itd = Math.round((wide ? K.fr_itd : K.b_itd) * SR * Math.sin(pan * Math.PI / 2));
+    this.dl = itd > 0 ? itd : 0; this.dr = itd < 0 ? -itd : 0; this.ib = new Float32Array(128); this.ip = 0;
+    this.wet = clamp(0.08 + r / 140, 0.08, 0.9) * this.amp * K.b_wet; this.lp = 1 - Math.exp(-TAU * (22000 / (1 + r / 40)) / SR);
+    this.reps = Array.from({ length: S.types }, () => SONG[sp]()); this.cur = 0; this.next = 0; this.busy = 0;
+    this.notes = []; this.z1 = 0; this.z2 = 0; this.nz = 0; this.jit = new Drift(18);
+    if (S.syr && K.b_syr && !light) { // two sides of the syrinx, a tracheal tube with reflections, a throat resonance that follows the pitch, beak radiation
+      this.dove = sp === 'woodpigeon' || sp === 'collared';
+      this.sides = [new SyrSide(), new SyrSide()]; this.T = Math.max(2, Math.round(2 * S.syr.L / 343 * SR)); this.tube = new Float32Array(256); this.tp = 0;
+      this.oec = new SVF(); this.brF = new SVF(); this.radF = new BQ('hp', K.b_hp, 0.7); this.owl = sp === 'owl'; this.lpT = S.syr.lp ? 1 - Math.exp(-TAU * S.syr.lp * (this.dove ? K.b_doveLp : this.owl ? K.b_owlLp : 1) / SR) : 0;
+      // doves coo with the beak closed through an inflated oesophagus, a sharp resonance on the note: hence their pure tone
+      this.oq = this.dove ? K.b_doveQ : this.owl ? K.b_owlQ : K.b_oecQ; this.om = this.dove ? K.b_doveOec : this.owl ? K.b_owlOec : (K.b_sbOec > 0 ? K.b_sbOec : S.syr.oec); this.lz = 0; this.cnt = 0;
+    }
+  }
+  sing(at) {
+    if (rnd() > this.S.rep) this.cur = Math.floor(rnd() * this.reps.length);
+    const s = this.reps[this.cur], ts = rr(0.95, 1.05), fs = rr(0.97, 1.03), as = rr(0.85, 1.1);
+    for (const nt of s.notes) this.notes.push(Object.assign({}, nt, { s: at + Math.round(nt.t * ts * SR), n: Math.max(8, Math.round(nt.dur * ts * SR)), fa: nt.fa * fs, fb: nt.fb * fs, a: nt.a * as, ph: 0 }));
+    this.busy = at + Math.round(s.dur * ts * SR);
+    return this.busy;
+  }
+  renderSyrinx(m, n, frame) {
+    const S = this.S.syr, act = this.notes.filter(nt => nt.s < frame + n && nt.s + nt.n > frame), r = K.b_tubeR;
+    for (let i = 0; i < n; i++) {
+      const at = frame + i; let out = 0, fTrack = 0, br = 0;
+      for (let side = 0; side < 2; side++) {
+        const sd = this.sides[side];
+        if ((i & 3) === 0) { // note targets at a 12 kHz control rate; the oscillator itself runs at full rate
+          let nt = null; for (const q of act) if ((q.v2 ? 1 : 0) === side && at >= q.s && at < q.s + q.n) nt = q;
+          sd.nt = nt;
+          let a = K.b_off, b = sd.b || 0.4, e = 0;
+          const dl = S.dl * (this.dove ? K.b_pressDove : K.b_press); sd.dl = dl;
+          if (nt) {
+            const k = at - nt.s, tt = k / SR, u = k / nt.n;
+            let f = nt.sh === 'arch' ? (nt.fa + (nt.fb - nt.fa) * u) * (1 + nt.pk * Math.sin(Math.PI * u)) : nt.fa * Math.pow(nt.fb / nt.fa, nt.c === 1 ? u : Math.pow(u, nt.c));
+            if (nt.vd) f *= 1 + nt.vd * Math.sin(TAU * nt.vr * tt);
+            if (nt.f2d) f *= 1 + nt.f2d * Math.sin(TAU * nt.f2r * tt);
+            f *= 1 + K.b_jit * (this.jit.next() - 0.5);
+            if (!nt.g) nt.g = TAU * Math.min(nt.fa, nt.fb) * (nt.sh === 'arch' && nt.pk < 0 ? 1 + nt.pk : 1) / Math.sqrt(0.3);
+            sd.gt = nt.g; b = (TAU * f / nt.g) * (TAU * f / nt.g); sd.b = b;
+            const a1 = Math.min(1, tt / nt.at), a2 = Math.min(1, (nt.n - k) / SR / nt.rl);
+            e = a1 * a1 * (3 - 2 * a1) * a2 * a2 * (3 - 2 * a2) * Math.max(0, 1 + nt.cr * (u - 0.5));
+            if (nt.tr) e *= 1 - nt.td * (0.5 + 0.5 * Math.cos(TAU * nt.tr * tt * (1 - 0.3 * u)));
+            a = syrOnset(b) + dl * e + K.b_off * (1 - e); sd.amp = nt.a; sd.ft = f; sd.brt = nt.br * e;
+            sd.idle = false;
+          }
+          sd.ta = a; sd.tb = b; sd.te = e;
+        }
+        const nt = sd.nt;
+        if (!nt && sd.idle) continue;
+        const a = sd.ta, b = sd.tb, e = sd.te, dl = sd.dl;
+        if (nt) { fTrack = sd.ft; br = Math.max(br, sd.brt); }
+        if (sd.as === undefined) {
+          sd.as = a; sd.bs = b; sd.g = sd.gt || sd.g; let x = 0.6; // Newton: rest position for this pressure and tension
+          for (let it = 0; it < 30; it++) { const F = -a - b * x - x * x * x + x * x, dF = -b - 3 * x * x + 2 * x; x -= F / dF; }
+          sd.x = x; sd.y = 0;
+        }
+        const phon = sd.as > syrOnset(sd.bs) - 0.012;
+        sd.as += (a - sd.as) * K.b_sa; sd.bs += (b - sd.bs) * (phon ? K.b_sb : K.b_sb * 0.12); if (sd.gt) sd.g += (sd.gt - sd.g) * (phon ? K.b_sb : K.b_sb * 0.12);
+        sd.ge = sd.ge || 0; sd.ge += ((nt ? Math.sqrt(e) : 0) - sd.ge) * (nt ? 0.02 : 0.004);
+        const y = sd.step(sd.as, sd.bs) / ((1000 + 1500 * sd.bs) * (1 + 40 * dl)) * (sd.amp || 1) * sd.ge;
+        if (!nt && sd.ge < 1e-4) sd.idle = true;
+        out += y;
+      }
+      // trachea: a tube with a weak reflection at the syrinx end
+      if (br > 0) { // breath turbulence, shaped by the vocal tract around the sung pitch
+        if (fTrack > 0 && (this.cnt & 15) === 0) this.brF.set(fTrack, 2.5);
+        this.brF.run(rnd() * 2 - 1); out += this.brF.bp * br * (this.dove ? K.b_breathDove : K.b_breath) * (S.br || 1) * 3;
+      }
+      const tb = this.tube, T = this.T, p = this.tp, back = tb[(p - T + 256) & 255], pin = out - r * back;
+      tb[p] = pin; this.tp = (p + 1) & 255;
+      let o = (1 - r) * tb[(p - (T >> 1) + 256) & 255];
+      // throat cavity tuned near the sung pitch keeps the tone pure, as songbirds do
+      if (fTrack > 0 && (this.cnt++ & 15) === 0) this.oec.set(fTrack, this.oq);
+      this.oec.run(o); o = (1 - this.om) * o + this.om * this.oec.bp * 1.6;
+      if (this.lpT) { this.lz += (o - this.lz) * this.lpT; o = this.lz; }
+      m[i] = this.radF.run(o); // beak radiation and the rest-position shifts removed
+    }
+  }
+  render(L, R, wL, wR, n, frame) {
+    if (!this.notes.length && (!this.sides || (this.sides[0].idle && this.sides[1].idle))) return;
+    if (!this.sides && Math.abs(this.z2) < 1e-7 && Math.abs(this.z1) < 1e-7 && Math.abs(this.ib[(this.ip - 1) & 127]) < 1e-7) { // silent between calls: skip unless a note sounds in this chunk
+      let any = false; for (const nt of this.notes) if (nt.s < frame + n && nt.s + nt.n > frame) { any = true; break; }
+      if (!any) return;
+    }
+    const m = SCRATCH.m; m.fill(0, 0, n);
+    if (this.sides) this.renderSyrinx(m, n, frame);
+    else for (const nt of this.notes) {
+      const psa = 1 - Math.exp(-1 / (K.fr_pulseSm * 0.001 * SR)), i0 = Math.max(nt.s, frame), i1 = Math.min(nt.s + nt.n, frame + n), h = nt.h, nh = h.length;
+      let s1 = nt.s1 === undefined ? 0 : nt.s1, c1 = nt.s1 === undefined ? 1 : nt.c1, rs = nt.rs || 0, rc = nt.rc || 1;
+      for (let i = i0; i < i1; i++) {
+        const k = i - nt.s;
+        if ((k & 7) === 0 || nt.inc === undefined) { // pitch and loudness contours at a 6 kHz control rate
+          const tt = k / SR, u = k / nt.n;
+          let f = nt.sh === 'arch' ? (nt.fa + (nt.fb - nt.fa) * u) * (1 + nt.pk * Math.sin(Math.PI * u)) : nt.fa * Math.pow(nt.fb / nt.fa, nt.c === 1 ? u : Math.pow(u, nt.c));
+          if (nt.vd) f *= 1 + nt.vd * Math.sin(TAU * nt.vr * tt);
+          if (nt.f2d) f *= 1 + nt.f2d * Math.sin(TAU * nt.f2r * tt);
+          f *= 1 + 0.008 * (this.jit.next() - 0.5); // no living voice holds a perfectly steady pitch
+          nt.f = Math.min(f, SR * 0.45); nt.inc = TAU * nt.f / SR; rs = Math.sin(nt.inc); rc = Math.cos(nt.inc);
+          const gn = 1.5 - 0.5 * (s1 * s1 + c1 * c1); s1 *= gn; c1 *= gn; // keep the phasor on the unit circle
+          const a1 = Math.min(1, tt / nt.at), a2 = Math.min(1, (nt.n - k) / SR / nt.rl);
+          let e = a1 * a1 * (3 - 2 * a1) * a2 * a2 * (3 - 2 * a2) * (1 + nt.cr * (u - 0.5)) * nt.a;
+          if (nt.tr) e *= 1 - nt.td * (0.5 + 0.5 * Math.cos(TAU * nt.tr * tt * (1 - 0.3 * u)));
+          nt.env = e;
+        }
+        const sn = s1 * rc + c1 * rs; c1 = c1 * rc - s1 * rs; s1 = sn;
+        let sk = s1, ck = c1, y = h[0] * s1;
+        for (let q = 1; q < nh && (q + 1) * nt.f < SR * 0.45; q++) { const sn = sk * c1 + ck * s1; ck = ck * c1 - sk * s1; sk = sn; y += h[q] * sk; }
+        let e = nt.env;
+        if (nt.pr) { // pulse train: each pulse starts sharply and decays
+          nt.pp = (nt.pp || 0) + nt.pr * (nt.pj || 1) / SR; if (nt.pp >= 1 || nt.pe === undefined) { nt.pp %= 1; nt.pe = 1; nt.pdk = Math.exp(-nt.pd * nt.pr / SR); nt.pj = 1 + K.fr_pulseJ * (2 * rnd() - 1); }
+          nt.ps = (nt.ps || 0) + (nt.pe - (nt.ps || 0)) * psa; e *= nt.ps; nt.pe *= nt.pdk; // vocal-cord pulses start softly, not as clicks
+        }
+        if (nt.br) { this.nz += ((rnd() * 2 - 1) - this.nz) * 0.12; y += this.nz * nt.br * 4; }
+        m[i - frame] += y * e;
+      }
+      nt.s1 = s1; nt.c1 = c1; nt.rs = rs; nt.rc = rc;
+    }
+    for (let j = this.notes.length - 1; j >= 0; j--) if (this.notes[j].s + this.notes[j].n <= frame + n) this.notes.splice(j, 1);
+    const a = this.lp, gl = this.g[0] * this.amp, gr = this.g[1] * this.amp, w = this.wet, ib = this.ib, dl = this.dl, dr = this.dr; let z1 = this.z1, z2 = this.z2, ip = this.ip;
+    for (let i = 0; i < n; i++) {
+      z1 += (m[i] - z1) * a; z2 += (z1 - z2) * a; ib[ip & 127] = z2;
+      L[i] += ib[(ip - dl) & 127] * gl; R[i] += ib[(ip - dr) & 127] * gr; ip++;
+      if (wL) { wL[i] += z2 * w; wR[i] += z2 * w; }
+    }
+    this.z1 = z1; this.z2 = z2; this.ip = ip;
+  }
+}
+function Chorus(mix, night) { // a population of callers that take turns, like real birds and frogs
+  const list = []; let frame = 0, lastKey = '';
+  const aL = new Pink(), aR = new Pink(), sh = new Pink(), lL = new BQ('lp', night ? 900 : 2500, 0.6), lR = new BQ('lp', night ? 900 : 2500, 0.6), hL = new BQ('hp', 250, 0.7), hR = new BQ('hp', 250, 0.7), drift = new Drift(0.15), flick = new Drift(6);
+  const rL = new Brown(), rR = new Brown(), rlL = new BQ('lp', 400, 0.6), rlR = new BQ('lp', 400, 0.6), rhL = new BQ('hp', 40, 0.7), rhR = new BQ('hp', 40, 0.7);
+  const leaves = new GrainCloud(400), gust = new Drift(0.1), far = [];
+  function pick(kind) { const w = mix[kind]; let r = rnd() * w.reduce((s, x) => s + x[1], 0); for (const [sp, p] of w) { r -= p; if (r <= 0) return sp; } return w[0][0]; }
+  return { render(L, R, n, p, cx) {
+    const key = p.kind + '|' + p.distance.toFixed(2);
+    if (key !== lastKey) { lastKey = key; list.length = 0; } // a new kind or distance means a new cast of animals
+    const D = p.distance, cnt = Math.round(p.count), act = 0.25 + 1.5 * p.activity * (p.kind === 'dawn' ? 1.4 : 1), frogs = mix === FROG_MIX;
+    while (list.length < cnt) {
+      const sp = pick(p.kind), light = list.length >= 5, r = lr(6 + 30 * D, 25 + 120 * D) * (sp === 'owl' ? 2 : 1) * (light ? 1.6 : 1), c = new Caller(sp, r, rr(-0.95, 0.95), light, frogs); // the five nearest get the full syrinx voice
+      c.next = frame + Math.floor(rnd() * SR * (SPECIES[sp].gap[1] + 2) / act); list.push(c);
+    }
+    list.length = Math.min(list.length, cnt);
+    const wL = cx && cx.wL, wR = cx && cx.wR;
+    for (const c of list) {
+      if (c.next < frame + n) {
+        let at = Math.max(c.next, frame);
+        if (rnd() < 0.6) for (const o of list) if (o !== c && o.busy > at && SPECIES[o.sp].g >= 0.2 && SPECIES[c.sp].g >= 0.2) at = Math.max(at, o.busy + Math.floor(rr(0.1, 0.6) * SR)); // wait for a neighbour to finish
+        const end = c.sing(at), g = c.S.gap;
+        c.next = end + Math.floor(rr(g[0], g[1]) * SR / act);
+      }
+      c.render(L, R, wL, wR, n, frame);
+    }
+    // far-off birds of the same kinds, deep in the landscape
+    const km = p.kind === 'doves' ? K.b_ambDove : p.kind === 'owls' ? K.b_ambOwl : 1, dark = night || p.kind === 'owls'; // owls sing in the night air, without daytime leaves
+    // the distant chorus: at most 10 frogs or 6 birds, each calling more often so the overall density is kept
+    const want = frogs ? K.fr_far * cnt : dark ? 0 : (p.kind === 'doves' ? K.b_farDove : K.b_far) * (1 + 2 * p.activity), nf = Math.min(frogs ? K.fr_farMax : 6, Math.round(want)), dens = nf ? Math.max(1, want / nf) : 1;
+    while (far.length < nf) { const sp = pick(p.kind), c = new Caller(sp, frogs ? lr(35, 140) : lr(120, 320), rr(-1, 1), true, frogs); c.next = frame + Math.floor(rnd() * SR * (frogs ? 3 : 8)); far.push(c); }
+    far.length = Math.min(far.length, nf);
+    for (const c of far) { if (c.next < frame + n) { const end = c.sing(Math.max(c.next, frame)), g = c.S.gap; c.next = end + Math.floor(rr(g[0], g[1]) * SR * 1.5 / act / dens); } c.render(L, R, wL, wR, n, frame); }
+    const lo = K.b_airLo * (dark ? 0.5 : 1) * km, mid = K.b_air * (dark ? 0.6 : 1) * km, hf = dark ? 0 : K.b_airHf * km;
+    for (let i = 0; i < n; i++) {
+      const d = 0.6 + 0.8 * drift.next(), fl = 0.85 + 0.3 * flick.next(), c = sh.next(), gv = gust.next();
+      if (hf > 0 && rnd() < (200 + 1800 * gv * gv) / SR) { const f = lr(2000, 9000), u = rnd(); leaves.add(f, rr(1, 3), hf * Math.sqrt(f / 1000) * u * u * (rnd() < 0.5 ? 1 : -1), rnd() * 2 - 1); }
+      leaves.step();
+      const rc = rhL.run(rlL.run(rL.next())), ri = rhR.run(rlR.run(rR.next()));
+      L[i] += hL.run(lL.run(aL.next() * 0.6 + c)) * mid * d * fl + rc * lo * d + leaves.l;
+      R[i] += hR.run(lR.run(aR.next() * 0.6 + c)) * mid * d * fl + (0.9 * rc + 0.44 * ri) * lo * d + leaves.r;
+    }
+    frame += n;
+  } };
+}
+const BIRD_MIX = {
+  woodland: [['blackbird', 0.4], ['robin', 0.3], ['chaffinch', 0.3]],
+  dawn: [['blackbird', 0.35], ['robin', 0.35], ['chaffinch', 0.3]],
+  doves: [['woodpigeon', 0.5], ['collared', 0.5]],
+  owls: [['owl', 1]],
+};
+const FROG_MIX = { peepers: [['peeper', 1]], treefrogs: [['treefrog', 1]], pond: [['treefrog', 0.65], ['peeper', 0.35]] };
+function Birds() { return Chorus(BIRD_MIX, false); }
+function Frogs() { // the three choruses play at matched loudness, so switching never jumps
+  const c = Chorus(FROG_MIX, true), G = { pond: 1, peepers: 0.65, treefrogs: 1.4 }; let b = null;
+  return { render(L, R, n, p, cx) {
+    if (!b || b[0].length !== n) b = [0, 1, 2, 3].map(() => new Float32Array(n)); else for (const a of b) a.fill(0);
+    const wet = cx && cx.wL; c.render(b[0], b[1], n, p, wet ? Object.assign({}, cx, { wL: b[2], wR: b[3] }) : cx);
+    const g = G[p.kind] || 1;
+    for (let i = 0; i < n; i++) { L[i] += b[0][i] * g; R[i] += b[1][i] * g; }
+    if (wet) for (let i = 0; i < n; i++) { cx.wL[i] += b[2][i] * g; cx.wR[i] += b[3][i] * g; }
+  } };
+}
+
+/* ================= DRIPS =================
+   The forest after rain: big drops let go from the canopy and land on leaves below or in
+   puddles; when the wind shakes the trees, a brief shower of drips follows. */
+function Drips() {
+  const voices = [], sp = new Spawner(), gust = new Drift(0.12), bg = new GrainCloud(300), bgL = new BQ('lp', 5000, 0.6), bgR = new BQ('lp', 5000, 0.6); let shower = 0;
+  return { render(L, R, n, p, cx) {
+    for (let k = 0; k < n; k += 32) gust.next();
+    const base = 0.2 * Math.pow(100, p.rate), g = gust.v;
+    if (p.shake > 0 && g > 0.72 && rnd() < p.shake * n / SR * 0.6) shower = rr(1, 3) * SR; // a gust shakes the canopy
+    const showerMul = shower > 0 ? 6 + 10 * p.shake : 1; shower -= n;
+    const tmpL = new Float32Array(n), tmpR = new Float32Array(n);
+    if (voices.length < 600) sp.run(base * showerMul, n, off => {
+      const r = lr(1.5, 18 * K.d_dist), a = Math.pow(rnd(), K.d_pow) * Math.min(1, 3 / r) * 0.5, pan = rr(-1, 1), onLeaf = p.surface === 'leaves' ? 0.85 : p.surface === 'puddles' ? 0.15 : 0.55;
+      if (rnd() < onLeaf) { voices.push(vNoise(off, a, pan, lr(0.0015, 0.006) * K.d_leafEx, lr(1200, 4500) * K.d_leafF, rr(1, 2.5) * K.d_leafQ)); if (rnd() < 0.4) voices.push(vNoise(off, a * 0.5 * K.d_thud, pan, lr(0.004, 0.012), lr(350, 800), 2)); }
+      else { // into a puddle: always a small splash; only some drops trap a bubble, and it rings only briefly
+        if (rnd() < K.d_bubP) voices.push(vBub(off, lr(650, 2200) * K.d_plinkF, a * 0.8 * K.d_plink, pan, rr(0.1, 0.2) * K.d_plinkDF, rr(0.1, 0.3)));
+        voices.push(vNoise(off, a * 0.35 * K.d_splash, pan, 0.0015, lr(1500, 4000), 0.8));
+      }
+    });
+    runVoices(voices, tmpL, tmpR, n);
+    // countless smaller drips further off in the canopy: a soft, sparse patter that never quite stops
+    const bR_ = K.d_bgRate * (0.5 + p.rate) * (shower > 0 ? 3 : 1) / SR, bA = K.d_bg;
+    if (bA > 0) for (let i = 0; i < n; i++) {
+      if (rnd() < bR_) { const f = lr(K.d_bgLo, K.d_bgHi), u = rnd(); bg.add(f, rr(0.8, 1.6) * K.d_bgQ, bA * Math.sqrt(f / 1000) * u * u * (rnd() < 0.5 ? 1 : -1), rr(-1, 1)); }
+      bg.step(); tmpL[i] += bgL.run(bg.l); tmpR[i] += bgR.run(bg.r);
+    }
+    const wL = cx && cx.wL, wR = cx && cx.wR;
+    for (let i = 0; i < n; i++) { L[i] += tmpL[i]; R[i] += tmpR[i]; if (wL) { const w = (tmpL[i] + tmpR[i]) * 0.35 * K.d_wet; wL[i] += w; wR[i] += w; } }
+  } };
+}
+
+/* ================= registry ================= */
+const pct = v => Math.round(v * 100) + '%';
+const BEAUFORT = [[1, 'calm'], [6, 'light air'], [12, 'light breeze'], [20, 'gentle breeze'], [29, 'moderate breeze'], [39, 'fresh breeze'], [50, 'strong breeze'], [62, 'near gale'], [75, 'gale'], [89, 'strong gale'], [103, 'storm'], [118, 'violent storm'], [1e9, 'hurricane']];
+const windKmh = v => 2 + 118 * Math.pow(v, 1.3);
+const birdDist = v => Math.round(Math.sqrt((6 + 30 * v) * (25 + 120 * v)));
+const SOUNDS = [
+  { id: 'rain', field: true, name: 'Rain', vol: 0.8, trim: 1.6, send: 0.12, wide: true, create: Rain,
+    blurb: 'Up to 25,000 individual droplet impacts a second, nearby splashes, and the rising "plink" of air bubbles trapped where drops hit water.',
+    params: [
+      { id: 'intensity', label: 'Rainfall', def: 0.45, fmt: v => { const mm = 0.2 * Math.pow(400, v); return (mm < 10 ? mm.toFixed(1) : Math.round(mm)) + ' mm/h · ' + (mm < 1 ? 'drizzle' : mm < 2.5 ? 'light' : mm < 7.6 ? 'moderate' : mm < 50 ? 'heavy' : 'violent'); } },
+      { id: 'surface', label: 'Falling on', type: 'choice', def: 'ground', options: [['ground', 'Open ground'], ['leaves', 'Leaves'], ['roof', 'Tin roof'], ['window', 'Window'], ['tent', 'Tent']] },
+      { id: 'size', label: 'Drop size', def: 0.5, fmt: v => (0.5 + 4.5 * v).toFixed(1) + ' mm drops' },
+      { id: 'closeness', label: 'Nearby drops', def: 0.5, fmt: v => v < 0.33 ? 'distant' : v < 0.66 ? 'around you' : 'right beside you' },
+      { id: 'drips', label: 'Eave drips', def: 0.25, fmt: v => { const k = Math.round(v * 4); return k ? k + (k > 1 ? ' drip points' : ' drip point') : 'off'; } },
+      { id: 'gusts', label: 'Gusts', def: 0.15, fmt: pct },
+    ] },
+  { id: 'thunder', name: 'Thunder', vol: 0.75, trim: 1.0, send: 0.35, create: Thunder,
+    blurb: 'Every strike is built fresh: a tearing crack when close, then rolling rumble darkened by distance. Sound trails the flash by about 2.9 s per km.',
+    params: [
+      { id: 'often', label: 'Strikes', def: 0.5, fmt: v => { const m = 6 * Math.pow(1 / 15, v); return 'about every ' + (m < 1 ? Math.round(m * 60) + ' s' : m.toFixed(1) + ' min'); } },
+      { id: 'distance', label: 'Storm distance', def: 0.5, fmt: v => (0.5 * Math.pow(30, v)).toFixed(1) + ' km away' },
+      { id: 'strike', label: 'Strike now', type: 'action' },
+    ] },
+  { id: 'wind', field: true, name: 'Wind', vol: 0.6, trim: 1.22, send: 0.1, create: Wind,
+    blurb: 'Gust-driven filtered noise, the whistling Aeolian tone of air around wires and edges, and moving foliage.',
+    params: [
+      { id: 'speed', label: 'Wind speed', def: 0.4, fmt: v => { const k = windKmh(v); const b = BEAUFORT.findIndex(x => k < x[0]); return Math.round(k) + ' km/h · force ' + b + ', ' + BEAUFORT[b][1]; } },
+      { id: 'gust', label: 'Gustiness', def: 0.5, fmt: pct },
+      { id: 'whistle', label: 'Whistle', def: 0.12, fmt: pct },
+      { id: 'trees', label: 'Rustling leaves', def: 0.6, fmt: pct },
+    ] },
+  { id: 'ocean', field: true, name: 'Ocean', vol: 0.7, trim: 1.21, send: 0.1, create: Ocean,
+    blurb: 'Each wave swells, breaks, runs up the sand in fizzing foam and drags back down. No two sets are alike.',
+    params: [
+      { id: 'size', label: 'Wave height', def: 0.45, fmt: v => (0.3 + 2.7 * v).toFixed(1) + ' m' },
+      { id: 'period', label: 'Wave period', def: 9, min: 5, max: 16, step: 0.5, fmt: v => v + ' s between waves' },
+      { id: 'distance', label: 'Distance', def: 0.3, fmt: v => Math.round(5 + 295 * Math.pow(v, 1.5)) + ' m from the surf' },
+    ] },
+  { id: 'stream', field: true, name: 'Stream', vol: 0.6, trim: 1.99, send: 0.12, create: Stream,
+    blurb: 'Hundreds of collapsing bubbles a second over the low body of moving water. Babble makes them arrive in bursts.',
+    params: [
+      { id: 'flow', label: 'Flow', def: 0.45, fmt: v => { const q = 0.2 * Math.pow(500, v); return (q < 10 ? q.toFixed(1) : Math.round(q)) + ' L/s'; } },
+      { id: 'size', label: 'Bubble size', def: 0.7, fmt: v => 'centred near ' + (3260 / (0.3 + (0.6 + 2.2 * v) / 2) / 1000).toFixed(1) + ' kHz' },
+      { id: 'babble', label: 'Babble', def: 0.2, fmt: pct },
+    ] },
+  { id: 'fire', field: true, name: 'Fire', vol: 0.65, trim: 2.1, send: 0.08, create: Fire,
+    blurb: 'A low roar of burning gas, a hiss of steam, and resin pockets bursting in tight clusters of crackles.',
+    params: [
+      { id: 'size', label: 'Fire size', def: 0.5, fmt: v => v < 0.2 ? 'embers' : v < 0.45 ? 'small fire' : v < 0.8 ? 'campfire' : 'bonfire' },
+      { id: 'crackle', label: 'Crackle', def: 0.5, fmt: v => 'about ' + Math.round((0.6 + 45 * Math.pow(v, 1.5)) * 0.8) + ' bursts/s' },
+      { id: 'hiss', label: 'Hiss', def: 0.15, fmt: pct },
+    ] },
+  { id: 'birds', name: 'Birds', vol: 0.6, trim: 0.996, send: 0.04, wet: true, create: Birds,
+    blurb: 'Songbirds built note by note from the song patterns of real species. Each bird keeps its own repertoire, perch and rhythm, and waits for its neighbours to finish.',
+    params: [
+      { id: 'kind', label: 'Who is singing', type: 'choice', def: 'woodland', options: [['woodland', 'Woodland'], ['dawn', 'Dawn chorus'], ['doves', 'Doves'], ['owls', 'Owls at night']] },
+      { id: 'count', label: 'Birds', def: 4, min: 1, max: 14, step: 1, fmt: v => v + (v > 1 ? ' birds' : ' bird') },
+      { id: 'activity', label: 'Activity', def: 0.35, fmt: v => v < 0.25 ? 'occasional' : v < 0.6 ? 'relaxed' : v < 0.85 ? 'lively' : 'full chorus' },
+      { id: 'distance', label: 'Distance', def: 0.4, fmt: v => 'about ' + birdDist(v) + ' m away' },
+    ] },
+  { id: 'frogs', name: 'Frogs', vol: 0.55, trim: 3.82, send: 0.04, wet: true, create: Frogs,
+    blurb: 'A night chorus of frogs calling in turn: clear rising peeps and the pulsed “krek” bouts of tree frogs, over a dense chorus further off.',
+    params: [
+      { id: 'kind', label: 'Chorus', type: 'choice', def: 'pond', options: [['pond', 'Pond'], ['peepers', 'Spring peepers'], ['treefrogs', 'Tree frogs']] },
+      { id: 'count', label: 'Frogs', def: 12, min: 1, max: 30, step: 1, fmt: v => v + (v > 1 ? ' frogs' : ' frog') },
+      { id: 'activity', label: 'Activity', def: 0.5, fmt: pct },
+      { id: 'distance', label: 'Distance', def: 0.35, fmt: v => 'about ' + birdDist(v) + ' m away' },
+    ] },
+  { id: 'drips', name: 'After the rain', vol: 0.6, trim: 6.5, send: 0.1, wet: true, create: Drips,
+    blurb: 'The rain has stopped, but the canopy still lets go of its water: single heavy drops onto leaves and puddles, and a short shower whenever the wind shakes the trees.',
+    params: [
+      { id: 'rate', label: 'Drips', def: 0.6, fmt: v => { const r = 0.2 * Math.pow(100, v); return (r < 10 ? r.toFixed(1) : Math.round(r)) + ' drops/s'; } },
+      { id: 'shake', label: 'Wind in the trees', def: 0.4, fmt: pct },
+      { id: 'surface', label: 'Landing on', type: 'choice', def: 'mixed', options: [['leaves', 'Leaves'], ['mixed', 'Leaves and puddles'], ['puddles', 'Puddles']] },
+    ] },
+  { id: 'crickets', name: 'Crickets', vol: 0.55, trim: 4.17, send: 0.25, create: Crickets,
+    blurb: 'Each cricket chirps at its own pitch and place. Warmer nights mean faster chirping, following Dolbear’s law.',
+    params: [
+      { id: 'count', label: 'Crickets', def: 6, min: 1, max: 16, step: 1, fmt: v => v + (v > 1 ? ' crickets' : ' cricket') },
+      { id: 'temp', label: 'Night temperature', def: 21, min: 10, max: 32, step: 0.5, fmt: v => v + ' °C · ' + Math.round(Math.max(15, 7.2 * v - 32)) + ' chirps/min' },
+      { id: 'distance', label: 'Distance', def: 0.4, fmt: v => v < 0.33 ? 'in the grass nearby' : v < 0.66 ? 'across the yard' : 'far off' },
+    ] },
+];
+
+
+/* ================= app ================= */
+const SCENES = [
+  { g: 'Rain', id: 'soft', name: 'Soft rain', sub: 'Rain on leaves', space: 'forest', mix: { rain: { p: { intensity: 0.3, surface: 'leaves', size: 0.4, closeness: 0.45, drips: 0.25, gusts: 0.2 } } } },
+  { g: 'Rain', id: 'downpour', name: 'Downpour', sub: 'Rain, wind', space: 'open', mix: { rain: { p: { intensity: 0.88, surface: 'ground', size: 0.7, closeness: 0.6, drips: 0.5, gusts: 0.45 } }, wind: { vol: 0.4, p: { speed: 0.3, trees: 0.5, whistle: 0.05 } } } },
+  { g: 'Rain', id: 'storm', name: 'Thunderstorm', sub: 'Rain, thunder, wind', space: 'valley', mix: { rain: { p: { intensity: 0.7, surface: 'leaves', size: 0.6, closeness: 0.5, drips: 0.25, gusts: 0.6 } }, thunder: { p: { often: 0.65, distance: 0.45 } }, wind: { vol: 0.45, p: { speed: 0.45, gust: 0.7, trees: 0.6, whistle: 0.15 } } } },
+  { g: 'Rain', id: 'roof', name: 'Tin roof', sub: 'Rain, distant thunder', space: 'indoors', mix: { rain: { p: { intensity: 0.55, surface: 'roof', size: 0.5, closeness: 0.6, drips: 0.5, gusts: 0.25 } }, thunder: { vol: 0.6, p: { often: 0.35, distance: 0.8 } } } },
+  { g: 'Rain', id: 'window', name: 'Rainy window', sub: 'Rain on glass', space: 'indoors', mix: { rain: { p: { intensity: 0.5, surface: 'window', size: 0.45, closeness: 0.7, drips: 0, gusts: 0.35 } } } },
+  { g: 'Rain', id: 'tent', name: 'In a tent', sub: 'Rain on canvas, wind', space: 'open', mix: { rain: { p: { intensity: 0.45, surface: 'tent', size: 0.55, closeness: 0.6, drips: 0, gusts: 0.3 } }, wind: { vol: 0.35, p: { speed: 0.3, trees: 0.6, whistle: 0 } } } },
+  { g: 'Woodland and water', id: 'dawn', name: 'Dawn chorus', sub: 'Birds waking, light breeze', space: 'forest', mix: { birds: { p: { kind: 'dawn', count: 9, activity: 0.7, distance: 0.45 } }, wind: { vol: 0.25, p: { speed: 0.12, trees: 0.6, whistle: 0, gust: 0.3 } } } },
+  { g: 'Woodland and water', id: 'spring', name: 'Spring woodland', sub: 'Birds, brook, breeze', space: 'forest', mix: { birds: { p: { kind: 'woodland', count: 4, activity: 0.35, distance: 0.45 } }, stream: { vol: 0.45, pos: -0.5, p: { flow: 0.3 } }, wind: { vol: 0.28, p: { speed: 0.15, trees: 0.7, whistle: 0 } } } },
+  { g: 'Woodland and water', id: 'after', name: 'After the rain', sub: 'Dripping canopy, birds return', space: 'forest', mix: { drips: {}, birds: { vol: 0.45, p: { kind: 'woodland', count: 3, activity: 0.25, distance: 0.55 } }, wind: { vol: 0.22, p: { speed: 0.12, trees: 0.6, whistle: 0 } } } },
+  { g: 'Woodland and water', id: 'brook', name: 'Forest brook', sub: 'Stream, breeze', space: 'forest', mix: { stream: { pos: 0.3 }, wind: { vol: 0.4, p: { speed: 0.22, trees: 0.8, whistle: 0, gust: 0.4 } } } },
+  { g: 'Woodland and water', id: 'garden', name: 'Garden doves', sub: 'Doves, soft breeze', space: 'open', mix: { birds: { p: { kind: 'doves', count: 3, activity: 0.5, distance: 0.35 } }, wind: { vol: 0.22, p: { speed: 0.1, trees: 0.5, whistle: 0 } } } },
+  { g: 'Woodland and water', id: 'sea', name: 'Seaside', sub: 'Waves, sea breeze', space: 'open', mix: { ocean: {}, wind: { vol: 0.4, p: { speed: 0.35, trees: 0, whistle: 0.1, gust: 0.4 } } } },
+  { g: 'Night', id: 'camp', name: 'Campfire night', sub: 'Fire, crickets', space: 'open', mix: { fire: {}, crickets: { pos: 0.4, p: { count: 7, temp: 22, distance: 0.45 } }, wind: { vol: 0.3, p: { speed: 0.15, trees: 0.6, whistle: 0 } } } },
+  { g: 'Night', id: 'pond', name: 'Night pond', sub: 'Frogs, crickets', space: 'open', mix: { frogs: { pos: 0.3 }, crickets: { vol: 0.35, pos: -0.4, p: { count: 4, distance: 0.6 } }, wind: { vol: 0.2, p: { speed: 0.08, trees: 0.4, whistle: 0 } } } },
+  { g: 'Night', id: 'owl', name: 'Owl wood', sub: 'Owls, night breeze', space: 'valley', mix: { birds: { p: { kind: 'owls', count: 2, activity: 0.5, distance: 0.5 } }, wind: { vol: 0.3, p: { speed: 0.12, trees: 0.5, whistle: 0 } }, crickets: { vol: 0.25, p: { count: 3, distance: 0.7 } } } },
+  { g: 'Night', id: 'gale', name: 'Winter gale', sub: 'Strong wind', space: 'valley', mix: { wind: { vol: 0.7, p: { speed: 0.82, gust: 0.8, whistle: 0.7, trees: 0.3 } } } },
+];
+const PLACE = new Set(['stream', 'fire', 'ocean', 'birds', 'frogs', 'drips', 'crickets']);
+const SPACE_DESC = {
+  open: 'Open ground with little to reflect the sound: close and clear, as on a meadow or a beach.',
+  forest: 'Trunks and leaves scatter the sound into a soft, short reverberation, the way birdsong carries through woodland.',
+  indoors: 'A furnished room: brief, warm reflections, as if you were listening from inside.',
+  valley: 'The slopes send sound back as distant echoes with a long, open tail.',
+};
+const MODES = {
+  listen: { name: 'Listen', crest: 60, evolve: 0, desc: 'Everything plays exactly as you set it. No softening and no drift.' },
+  relax: { name: 'Relax', crest: 15, evolve: 1, thunderMin: 0.55, desc: 'Keeps the storm at least 3 km away, caps sudden peaks at 15 dB above the background, and lets the weather drift slowly over minutes so your attention can rest on it without effort.' },
+  focus: { name: 'Focus', crest: 11, evolve: 0.35, thunderMin: 0.85, oftenMax: 0.3, drips: 0.4, gust: 0.5, whistle: 0.5, crackle: 0.6, calm: 0.5, desc: 'A steady, even bed that masks nearby talk. Sudden events are capped at 11 dB, drips and gusts are calmed, thunder stays far off, and the drift is minimal so nothing pulls at your attention.' },
+  sleep: { name: 'Sleep', crest: 8, evolve: 0.6, thunderMin: 0.8, oftenMax: 0.4, drips: 0.4, gust: 0.5, whistle: 0.4, crackle: 0.5, calm: 0.45, desc: 'The strictest cap on sudden peaks (8 dB), no close thunder, fewer crackles and drips, and a long ending in which the sound slowly darkens and fades. Starts a 45-minute timer if none is running.' },
+};
+const BREATH = {
+  slow: { name: 'Slow', desc: '4.4 s in, 6.5 s out: about 5.5 breaths a minute, the pace used in heart-rate-variability training.', seq: () => [['in', 4.4, 1], ['out', 6.5, 0]] },
+  sigh: { name: 'Cyclic sigh', desc: 'Breathe in, take a short second sip of air, then let it all out slowly. Five minutes a day of this lifted mood in a 2023 Stanford study.', seq: () => [['in', 2.3, 0.8], ['top', 1.0, 1], ['out', 6.2, 0]] },
+  settle: { name: 'Settle', desc: 'Starts near an everyday resting pace of 10 breaths a minute and slows to 5.5 over four minutes, leading you down gradually.', seq: e => { const f = Math.min(1, e / 240), c = 6 + 4.9 * f; return [['in', c * 0.4, 1], ['out', c * 0.6, 0]]; } },
+};
+const PHASE_LABEL = { in: 'Breathe in', top: 'A little more', out: 'Breathe out' };
+// guided practices from anxiety treatment; each returns timed steps {t (s), text, sub, say, hold}
+const PRACTICES = {
+  att: { name: 'Attention training', desc: 'About 12 minutes, after Wells\u2019s Attention Training Technique: focus on one sound at a time, then switch quickly as each is named, then hear them all at once. It trains you to steer attention away from worry rather than fight it. Works best with three or more sounds placed around you.', steps: attSteps },
+  leaves: { name: 'Leaves on a stream', desc: 'About 8 minutes, from acceptance and commitment therapy: picture a stream and set each thought on a leaf to float away. With practice, thoughts feel less gripping. Pairs well with Forest brook.', steps: leavesSteps },
+  muscle: { name: 'Muscle release', desc: 'About 7 minutes of progressive muscle relaxation: tense each muscle group gently as you breathe in, let it go as you breathe out, and notice the difference.', steps: muscleSteps },
+  write: { name: 'Write it down', desc: 'About 5 minutes before sleep: write a specific to-do list for the coming days, then let the sound take over. In a sleep-lab study, people who did this fell asleep faster than people who wrote about what they had already done, and the more specific the list, the faster.', steps: writeSteps },
+  shuffle: { name: 'Sleep shuffle', desc: 'For falling asleep: a simple, unrelated thing to picture every 9 seconds for 20 minutes, which leaves little room for worry. Early research. Best with the steps read aloud and your eyes closed.', steps: shuffleSteps },
+};
+const CHECKS = 'rainmaker-checkins';
+const capF = s => s.charAt(0).toUpperCase() + s.slice(1);
+function pracSources() { // the sounds that are actually playing, and where they sit
+  const on = id => state.sounds[id].on, out = [];
+  const at = id => { const p = state.sounds[id].pos || 0; return p < -0.3 ? ' on your left' : p > 0.3 ? ' on your right' : ''; };
+  if (on('rain')) { const s = state.sounds.rain.p.surface; out.push('the nearest raindrops', 'the soft hiss of rain far away', s === 'window' ? 'the taps on the glass' : s === 'roof' ? 'the ring of the tin roof' : s === 'tent' ? 'the drumming on the canvas' : s === 'leaves' ? 'the patter on the leaves' : 'the little plinks of drops landing in puddles'); }
+  if (on('ocean')) out.push('the waves as they break' + at('ocean'), 'the fizz of foam running up the sand');
+  if (on('stream')) out.push('the stream' + at('stream'));
+  if (on('fire')) out.push('the crackle of the fire' + at('fire'), 'the soft roar of the flames');
+  if (on('birds')) { const k = state.sounds.birds.p.kind; if (k === 'owls') out.push('the owls' + at('birds')); else if (k === 'doves') out.push('the doves' + at('birds')); else out.push('the nearest bird' + at('birds'), 'the birds farther away'); }
+  if (on('frogs')) out.push('the frogs' + at('frogs'), 'the farthest frogs');
+  if (on('drips')) out.push('the drops falling from the leaves' + at('drips'));
+  if (on('crickets')) out.push('the crickets' + at('crickets'));
+  if (on('wind')) out.push('the wind moving through the trees');
+  if (on('thunder')) out.push('the thunder, whenever it rolls');
+  for (const x of ['the quietest sound you can find', 'the sounds of the room around you']) if (out.length < 3) out.push(x);
+  return out.slice(0, 6);
+}
+function attSteps() {
+  const S = pracSources(), st = [], each = Math.round(300 / S.length); let t = 0;
+  st.push({ t, text: 'Rest your eyes on one spot', sub: 'Nothing to change and nothing to push away. If thoughts come, let them be there and return to the sound named.' }); t += 25;
+  st.push({ t, text: 'First, one sound at a time', sub: 'Give it all of your attention. Everything else can stay in the background.' }); t += 10;
+  for (const s of S) { st.push({ t, text: 'Focus on ' + s, sub: '' }); st.push({ t: t + Math.round(each / 2), text: 'Stay with ' + s.replace(/ on your (left|right)$/, ''), sub: 'If your mind wanders, gently come back.', say: 'Stay with it.' }); t += each; }
+  st.push({ t, text: 'Now switch quickly', sub: 'Move your attention to each sound as soon as it is named.' }); t += 10;
+  let prev = -1;
+  for (let k = 0; k < 36; k++) { let j; do { j = Math.floor(Math.random() * S.length); } while (j === prev && S.length > 1); prev = j; st.push({ t, text: capF(S[j]), sub: '' }); t += 6; }
+  st.push({ t, text: 'Now hear them all at once', sub: 'Widen your attention to take in every sound together, as many as you can at the same time.' });
+  st.push({ t: t + 50, text: 'All of them together', sub: '', say: 'All of them, together.' }); t += 100;
+  st.push({ t, text: 'Let your attention rest', sub: 'That is the practice. Done daily, it makes it easier to step out of worry.', hold: 15 });
+  return st;
+}
+function leavesSteps() {
+  return [
+    { t: 0, text: 'Sit comfortably', sub: 'Let your eyes close if you like, and listen to the water for a moment.' },
+    { t: 30, text: 'Picture a gentle stream', sub: 'Leaves float past on the surface, one at a time, at their own pace.' },
+    { t: 75, text: 'Put each thought on a leaf', sub: 'A worry, an image, a plan: set it on a leaf and watch the water carry it away.' },
+    { t: 130, text: 'No need to hurry the leaves', sub: 'You are not trying to get rid of thoughts, only letting them pass.' },
+    { t: 200, text: 'Caught up in a thought?', sub: 'That happens. Notice it, place it on a leaf, and come back to the bank.' },
+    { t: 270, text: 'Pleasant thoughts float too', sub: 'Every thought gets a leaf. You are simply watching.' },
+    { t: 350, text: 'Listen to the water', sub: 'Let the sound hold your attention while the leaves drift on.' },
+    { t: 420, text: 'Let the last leaves float out of sight', sub: '' },
+    { t: 465, text: 'Come back slowly', sub: 'Thoughts will keep coming. You do not have to climb onto them.', hold: 20 },
+  ];
+}
+const MUSCLES = [['make two tight fists', 'Let your hands fall open and soft.'], ['bend your arms and tighten them', 'Let your arms drop and grow heavy.'],
+  ['lift your shoulders up toward your ears', 'Let them drop. Notice the space it leaves.'], ['scrunch up your whole face', 'Smooth your forehead. Let your jaw hang loose.'],
+  ['gently tuck your chin toward your chest', 'Let your head float back to rest.'], ['draw your shoulder blades together', 'Let your back sink into whatever holds you.'],
+  ['tighten your stomach', 'Let your belly soften with each breath.'], ['tighten your thighs and press your knees together', 'Let your legs grow loose and heavy.'], ['curl your toes', 'Let your feet go completely limp.']];
+function muscleSteps() {
+  const st = [{ t: 0, text: 'Tense gently, never to the point of pain', sub: 'Skip any part that is sore or injured. Breathe in as you tense, and out as you let go.' }]; let t = 15;
+  for (const [a, b] of MUSCLES) { st.push({ t, text: 'Breathe in and ' + a, sub: 'Hold it for about five seconds.' }); st.push({ t: t + 6, text: 'Breathe out and let go', sub: b }); t += 30; }
+  st.push({ t, text: 'Now let your whole body rest', sub: 'Scan from head to toe. Wherever you find tension, breathe out and let it go.' });
+  st.push({ t: t + 60, text: 'Take your time before you move', sub: '', hold: 20 });
+  return st;
+}
+const WORDS = ('teapot,meadow,pebble,lantern,violin,pinecone,feather,harbour,sailboat,bicycle,orchard,candle,snowflake,blanket,lighthouse,strawberry,kite,wheelbarrow,tulip,compass,' +
+  'acorn,teacup,hammock,pear,telescope,rowing boat,cello,honeycomb,seashell,windmill,scarf,apricot,old map,piano,sunflower,garden gate,wool sweater,hot air balloon,canoe,cinnamon bun,' +
+  'birch tree,rocking chair,paintbrush,envelope,chestnut,wicker basket,lemon,harp,snow globe,butterfly,loaf of bread,blueberry,paper lantern,ladder,sandcastle,trumpet,maple leaf,wooden spoon,guitar,mountain lake,' +
+  'rose garden,cottage,pumpkin,carousel,pocket watch,raft,kettle,hedgehog,cloud,pine forest,river stone,accordion,swan,fountain,picnic blanket,lavender,umbrella,peach,wooden bridge,sleigh,' +
+  'marble,flute,honey jar,rope swing,fern,bakery,puzzle piece,mitten,apple tree,sail,cherry,glass bottle,chalk,notebook,duck pond,kayak,pillow,slippers,porch,oak tree,' +
+  'barn,haystack,button,thimble,paper crane,watering can,bird house,clothesline,lemonade,deck chair,bookshelf,ink pot,easel,daisy,red tractor,sheep,tortoise,coconut,beach hut,straw hat,' +
+  'violet,clock tower,spinning top,cobblestone street,lily pad,rowan berries,garden bench,flower pot,bumblebee,pine needles,village square,blackboard,woolly hat,plum,wind chime,flower field,hot cocoa,doormat,little boat,tea tray').split(',');
+function writeSteps() {
+  return [
+    { t: 0, text: 'Write down what you need to do', sub: 'Tomorrow and the next few days. Be specific, and let small tasks count too. Keep going until nothing else comes.' },
+    { t: 150, text: 'Anything else on your mind?', sub: 'Add it to the list. It will be waiting for you in the morning.' },
+    { t: 270, text: 'Let the list hold it now', sub: 'When you are ready, close your eyes and let the sound take over.', hold: 15 },
+  ];
+}
+function shuffleSteps() {
+  const w = WORDS.slice(); for (let i = w.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [w[i], w[j]] = [w[j], w[i]]; }
+  const st = [{ t: 0, text: 'Picture each word for a few seconds', sub: 'Any image is fine. If nothing comes, wait for the next one. No need to connect them.' }];
+  for (let k = 0; k < 132; k++) st.push({ t: 14 + k * 9, text: w[k % w.length], sub: '', say: w[k % w.length] });
+  st[st.length - 1].hold = 10; return st;
+}
+// "living weather": each sound's main control drifts slowly; three incommensurate cycles (~1.6, 4 and 10 min) give a 1/f-like wander that never repeats exactly
+const EVOLVE = { rain: ['intensity', 0.12], wind: ['speed', 0.1], ocean: ['size', 0.12], stream: ['flow', 0.1], fire: ['size', 0.08], birds: ['activity', 0.12], frogs: ['activity', 0.1], drips: ['rate', 0.08] };
+const PH = Object.fromEntries(SOUNDS.map(d => [d.id, [rnd() * TAU, rnd() * TAU, rnd() * TAU]]));
+function effective(id, p, t, M) {
+  let q = null; const set = (k, v) => { if (!q) q = Object.assign({}, p); q[k] = v; };
+  if (id === 'thunder') { if (M.thunderMin) set('distance', Math.max(p.distance, M.thunderMin)); if (M.oftenMax != null) set('often', Math.min(p.often, M.oftenMax)); }
+  if (id === 'rain') { if (M.drips != null) set('drips', p.drips * M.drips); if (M.gust != null) set('gusts', p.gusts * M.gust); }
+  if (id === 'wind') { if (M.gust != null) set('gust', p.gust * M.gust); if (M.whistle != null) set('whistle', p.whistle * M.whistle); }
+  if (id === 'fire' && M.crackle != null) set('crackle', p.crackle * M.crackle);
+  if ((id === 'birds' || id === 'frogs') && M.calm != null) set('activity', p.activity * M.calm);
+  if (id === 'drips' && M.calm != null) set('rate', p.rate * (0.6 + 0.4 * M.calm));
+  const ev = EVOLVE[id];
+  if (ev && M.evolve) {
+    const ph = PH[id], w = 0.5 * Math.sin(TAU * t / 97 + ph[0]) + 0.33 * Math.sin(TAU * t / 241 + ph[1]) + 0.17 * Math.sin(TAU * t / 607 + ph[2]);
+    set(ev[0], clamp(p[ev[0]] + ev[1] * M.evolve * w, 0, 1));
+  }
+  return q || p;
+}
+const STORE = 'rainmaker-mix-v1', CH = 8192, FADE_S = 0.5, GD = 128, GB = 480; // GD: startle-guard look-ahead in samples
+const $ = s => document.querySelector(s);
+const DEF = Object.fromEntries(SOUNDS.map(d => [d.id, d]));
+
+function defaults() {
+  const s = { master: 0.8, mode: 'listen', space: 'open', breath: { on: false, pattern: 'slow', depth: 0.5 }, prac: { id: 'att', voice: false }, sounds: {} };
+  for (const d of SOUNDS) {
+    const p = {}; for (const q of d.params) if (q.type !== 'action') p[q.id] = q.def;
+    s.sounds[d.id] = { on: d.id === 'rain', vol: d.vol, pos: 0, p };
+  }
+  return s;
+}
+let state = defaults();
+try {
+  const saved = JSON.parse(localStorage.getItem(STORE) || 'null');
+  if (saved && saved.sounds) {
+    if (typeof saved.master === 'number') state.master = saved.master;
+    if (MODES[saved.mode]) state.mode = saved.mode;
+    if (SPACES[saved.space]) state.space = saved.space;
+    if (saved.prac) { if (PRACTICES[saved.prac.id]) state.prac.id = saved.prac.id; state.prac.voice = !!saved.prac.voice; }
+    if (saved.breath) { if (BREATH[saved.breath.pattern]) state.breath.pattern = saved.breath.pattern; if (typeof saved.breath.depth === 'number') state.breath.depth = saved.breath.depth; }
+    for (const d of SOUNDS) {
+      const a = saved.sounds[d.id], b = state.sounds[d.id]; if (!a) continue;
+      b.on = !!a.on; if (typeof a.vol === 'number') b.vol = a.vol; if (typeof a.pos === 'number') b.pos = a.pos;
+      for (const k in b.p) if (a.p && typeof a.p[k] === typeof b.p[k]) b.p[k] = a.p[k];
+    }
+  }
+} catch (e) {}
+let saveT = 0;
+function save() { clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) {} }, 300); }
+
+const chanGain = id => { const v = state.sounds[id].vol; return v * v * 1.6 * (DEF[id].trim || 1); };
+const masterGain = () => state.master * state.master;
+
+function spaceBuffer(c, key) { const [a, b] = makeSpaceIR(key, c.sampleRate), buf = c.createBuffer(2, a.length, c.sampleRate); buf.copyToChannel(a, 0); buf.copyToChannel(b, 1); return buf; }
+function place(L, R, n, pos) { // equal-power placement of a stereo source
+  const a = (clamp(pos, -1, 1) + 1) * Math.PI / 4, gl = Math.cos(a) * Math.SQRT2, gr = Math.sin(a) * Math.SQRT2;
+  for (let i = 0; i < n; i++) { const m = (L[i] + R[i]) * 0.5, sd = (L[i] - R[i]) * 0.5 * (1 - 0.4 * Math.abs(pos)); L[i] = (m + sd) * gl; R[i] = (m - sd) * gr; }
+}
+
+class Breath { // schedules the breathing swell on audio-clock automation, and keeps the timeline for the pacer and the ocean
+  constructor(e) { this.e = e; this.on = false; this.segs = []; this.cycles = []; }
+  gainOf(v) { return 1 - state.breath.depth * 0.42 * (1 - v); }
+  lpOf(v) { return 20000 * Math.pow(0.18, state.breath.depth * (1 - v)); }
+  start() {
+    const t = this.e.ctx.currentTime + 0.15, g = this.e.bg.gain, f = this.e.blp.frequency;
+    this.on = true; this.t0 = t; this.end = t; this.x = 1; this.segs = []; this.cycles = [];
+    g.cancelScheduledValues(t); f.cancelScheduledValues(t); g.setValueAtTime(1, t); f.setValueAtTime(20000, t);
+    this.push('out', 4, 0); // begin by letting a breath go
+    this.ensure(t + 3);
+  }
+  stop() {
+    const now = this.e.ctx.currentTime, g = this.e.bg.gain, f = this.e.blp.frequency;
+    this.on = false; this.segs = []; this.cycles = [];
+    g.cancelScheduledValues(now); f.cancelScheduledValues(now); g.setTargetAtTime(1, now, 0.6); f.setTargetAtTime(20000, now, 0.6);
+  }
+  push(lab, dur, to) {
+    const t0 = this.end, from = this.x, g = this.e.bg.gain, f = this.e.blp.frequency;
+    for (let k = 1; k <= 12; k++) { const u = k / 12, v = from + (to - from) * (0.5 - 0.5 * Math.cos(Math.PI * u)); g.linearRampToValueAtTime(this.gainOf(v), t0 + dur * u); f.linearRampToValueAtTime(this.lpOf(v), t0 + dur * u); }
+    this.segs.push({ lab, t0, dur, from, to }); this.x = to; this.end = t0 + dur;
+  }
+  ensure(until) {
+    while (this.end < until) {
+      const seq = BREATH[state.breath.pattern].seq(this.end - this.t0), start = this.end; let inh = 0, exh = 0;
+      for (const [lab, dur, to] of seq) { this.push(lab, dur, to); if (lab === 'out') exh += dur; else inh += dur; }
+      this.cycles.push({ start, inhale: inh, exhale: exh });
+    }
+    const old = this.e.ctx.currentTime - 30;
+    while (this.segs.length && this.segs[0].t0 + this.segs[0].dur < old) this.segs.shift();
+    while (this.cycles.length && this.cycles[0].start < old) this.cycles.shift();
+  }
+  at(t) {
+    for (const s of this.segs) if (t >= s.t0 && t < s.t0 + s.dur) { const u = (t - s.t0) / s.dur; return { s, v: s.from + (s.to - s.from) * (0.5 - 0.5 * Math.cos(Math.PI * u)), left: s.t0 + s.dur - t }; }
+    return null;
+  }
+  cyclesIn(a, b) { return this.cycles.filter(c => c.start >= a && c.start < b); }
+}
+
+const strikes = [];
+class Engine {
+  constructor() {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    const c = this.ctx = new AC({ latencyHint: 'playback' });
+    SR = c.sampleRate;
+    this.bus = c.createGain();
+    this.comp = c.createDynamicsCompressor();
+    this.comp.threshold.value = -4; this.comp.knee.value = 4; this.comp.ratio.value = 20; this.comp.attack.value = 0.002; this.comp.release.value = 0.25; // a safety limiter only: the mix keeps its natural dynamics
+    this.master = c.createGain(); this.master.gain.value = 0;
+    this.an = c.createAnalyser(); this.an.fftSize = 4096; this.an.smoothingTimeConstant = 0.5; this.an.minDecibels = -110; this.an.maxDecibels = -35;
+    // the acoustic space: two convolvers so a new space can crossfade in
+    this.wetIn = c.createGain(); this.cv = [c.createConvolver(), c.createConvolver()]; this.cvg = [c.createGain(), c.createGain()]; this.cvOn = 0;
+    for (let k = 0; k < 2; k++) { this.cv[k].normalize = false; this.wetIn.connect(this.cv[k]); this.cv[k].connect(this.cvg[k]); this.cvg[k].connect(this.comp); this.cvg[k].gain.value = 0; }
+    this.cv[0].buffer = spaceBuffer(c, state.space); this.cvg[0].gain.value = SPACES[state.space].level;
+    // comp -> breathing swell (gain + low-pass) -> sleep darkening -> timer fade -> master
+    this.bg = c.createGain(); this.blp = c.createBiquadFilter(); this.blp.type = 'lowpass'; this.blp.frequency.value = 20000; this.blp.Q.value = 0.5;
+    this.tone = c.createBiquadFilter(); this.tone.type = 'lowpass'; this.tone.frequency.value = 20000; this.tone.Q.value = 0.5; this.fadeG = c.createGain();
+    this.bus.connect(this.comp);
+    this.comp.connect(this.bg); this.bg.connect(this.blp); this.blp.connect(this.tone); this.tone.connect(this.fadeG);
+    this.fadeG.connect(this.an); this.fadeG.connect(this.master); this.master.connect(c.destination);
+    this.breath = new Breath(this); this.ms = -1; this.gg = 1; this.acc = 0; this.na = 0; this.softened = 0; this.inPeak = false; this.gbuf = new Float32Array(CH);
+    this.ch = {};
+    for (const d of SOUNDS) {
+      const g = c.createGain(), s = c.createGain(); g.gain.value = 0; s.gain.value = d.send;
+      g.connect(this.bus); g.connect(s); s.connect(this.wetIn);
+      const wg = d.wet ? c.createGain() : null; if (wg) { wg.gain.value = 0; wg.connect(this.wetIn); }
+      this.ch[d.id] = { inst: d.create(), g, wg, live: false, fade: 0, q: [], level: 0, sf: d.field ? new StereoField() : null };
+    }
+    this.ch.thunder.inst.onStrike = (km, off, delay) => {
+      const t = this._t + off / SR; strikes.push({ flash: t, arrive: t + delay / SR, km });
+      if (strikes.length > 6) strikes.shift();
+    };
+    // chunk start times sit exactly on sample frames so consecutive chunks join seamlessly (no sub-sample interpolation at the seams)
+    this.frame = 0; this.t0f = Math.ceil((c.currentTime + 0.15) * SR); this.fadeN = Math.floor(FADE_S * SR);
+  }
+  tick() {
+    const c = this.ctx; if (c.state !== 'running') return;
+    const now = c.currentTime, ahead = document.hidden ? 6 : 0.5; // in the background timers slow down: keep more sound ready
+    let t = (this.t0f + this.frame) / SR;
+    if (t < now + 0.02) { // fell behind (tab was frozen): jump ahead and fade back in
+      this.frame = Math.ceil((now + 0.1) * SR) - this.t0f; t = (this.t0f + this.frame) / SR;
+      for (const id in this.ch) this.ch[id].fade = 0;
+    }
+    let guard = 0;
+    while (t < now + ahead && guard++ < 60) { this.render(t); this.frame += CH; t = (this.t0f + this.frame) / SR; }
+  }
+  render(t) {
+    this._t = t; const M = MODES[state.mode];
+    if (this.breath.on) this.breath.ensure(t + CH / SR + 1);
+    const cx = { t, cycles: this.breath.on ? this.breath.cyclesIn(t, t + CH / SR) : null }, live = [];
+    for (const d of SOUNDS) {
+      const st = state.sounds[d.id], ch = this.ch[d.id];
+      if (!st.on) { ch.live = false; continue; }
+      if (!ch.live) { ch.live = true; ch.fade = 0; ch.tL = new Float32Array(GD); ch.tR = new Float32Array(GD); ch.twL = new Float32Array(GD); ch.twR = new Float32Array(GD); for (const gn of [ch.g, ch.wg]) if (gn) { gn.gain.cancelScheduledValues(t); gn.gain.setValueAtTime(chanGain(d.id), t); } }
+      const L = new Float32Array(CH), R = new Float32Array(CH), wL = d.wet ? new Float32Array(CH) : null, wR = d.wet ? new Float32Array(CH) : null;
+      ch.inst.render(L, R, CH, effective(d.id, st.p, t, M), Object.assign({}, cx, { wL, wR }));
+      if (ch.sf) ch.sf.run(L, R, CH);
+      if (st.pos && PLACE.has(d.id)) place(L, R, CH, st.pos);
+      for (let i = 0, f = ch.fade; i < CH && f < this.fadeN; i++, f++) { const a = f / this.fadeN; L[i] *= a; R[i] *= a; if (wL) { wL[i] *= a; wR[i] *= a; } }
+      ch.fade = Math.min(this.fadeN, ch.fade + CH);
+      live.push([ch, L, R, chanGain(d.id), wL, wR]);
+    }
+    // startle guard: one gain curve from the whole mix caps how far any event can rise above the
+    // running background level (mode-dependent), with a short look-ahead so peaks are caught before they sound
+    // background level: rises quickly (0.3 s) so fade-ins and swelling weather are not mistaken for events, falls slowly (4 s)
+    // an event is a rise in short-term (3 ms) loudness, or a transient whose peak stands far above the texture's normal peaks;
+    // the ordinary peaks inside steady rain or wind never trigger it. A fixed ceiling keeps the master limiter from pumping.
+    const crest = Math.pow(10, M.crest / 20), aUp = 1 - Math.exp(-GB / (0.3 * SR)), aL = 1 - Math.exp(-GB / (4 * SR)), aA = 1 - Math.exp(-4 / GD), aR = 1 - Math.exp(-1 / (0.3 * SR)), aS = 1 - Math.exp(-1 / (0.003 * SR)), aC = 1 - Math.exp(-1 / (0.06 * SR)), G = this.gbuf;
+    for (const x of live) { const ch = x[0]; if (!ch.cgb) { ch.cgb = new Float32Array(CH); ch.cg = 1; ch.chm = 1; ch.chc = 0; } }
+    let ms = this.ms, g = this.gg, acc = this.acc, na = this.na, st = this.st || 0, hm = this.hm || 1, hc = this.hc || 0;
+    for (let i = 0; i < CH; i++) {
+      let s = 0;
+      for (let k = 0; k < live.length; k++) { // each sound's own ceiling (-6 dBFS, quick release): a loud crack touches only its own sound
+        const x = live[k], ch = x[0], a = Math.abs(x[1][i]), b = Math.abs(x[2][i]), sk = x[3] * (a > b ? a : b); s += sk > 0.5 ? 0.5 : sk;
+        const rq = sk > 0.5 ? 0.5 / sk : 1; if (rq <= ch.chm) { ch.chm = rq; ch.chc = GD; } else if (--ch.chc <= 0) ch.chm = rq;
+        ch.cg += (ch.chm - ch.cg) * (ch.chm < ch.cg ? aA : aC); ch.cgb[i] = ch.cg;
+      }
+      const s2 = s * s; acc += s2; if (++na === GB) { const bm = acc / GB; ms = ms < 0 ? bm : ms + (bm - ms) * (bm > ms ? aUp : aL); acc = 0; na = 0; } // 10 ms block energy, then asymmetric smoothing
+      st += (s2 - st) * aS;
+      const lv = Math.max(Math.sqrt(st), s / 3), thr = ms < 0 ? 1e9 : Math.max(Math.sqrt(ms) * crest, 0.02);
+      const req = Math.min(lv > thr ? thr / lv : 1, s > 0.7 ? 0.7 / s : 1);
+      if (req <= hm) { hm = req; hc = GD; } else if (--hc <= 0) hm = req; // hold each demand for the look-ahead, so even a spike of a few samples is met in full
+      g += (hm - g) * (hm < g ? aA : aR); G[i] = g;
+      if (g < 0.7 && !this.inPeak) { this.inPeak = true; this.softened++; } else if (g > 0.95) this.inPeak = false;
+    }
+    this.ms = ms; this.gg = g; this.acc = acc; this.na = na; this.st = st; this.hm = hm; this.hc = hc;
+    for (const [ch, L, R, , wL, wR] of live) {
+      const oL = new Float32Array(CH), oR = new Float32Array(CH);
+      const cg = ch.cgb; for (let i = 0; i < CH; i++) { const j = i - GD, gi = G[i] * cg[i]; oL[i] = (j < 0 ? ch.tL[i] : L[j]) * gi; oR[i] = (j < 0 ? ch.tR[i] : R[j]) * gi; }
+      ch.tL = L.slice(CH - GD); ch.tR = R.slice(CH - GD);
+      if (wL) { // the reverb-only bus: far animals reach you mostly through the space
+        const xL = new Float32Array(CH), xR = new Float32Array(CH);
+        for (let i = 0; i < CH; i++) { const j = i - GD, gi = G[i] * cg[i]; xL[i] = (j < 0 ? ch.twL[i] : wL[j]) * gi; xR[i] = (j < 0 ? ch.twR[i] : wR[j]) * gi; }
+        ch.twL = wL.slice(CH - GD); ch.twR = wR.slice(CH - GD);
+        const wb = this.ctx.createBuffer(2, CH, SR); wb.copyToChannel(xL, 0); wb.copyToChannel(xR, 1);
+        const ws = this.ctx.createBufferSource(); ws.buffer = wb; ws.connect(ch.wg); ws.start(t);
+      }
+      let ss = 0; for (let i = 0; i < CH; i += 4) ss += oL[i] * oL[i] + oR[i] * oR[i];
+      ch.q.push([t, Math.sqrt(ss / (CH / 2))]); if (ch.q.length > 300) ch.q.shift();
+      const buf = this.ctx.createBuffer(2, CH, SR); buf.copyToChannel(oL, 0); buf.copyToChannel(oR, 1);
+      const src = this.ctx.createBufferSource(); src.buffer = buf; src.connect(ch.g); src.start(t);
+    }
+  }
+  setVol(id) {
+    const ch = this.ch[id]; if (!state.sounds[id].on || !ch.live) return;
+    const now = this.ctx.currentTime; for (const gn of [ch.g, ch.wg]) if (gn) { gn.gain.cancelScheduledValues(now); gn.gain.setTargetAtTime(chanGain(id), now, 0.05); }
+  }
+  mute(id) { const now = this.ctx.currentTime, ch = this.ch[id]; for (const gn of [ch.g, ch.wg]) if (gn) { gn.gain.cancelScheduledValues(now); gn.gain.setTargetAtTime(0, now, 0.12); } }
+  setSpace(key) { // crossfade to a new acoustic space
+    const c = this.ctx, now = c.currentTime, nx = 1 - this.cvOn, old = this.cvOn;
+    this.cv[nx].buffer = spaceBuffer(c, key);
+    this.cvg[nx].gain.cancelScheduledValues(now); this.cvg[nx].gain.setValueAtTime(0, now); this.cvg[nx].gain.linearRampToValueAtTime(SPACES[key].level, now + 1.5);
+    this.cvg[old].gain.cancelScheduledValues(now); this.cvg[old].gain.setValueAtTime(this.cvg[old].gain.value, now); this.cvg[old].gain.linearRampToValueAtTime(0, now + 1.5);
+    this.cvOn = nx;
+  }
+  setMaster(v, tau = 0.08) { const now = this.ctx.currentTime, gp = this.master.gain; gp.cancelScheduledValues(now); gp.setTargetAtTime(v, now, tau); }
+}
+
+let eng = null, playing = false, pendingStrike = false;
+function thunderWorker() { // builds strikes off the main thread so the audio never stalls
+  const src = ['let SR = ' + SR + ';', 'const K = ' + JSON.stringify(K) + ';', 'const TAU = Math.PI * 2;', 'let rnd = Math.random;', 'const rr = ' + rr + ';', 'const lr = ' + lr + ';', 'const ns = ' + ns + ';', 'const clamp = ' + clamp + ';',
+    panG.toString(), BQ.toString(), Brown.toString(), makeThunder.toString(),
+    'onmessage = e => { const [L, R, d] = makeThunder(e.data.km); postMessage({ id: e.data.id, L, R, d }, [L.buffer, R.buffer]); };'].join('\n');
+  const w = new Worker(URL.createObjectURL(new Blob([src], { type: 'text/javascript' }))), pending = new Map(); let id = 0;
+  w.onmessage = e => { const p = pending.get(e.data.id); pending.delete(e.data.id); if (p) p.done([e.data.L, e.data.R, e.data.d]); };
+  w.onerror = () => { THUNDER_BUILD = null; for (const p of pending.values()) p.done(makeThunder(p.km)); pending.clear(); };
+  return (km, done) => { pending.set(++id, { km, done }); w.postMessage({ id, km }); };
+}
+function startTicker() {
+  const tick = () => { if (eng) eng.tick(); practiceTick(); };
+  setInterval(tick, 100);
+  try {
+    const w = new Worker(URL.createObjectURL(new Blob(['setInterval(()=>postMessage(0),40)'], { type: 'text/javascript' })));
+    w.onmessage = tick; w.onerror = () => {};
+  } catch (e) {}
+}
+async function play() {
+  backgroundAudio(true);
+  if (!eng) {
+    try { eng = new Engine(); } catch (e) { $('#idle strong').textContent = 'This browser could not start audio'; return; }
+    try { THUNDER_BUILD = thunderWorker(); } catch (e) { THUNDER_BUILD = null; }
+    startTicker(); buildAxis();
+  }
+  playing = true; updateTransport();
+  try { await eng.ctx.resume(); } catch (e) {}
+  if (pendingStrike) { pendingStrike = false; eng.ch.thunder.inst.force = true; }
+  if (state.breath.on && !eng.breath.on) eng.breath.start();
+  eng.tick(); eng.setMaster(masterGain(), eng.started ? 0.3 : 1.2); eng.started = true; // a slow first fade-in: nothing should start abruptly
+}
+function pause() {
+  if (!eng) return; playing = false; updateTransport(); backgroundAudio(false);
+  if ('speechSynthesis' in window) speechSynthesis.cancel();
+  eng.setMaster(0, 0.18);
+  setTimeout(() => { if (!playing) eng.ctx.suspend(); }, 900);
+}
+const ICON_PLAY = 'M8 5v14l11-7z', ICON_PAUSE = 'M7 5h4v14H7zM13 5h4v14h-4z';
+function updateTransport() {
+  $('#play-lbl').textContent = playing ? 'Pause' : 'Play';
+  $('#play-ico').setAttribute('d', playing ? ICON_PAUSE : ICON_PLAY);
+  $('#idle').hidden = playing || !!eng;
+  $('#zen-play').textContent = playing ? 'Pause' : 'Play';
+  $('#breath-desc').textContent = BREATH[state.breath.pattern].desc + (state.sounds.ocean.on ? ' The ocean\u2019s waves break on each in-breath.' : '');
+  const on = SOUNDS.filter(d => state.sounds[d.id].on).map(d => d.name);
+  const now = $('#now');
+  now.textContent = on.length ? (playing ? '' : 'Paused · ') + on.join(' · ') : 'Nothing selected';
+  now.classList.toggle('live', playing && on.length > 0);
+  const sc = SCENES.find(x => x.id === activeScene);
+  $('#dock-ico').setAttribute('d', playing ? ICON_PAUSE : ICON_PLAY); $('#dock-play').setAttribute('aria-label', playing ? 'Pause' : 'Play');
+  $('#dock-now').textContent = sc ? sc.name : on.join(' \u00b7 ') || 'Nothing selected';
+  $('#dock-sub').textContent = (playing ? '' : 'Paused \u00b7 ') + MODES[state.mode].name + ' mode';
+  mediaSession(sc, on);
+}
+
+/* ---------- playing on with the screen locked, and lock-screen controls ----------
+   iOS 17+ lets a page claim the "playback" audio session: sound continues when the screen locks and
+   ignores the silent switch. A silent looping media element keeps the session alive on iPhone. */
+const IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+let keepAlive = null;
+function backgroundAudio(on) {
+  if (on && navigator.audioSession) try { navigator.audioSession.type = 'playback'; } catch (e) {}
+  if (!IOS) return;
+  if (!keepAlive) { keepAlive = new Audio(silence()); keepAlive.loop = true; keepAlive.setAttribute('playsinline', ''); }
+  if (on) keepAlive.play().catch(() => {}); else keepAlive.pause();
+}
+function silence() { // half a second of 8-bit silence as a WAV file
+  const n = 4000, b = new ArrayBuffer(44 + n), v = new DataView(b), w = (o, t) => { for (let i = 0; i < t.length; i++) v.setUint8(o + i, t.charCodeAt(i)); };
+  w(0, 'RIFF'); v.setUint32(4, 36 + n, true); w(8, 'WAVEfmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, 8000, true); v.setUint32(28, 8000, true); v.setUint16(32, 1, true); v.setUint16(34, 8, true); w(36, 'data'); v.setUint32(40, n, true);
+  new Uint8Array(b, 44).fill(128);
+  return URL.createObjectURL(new Blob([b], { type: 'audio/wav' }));
+}
+function mediaSession(sc, on) {
+  if (!('mediaSession' in navigator) || !window.MediaMetadata) return;
+  try {
+    navigator.mediaSession.metadata = new MediaMetadata({ title: sc ? sc.name : on.join(' \u00b7 ') || 'Rainmaker', artist: 'Rainmaker', album: MODES[state.mode].name + ' mode',
+      artwork: [{ src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png' }] });
+    navigator.mediaSession.playbackState = playing ? 'playing' : 'paused';
+  } catch (e) {}
+}
+if ('mediaSession' in navigator) for (const [a, f] of [['play', play], ['pause', pause], ['stop', pause]]) try { navigator.mediaSession.setActionHandler(a, () => f()); } catch (e) {}
+document.addEventListener('visibilitychange', () => { if (!document.hidden && playing && eng && eng.ctx.state !== 'running') eng.ctx.resume().catch(() => {}); });
+
+/* ---------- UI construction ---------- */
+function setPct(inp) { const mn = +inp.min, mx = +inp.max; inp.style.setProperty('--pct', ((inp.value - mn) / (mx - mn) * 100) + '%'); }
+function rangeRow(id, label, cfg, value, onInput) {
+  const row = document.createElement('div'); row.className = 'row';
+  row.innerHTML = `<div class="row-top"><label for="${id}">${label}</label><output for="${id}"></output></div><input type="range" id="${id}">`;
+  const inp = row.querySelector('input'), out = row.querySelector('output');
+  inp.min = cfg.min ?? 0; inp.max = cfg.max ?? 1; inp.step = cfg.step ?? 0.01; inp.value = value;
+  const show = () => { out.textContent = cfg.fmt(+inp.value); setPct(inp); };
+  inp.addEventListener('input', () => { show(); onInput(+inp.value); });
+  show(); return row;
+}
+function choiceRow(id, q, value, onPick) {
+  const row = document.createElement('div'); row.className = 'row span';
+  row.innerHTML = `<div class="row-top"><span class="lbl" id="${id}-l">${q.label}</span></div><div class="seg" role="group" aria-labelledby="${id}-l"></div>`;
+  const seg = row.querySelector('.seg');
+  for (const [v, name] of q.options) {
+    const b = document.createElement('button'); b.type = 'button'; b.id = `${id}-${v}`; b.textContent = name; b.setAttribute('aria-pressed', v === value);
+    b.addEventListener('click', () => { seg.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b)); onPick(v); });
+    seg.append(b);
+  }
+  return row;
+}
+function buildCards() {
+  const wrap = $('#cards'); wrap.innerHTML = '';
+  for (const d of SOUNDS) {
+    const st = state.sounds[d.id];
+    const card = document.createElement('article'); card.className = 'card' + (d.wide ? ' wide' : ''); card.dataset.on = st.on; card.dataset.id = d.id;
+    card.innerHTML = `<div class="card-head"><h3 id="h-${d.id}">${d.name}</h3><span class="meter" aria-hidden="true"><i></i></span>
+      <button class="switch" type="button" role="switch" id="sw-${d.id}" aria-labelledby="h-${d.id}" aria-checked="${st.on}"><span></span></button></div>
+      <p class="blurb">${d.blurb}</p><div class="params"></div>`;
+    const params = card.querySelector('.params');
+    params.append(rangeRow(`vol-${d.id}`, 'Volume', { fmt: pct }, st.vol, v => { st.vol = v; eng && eng.setVol(d.id); touched(); }));
+    if (PLACE.has(d.id)) params.append(rangeRow(`pos-${d.id}`, 'Where it is', { min: -0.8, max: 0.8, step: 0.05, fmt: v => v < -0.45 ? 'to your left' : v < -0.15 ? 'front left' : v <= 0.15 ? 'in front' : v <= 0.45 ? 'front right' : 'to your right' }, st.pos || 0, v => { st.pos = v; touched(); }));
+    for (const q of d.params) {
+      const pid = `${d.id}-${q.id}`;
+      if (q.type === 'choice') params.append(choiceRow(pid, q, st.p[q.id], v => { st.p[q.id] = v; touched(); }));
+      else if (q.type === 'action') {
+        const row = document.createElement('div'); row.className = 'row span action';
+        row.innerHTML = `<button class="btn" type="button" id="${pid}">${q.label}</button><span class="status" id="strike-status">Waiting for the next strike</span>`;
+        row.querySelector('button').addEventListener('click', strikeNow);
+        params.append(row);
+      } else params.append(rangeRow(pid, q.label, q, st.p[q.id], v => { st.p[q.id] = v; touched(); }));
+    }
+    card.querySelector('.switch').addEventListener('click', e => setOn(d.id, !state.sounds[d.id].on));
+    wrap.append(card);
+  }
+}
+function setOn(id, on) {
+  state.sounds[id].on = on;
+  const card = document.querySelector(`.card[data-id="${id}"]`); card.dataset.on = on;
+  card.querySelector('.switch').setAttribute('aria-checked', on);
+  if (!on && eng) eng.mute(id);
+  touched(); updateTransport();
+  if (on && !playing) play();
+}
+function strikeNow() {
+  if (!state.sounds.thunder.on) setOn('thunder', true);
+  if (eng && playing) eng.ch.thunder.inst.force = true; else { pendingStrike = true; if (!playing) play(); }
+}
+let activeScene = null;
+function touched() { save(); if (activeScene) { activeScene = null; markScene(); } }
+function markScene() { document.querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed', c.dataset.id === activeScene)); }
+function buildScenes() {
+  const box = $('#chips'); box.innerHTML = '';
+  for (const grp of [...new Set(SCENES.map(x => x.g))]) {
+    const wrap = document.createElement('div'); wrap.className = 'chip-group';
+    wrap.innerHTML = `<div class="lbl">${grp}</div><div class="chips"></div>`;
+    for (const sc of SCENES.filter(x => x.g === grp)) {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.dataset.id = sc.id; b.setAttribute('aria-pressed', 'false');
+      b.innerHTML = `<b>${sc.name}</b><small>${sc.sub}</small>`;
+      b.addEventListener('click', () => applyScene(sc));
+      wrap.querySelector('.chips').append(b);
+    }
+    box.append(wrap);
+  }
+}
+function applyScene(sc) {
+  const fresh = defaults();
+  for (const d of SOUNDS) {
+    const st = state.sounds[d.id], m = sc.mix[d.id], was = st.on;
+    st.on = !!m; st.vol = (m && m.vol) ?? fresh.sounds[d.id].vol; st.pos = (m && m.pos) || 0;
+    st.p = Object.assign(fresh.sounds[d.id].p, m && m.p);
+    if (eng) { if (!st.on && was) eng.mute(d.id); else if (st.on) eng.setVol(d.id); }
+  }
+  if (sc.space && sc.space !== state.space) setSpace(sc.space);
+  buildSession();
+  save(); activeScene = sc.id; markScene(); buildCards(); updateTransport();
+  if (!playing) play();
+}
+
+/* ---------- spectrogram ---------- */
+const cv = $('#cv'), g2 = cv.getContext('2d');
+const FMIN = 40, FMAX = 18000;
+let lut = null, yBins = null, col = null, bins = null;
+function hex(c) { c = c.trim().replace('#', ''); return [parseInt(c.slice(0, 2), 16), parseInt(c.slice(2, 4), 16), parseInt(c.slice(4, 6), 16)]; }
+function buildLut() {
+  const cs = getComputedStyle(document.documentElement);
+  const stops = [[0, hex(cs.getPropertyValue('--scope-bg'))], [0.38, hex(cs.getPropertyValue('--scope-1'))], [0.62, hex(cs.getPropertyValue('--scope-2'))], [0.84, hex(cs.getPropertyValue('--scope-3'))], [1, hex(cs.getPropertyValue('--scope-4'))]];
+  lut = new Uint8ClampedArray(256 * 3);
+  for (let v = 0; v < 256; v++) {
+    const x = Math.pow(v / 255, 1.25); let k = 0; while (k < stops.length - 2 && x > stops[k + 1][0]) k++;
+    const [a, ca] = stops[k], [b, cb] = stops[k + 1], f = Math.min(1, Math.max(0, (x - a) / (b - a)));
+    for (let j = 0; j < 3; j++) lut[v * 3 + j] = ca[j] + (cb[j] - ca[j]) * f;
+  }
+  g2.fillStyle = cs.getPropertyValue('--scope-bg').trim(); g2.fillRect(0, 0, cv.width, cv.height);
+}
+const yOf = f => 1 - Math.log(f / FMIN) / Math.log(FMAX / FMIN);
+function buildAxis() {
+  const ax = $('#axis'); ax.innerHTML = '';
+  for (const [f, t] of [[100, '100 Hz'], [1000, '1 kHz'], [5000, '5 kHz'], [10000, '10 kHz']]) {
+    const s = document.createElement('span'); s.textContent = t; s.style.top = (yOf(f) * 100) + '%'; ax.append(s);
+  }
+}
+function sizeScope() {
+  const r = cv.getBoundingClientRect(), dpr = Math.min(2, window.devicePixelRatio || 1);
+  cv.width = Math.max(1, Math.round(r.width * dpr)); cv.height = Math.max(1, Math.round(r.height * dpr));
+  col = null; buildLut();
+}
+function drawScope() {
+  if (!eng || !lut) return;
+  const an = eng.an, H = cv.height, W = cv.width, step = Math.max(1, Math.round(cv.width / cv.getBoundingClientRect().width));
+  if (!bins || bins.length !== an.frequencyBinCount) bins = new Uint8Array(an.frequencyBinCount);
+  if (!yBins || yBins.length !== H) {
+    yBins = new Float32Array(H); const hz = SR / an.fftSize;
+    for (let y = 0; y < H; y++) yBins[y] = Math.min(bins.length - 1, FMIN * Math.pow(FMAX / FMIN, 1 - y / (H - 1)) / hz);
+  }
+  if (!col || col.height !== H || col.width !== step) col = g2.createImageData(step, H);
+  an.getByteFrequencyData(bins);
+  const d = col.data;
+  for (let y = 0; y < H; y++) {
+    const fb = yBins[y], i0 = fb | 0, fr = fb - i0, v = (bins[i0] * (1 - fr) + bins[Math.min(bins.length - 1, i0 + 1)] * fr) | 0;
+    for (let x = 0; x < step; x++) { const o = (y * step + x) * 4; d[o] = lut[v * 3]; d[o + 1] = lut[v * 3 + 1]; d[o + 2] = lut[v * 3 + 2]; d[o + 3] = 255; }
+  }
+  g2.globalCompositeOperation = 'copy'; g2.drawImage(cv, -step, 0); g2.globalCompositeOperation = 'source-over';
+  g2.putImageData(col, W - step, 0);
+}
+new ResizeObserver(() => { sizeScope(); yBins = null; }).observe(cv);
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', buildLut);
+new MutationObserver(buildLut).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+/* ---------- animation loop: meters, scope, lightning ---------- */
+const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+let statusT = 0;
+function flash() {
+  const b = $('#bolt'); b.classList.remove('on'); void b.offsetWidth; b.classList.add('on');
+  if (!reduce.matches && state.mode !== 'sleep' && state.mode !== 'focus') { const f = $('#flash'); f.classList.remove('on'); void f.offsetWidth; f.classList.add('on'); }
+}
+function loop(ts) {
+  requestAnimationFrame(loop);
+  if (!eng) return;
+  const now = eng.ctx.currentTime;
+  for (const d of SOUNDS) {
+    const ch = eng.ch[d.id]; let lv = null;
+    while (ch.q.length && ch.q[0][0] <= now) lv = ch.q.shift()[1];
+    if (lv !== null) ch.level = lv * chanGain(d.id);
+    if (!state.sounds[d.id].on || !playing) ch.level *= 0.85;
+    const el = document.querySelector(`.card[data-id="${d.id}"] .meter`);
+    if (el) el.style.setProperty('--lv', Math.max(0, Math.min(1, (20 * Math.log10(ch.level + 1e-6) + 50) / 40)).toFixed(3));
+  }
+  if (playing) drawScope();
+  updatePacer(now);
+  for (const s of strikes) if (!s.flashed && now >= s.flash) { s.flashed = true; flash(); }
+  if (ts - statusT > 120) {
+    statusT = ts;
+    $('#guard-status').textContent = state.mode !== 'listen' && eng.softened ? `Softened ${eng.softened} sudden peak${eng.softened > 1 ? 's' : ''}` : '';
+    const el = $('#strike-status'); if (!el) return;
+    const s = strikes.filter(x => now >= x.flash).pop();
+    let txt = state.sounds.thunder.on ? 'Waiting for the next strike' : 'Thunder is off', hot = false;
+    if (s && now < s.arrive) { txt = `Flash ${s.km.toFixed(1)} km away · thunder in ${(s.arrive - now).toFixed(1)} s`; hot = true; }
+    else if (s && now < s.arrive + 8) txt = `Rumble from ${s.km.toFixed(1)} km away`;
+    el.textContent = txt; el.classList.toggle('hot', hot);
+  }
+}
+requestAnimationFrame(loop);
+
+/* ---------- transport wiring ---------- */
+$('#play').addEventListener('click', () => (playing ? pause() : play()));
+$('#dock-play').addEventListener('click', () => (playing ? pause() : play()));
+$('#dock-zen').addEventListener('click', () => { zen(true); if (!playing) play(); });
+if (window.IntersectionObserver) new IntersectionObserver(([e]) => $('#dock').classList.toggle('show', !e.isIntersecting)).observe($('.transport'));
+const mi = $('#master');
+mi.value = state.master; const showMaster = () => { $('#master-out').textContent = pct(+mi.value); setPct(mi); };
+showMaster();
+mi.addEventListener('input', () => { state.master = +mi.value; showMaster(); save(); if (eng && playing) eng.setMaster(masterGain()); });
+let timer = null; // {end, fade} on the audio clock, so a paused session also pauses the timer
+async function setTimer(min) {
+  if (min && !playing) await play();
+  if (!eng) return;
+  const now = eng.ctx.currentTime, fg = eng.fadeG.gain, tf = eng.tone.frequency;
+  fg.cancelScheduledValues(now); tf.cancelScheduledValues(now);
+  if (!min) { timer = null; fg.setTargetAtTime(1, now, 0.3); tf.setTargetAtTime(20000, now, 0.3); timerTick(); return; }
+  // sleep: a long descent (35% of the session) that darkens as it fades; otherwise a short fade
+  const dur = min * 60, sleepy = state.mode === 'sleep', fw = sleepy ? Math.max(60, dur * 0.35) : Math.min(45, dur * 0.2), end = now + dur, fs = end - fw;
+  fg.setValueAtTime(fg.value, now); fg.linearRampToValueAtTime(1, now + 0.5); fg.setValueAtTime(1, fs);
+  for (let k = 1; k <= 24; k++) { const u = k / 24; fg.linearRampToValueAtTime(k === 24 ? 0 : Math.pow(10, -60 * Math.pow(u, 1.3) / 20), fs + fw * u); }
+  tf.setValueAtTime(20000, now); tf.setValueAtTime(20000, fs); tf.exponentialRampToValueAtTime(sleepy ? 900 : 5000, end);
+  timer = { end, fade: fs }; timerTick();
+}
+$('#sleep').addEventListener('change', e => setTimer(+e.target.value));
+function timerText() {
+  if (!timer || !eng) return '';
+  const left = timer.end - eng.ctx.currentTime, m = Math.max(1, Math.ceil(left / 60));
+  return eng.ctx.currentTime >= timer.fade ? `Fading out \u00b7 ${m} min left` : `Fades out in ${m} min`;
+}
+function timerTick() {
+  const pill = $('#sleep-pill');
+  if (timer && eng && eng.ctx.currentTime >= timer.end) {
+    timer = null; $('#sleep').value = '0'; pause();
+    setTimeout(() => { const now = eng.ctx.currentTime; eng.fadeG.gain.cancelScheduledValues(now); eng.fadeG.gain.setValueAtTime(1, now); eng.tone.frequency.cancelScheduledValues(now); eng.tone.frequency.setValueAtTime(20000, now); }, 600);
+  }
+  const txt = timerText(); pill.hidden = !txt; pill.textContent = txt;
+  $('#zen-time').textContent = [MODES[state.mode].name + ' mode', txt].filter(Boolean).join(' \u00b7 ');
+}
+setInterval(timerTick, 1000);
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space' && (e.target === document.body || e.target === document.documentElement)) { e.preventDefault(); playing ? pause() : play(); }
+});
+$('#reset').addEventListener('click', () => {
+  const was = state.sounds; state = defaults();
+  if (eng) for (const d of SOUNDS) { if (was[d.id].on && !state.sounds[d.id].on) eng.mute(d.id); else eng.setVol(d.id); }
+  mi.value = state.master; showMaster(); if (eng && playing) eng.setMaster(masterGain());
+  if (eng && eng.breath.on) eng.breath.stop();
+  if (prac) stopPractice(false);
+  activeScene = null; markScene(); buildCards(); buildSession(); buildPractices(); updateTransport(); save();
+});
+
+/* ---------- mode, breathing, focus view ---------- */
+function segButtons(box, items, current, onPick) {
+  box.innerHTML = '';
+  for (const [k, label] of items) {
+    const b = document.createElement('button'); b.type = 'button'; b.id = box.id + '-' + k; b.textContent = label; b.setAttribute('aria-pressed', k === current);
+    b.addEventListener('click', () => { box.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b)); onPick(k); });
+    box.append(b);
+  }
+}
+function setMode(k) {
+  state.mode = k; save(); $('#mode-desc').textContent = MODES[k].desc;
+  if (k === 'sleep' && !timer) { $('#sleep').value = '45'; setTimer(45); }
+  timerTick();
+}
+function setSpace(k) {
+  state.space = k; save(); $('#space-desc').textContent = SPACE_DESC[k];
+  document.querySelectorAll('#spaces button').forEach(b => b.setAttribute('aria-pressed', b.id === 'spaces-' + k));
+  if (eng) eng.setSpace(k);
+}
+function setBreath(on) {
+  state.breath.on = on; save(); $('#breath-sw').setAttribute('aria-checked', on);
+  $('#zen-breath').textContent = on ? 'Stop breathing guide' : 'Breathe with the sound';
+  if (on) { if (!playing) play(); else if (eng && !eng.breath.on) eng.breath.start(); }
+  else if (eng && eng.breath.on) eng.breath.stop();
+}
+function buildSession() {
+  segButtons($('#modes'), Object.entries(MODES).map(([k, m]) => [k, m.name]), state.mode, setMode);
+  segButtons($('#spaces'), Object.entries(SPACES).map(([k, m]) => [k, m.name]), state.space, setSpace);
+  $('#space-desc').textContent = SPACE_DESC[state.space];
+  $('#mode-desc').textContent = MODES[state.mode].desc;
+  segButtons($('#patterns'), Object.entries(BREATH).map(([k, b]) => [k, b.name]), state.breath.pattern, k => { state.breath.pattern = k; save(); updateTransport(); });
+  const dr = $('#depth-row'); dr.innerHTML = '';
+  dr.append(rangeRow('breath-depth', 'How much the sound moves', { fmt: v => v < 0.05 ? 'not at all, visual guide only' : v < 0.4 ? 'subtly' : v < 0.75 ? 'clearly' : 'strongly' }, state.breath.depth, v => { state.breath.depth = v; save(); }));
+  $('#breath-sw').setAttribute('aria-checked', state.breath.on);
+}
+$('#breath-sw').addEventListener('click', () => setBreath(!state.breath.on));
+function updatePacer(now) {
+  const b = eng && eng.breath.on && playing ? eng.breath.at(now) : null;
+  for (const el of document.querySelectorAll('.pacer')) {
+    const zen = el.id === 'zpacer', lbl = el.querySelector('b'), sub = el.querySelector('small');
+    if (!b) {
+      if (!zen) { el.hidden = true; continue; }
+      el.style.setProperty('--s', 0.62); lbl.textContent = playing ? 'Listening' : 'Paused'; sub.textContent = ''; continue;
+    }
+    el.hidden = false; el.style.setProperty('--s', (0.5 + 0.5 * b.v).toFixed(3));
+    lbl.textContent = PHASE_LABEL[b.s.lab]; sub.textContent = Math.ceil(b.left) + ' s';
+  }
+}
+function zen(on) {
+  $('#zen').hidden = !on; document.body.classList.toggle('zen-on', on);
+  if (on) { try { const p = document.documentElement.requestFullscreen && document.documentElement.requestFullscreen(); if (p) p.catch(() => {}); } catch (e) {} $('#zen-exit').focus(); timerTick(); }
+  else { try { if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); } catch (e) {} $('#zen-btn').focus(); }
+}
+$('#zen-btn').addEventListener('click', () => { zen(true); if (!playing) play(); });
+$('#zen-exit').addEventListener('click', () => zen(false));
+$('#zen-play').addEventListener('click', () => (playing ? pause() : play()));
+$('#zen-breath').addEventListener('click', () => setBreath(!state.breath.on));
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#zen').hidden) zen(false); });
+
+/* ---------- calm practices ---------- */
+let prac = null, ciBefore = null, ciAfter = false, ciPrac = '';
+function pickVoice() {
+  const vs = speechSynthesis.getVoices(); if (!vs.length) return null;
+  const en = vs.filter(v => /^en/i.test(v.lang)), pool = en.length ? en : vs;
+  return pool.find(v => /natural|neural/i.test(v.name)) || pool.find(v => /sonia|libby|aria|jenny|serena|samantha|google uk english female/i.test(v.name)) || pool.find(v => /google/i.test(v.name)) || pool[0];
+}
+function speak(text) {
+  if (!state.prac.voice || !('speechSynthesis' in window) || !text) return;
+  try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text), v = pickVoice(); u.rate = 0.85; u.pitch = 0.95; u.volume = 0.85; if (v) { u.voice = v; u.lang = v.lang; } speechSynthesis.speak(u); } catch (e) {}
+}
+function showGuide(s) {
+  for (const id of ['#guide', '#zguide']) {
+    const g = $(id); g.hidden = false; g.querySelector('b').textContent = s.text; g.querySelector('small').textContent = s.sub || '';
+    g.classList.remove('fresh'); void g.offsetWidth; g.classList.add('fresh');
+  }
+  $('#scope').classList.add('guided');
+  speak(s.say || [s.text, s.sub].filter(Boolean).join('. '));
+}
+function hideGuide() { for (const id of ['#guide', '#zguide']) $(id).hidden = true; $('#scope').classList.remove('guided'); }
+async function startPractice() {
+  if (!playing) await play();
+  if (!eng) return;
+  const steps = PRACTICES[state.prac.id].steps(), last = steps[steps.length - 1];
+  prac = { id: state.prac.id, t0: eng.ctx.currentTime, steps, i: 0, end: last.t + (last.hold || 20) }; ciPrac = prac.id; ciAfter = false;
+  $('#prac-go').textContent = 'Stop'; renderCheckin(); practiceTick();
+}
+function stopPractice(finished) {
+  if (!prac) return;
+  const ran = eng ? eng.ctx.currentTime - prac.t0 : 0; prac = null; hideGuide();
+  if ('speechSynthesis' in window) speechSynthesis.cancel();
+  $('#prac-go').textContent = 'Start'; $('#prac-status').textContent = finished ? 'Well done' : '';
+  if (ran > 90) ciAfter = true; // ask how it feels now, after a real session
+  renderCheckin();
+}
+function practiceTick() { // runs on the audio ticker, so a paused session pauses the practice too
+  if (!prac || !eng) return;
+  const t = eng.ctx.currentTime - prac.t0;
+  while (prac.i < prac.steps.length && prac.steps[prac.i].t <= t) showGuide(prac.steps[prac.i++]);
+  if (t >= prac.end) { stopPractice(true); return; }
+  const left = Math.ceil((prac.end - t) / 60), txt = left + ' min left'; if ($('#prac-status').textContent !== txt) $('#prac-status').textContent = txt;
+}
+function readChecks() { try { const h = JSON.parse(localStorage.getItem(CHECKS) || '[]'); return Array.isArray(h) ? h : []; } catch (e) { return []; } }
+function renderCheckin() {
+  $('#ci-q').textContent = ciAfter ? 'And how tense do you feel now?' : 'How tense do you feel right now?';
+  const cur = ciAfter || ciBefore == null ? '' : String(ciBefore);
+  segButtons($('#ci'), Array.from({ length: 11 }, (_, i) => [String(i), String(i)]), cur, k => {
+    if (ciAfter) {
+      const h = readChecks(); if (ciBefore != null) { h.push({ d: Date.now(), p: ciPrac, b: ciBefore, a: +k }); try { localStorage.setItem(CHECKS, JSON.stringify(h.slice(-40))); } catch (e) {} }
+      ciAfter = false; ciBefore = null; renderCheckin();
+    } else { ciBefore = +k; $('#ci-val').textContent = k + ' of 10'; }
+  });
+  $('#ci-val').textContent = ciAfter ? 'tap a number' : ciBefore == null ? 'optional' : ciBefore + ' of 10';
+  const h = readChecks(), el = $('#prac-hist');
+  if (!h.length) { el.textContent = 'Rate yourself before and after a practice to see what helps you most. Ratings stay in this browser.'; return; }
+  const last = h[h.length - 1], avg = h.reduce((s, x) => s + (x.b - x.a), 0) / h.length;
+  el.textContent = `Last time ${last.b} \u2192 ${last.a}. Across ${h.length} session${h.length > 1 ? 's' : ''}, tension ` + (avg >= 0 ? `eased by ${avg.toFixed(1)} points on average.` : `rose by ${(-avg).toFixed(1)} points on average.`);
+}
+const LIST = 'rainmaker-list';
+function showList() { $('#list-row').hidden = state.prac.id !== 'write'; }
+function buildPractices() {
+  segButtons($('#pracs'), Object.entries(PRACTICES).map(([k, p]) => [k, p.name]), state.prac.id, k => { if (prac) stopPractice(false); state.prac.id = k; save(); $('#prac-desc').textContent = PRACTICES[k].desc; showList(); });
+  $('#prac-desc').textContent = PRACTICES[state.prac.id].desc; showList();
+  try { $('#list').value = localStorage.getItem(LIST) || ''; } catch (e) {}
+  const v = $('#prac-voice'); v.checked = state.prac.voice; v.closest('label').hidden = !('speechSynthesis' in window);
+  renderCheckin();
+}
+$('#prac-go').addEventListener('click', () => (prac ? stopPractice(false) : startPractice()));
+let listT = 0;
+$('#list').addEventListener('input', () => { clearTimeout(listT); listT = setTimeout(() => { try { localStorage.setItem(LIST, $('#list').value); } catch (e) {} }, 400); });
+$('#list-clear').addEventListener('click', () => { $('#list').value = ''; try { localStorage.removeItem(LIST); } catch (e) {} $('#list').focus(); });
+$('#prac-voice').addEventListener('change', e => { state.prac.voice = e.target.checked; save(); if (!state.prac.voice && 'speechSynthesis' in window) speechSynthesis.cancel(); });
+if ('speechSynthesis' in window) { speechSynthesis.getVoices(); speechSynthesis.addEventListener && speechSynthesis.addEventListener('voiceschanged', () => {}); }
+
+buildScenes(); buildCards(); buildSession(); buildPractices(); buildAxis(); updateTransport(); timerTick();
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+</script>
+</body>
+</html>
