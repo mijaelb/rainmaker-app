@@ -141,6 +141,7 @@ body.sleepy .scope canvas { opacity: 0.3; } /* bedtime: the moving display dims 
 .tile[data-on="false"] .meter { visibility: hidden; }
 .tile-vol { padding-inline: 4px; }
 .tile[data-on="false"] .tile-vol { opacity: 0.45; } /* drag it up to add the sound */
+.tile[data-open="true"] .tile-vol { max-width: 420px; }
 .tile-body { display: flex; flex-direction: column; gap: 14px; padding: 6px 4px 0; border-top: 1px solid var(--line); }
 .blurb { margin: 8px 0 0; color: var(--muted); font-size: 13.5px; max-width: 75ch; text-wrap: pretty; }
 .params { display: grid; gap: 14px 26px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); }
