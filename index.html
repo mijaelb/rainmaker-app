@@ -723,7 +723,7 @@ function seedRandom(seed) { let t = seed >>> 0; rnd = () => { t = (t + 0x6D2B79F
 // K: the inner settings of each sound, grouped by sound. Defaults were found by tuning against real
 // recordings (texture statistics, AI listeners, loudness); the test tools can override them.
 const K = {
-  hp_h2: 0.72, hp_h3: 0.3, hp_h4: 0.12, hp_palm: 0.25, hp_slap: 0.2, hp_sf: 1, hp_symp: 0.237, td_ovr: 2.805, td_ovr2: 5.9, td_h: 0.593, td_tok: 0.35, td_tick: 1.3, td_symp: 0.05, // handpan, tongue drum (tuned with tools/tune.py against hang1-2 and tongue1)
+  hp_A: 0.16, hp_h2: 0.25, hp_h3: 0.2, hp_h15: 0.1, hp_h4: 0.08, hp_ring: 0.3, hp_ringT: 1, hp_click: 0.5, hp_slap: 0.35, hp_symp: 0.3, td_A: 0.2, td_ovr: 2.805, td_ovr2: 5.9, td_h: 0.3, td_ring: 0.2, td_click: 0.4, td_tok: 0.35, td_tick: 0.3, td_symp: 0.2, // handpan, tongue drum (tuned with tools/tune.py against hang1-2 and tongue1)
   // rain
   r_gs: 0.35, r_hgs: 0.5, r_col: 3, r_wEqLo: 6, r_hiDens: 0.6, r_bub: 1.5, r_slow: 0.05,
   // thunder
@@ -2068,32 +2068,39 @@ function Lullaby() {
    - soft, even touch, a little slower at each phrase end, never a sudden loud note. */
 const CALM_CELLS = [[2, 2], [1, 1, 2], [2, 1, 1], [1, 1, 1, 1], [3, 1], [1.5, 0.5, 2], [1, 1, 2, 4], [2, 2, 4]]; // note lengths in beats
 class Improviser {
-  constructor(n, home) { this.n = n; this.home = home; this.motifs = []; this.left = 0; this.cur = null; this.at = home + 2; } // n notes in the scale, home: the resting note
+  constructor(n, home) { this.n = n; this.home = home; this.motifs = []; this.left = 0; this.cur = null; this.at = home + 2; this.open = true; this.arc = new Drift(1 / 150); this.arc2 = new Drift(1 / 70); this.sec = 0; } // n notes in the scale, home: the resting note
   newMotif() {
     const cell = CALM_CELLS[Math.floor(rnd() * CALM_CELLS.length)], steps = [0];
     for (let i = 1; i < cell.length; i++) steps.push(rnd() < 0.08 ? 0 : (rnd() < 0.78 ? 1 : 2) * (rnd() < 0.55 ? 1 : -1)); // steps, a few small leaps, the odd repeat
     return { cell, steps };
   }
-  phrase(flow) { // one phrase: a motif, its answer, then a fall to rest. Returns notes [{ b: beat, d: degree, len, v }] and its length in beats
+  phrase(flow) { // one phrase: a motif, its answer, then a fall to rest. Returns notes [{ b: beat, d: degree, len, v, orn }] and its length in beats
+    // the piece evolves over minutes: two slow tides move the register, the density and the loudness, so the music
+    // wanders between sparse and low, and flowing and high, and never settles into a loop
+    for (let k = 0; k < 400; k++) { this.arc.next(); this.arc2.next(); }
+    const tide = this.arc.v, tide2 = this.arc2.v, top = this.n - 1, lift = Math.round((tide - 0.5) * 3), fl = clamp(flow + (tide2 - 0.5) * 0.5, 0, 1);
     if (this.left <= 0 || !this.cur) { // a new section every few phrases: a new motif, or an earlier one comes back
-      this.cur = this.motifs.length && rnd() < 0.4 ? this.motifs[Math.floor(rnd() * this.motifs.length)] : this.newMotif();
+      this.cur = this.motifs.length && rnd() < 0.45 ? this.motifs[Math.floor(rnd() * this.motifs.length)] : this.newMotif();
       if (!this.motifs.includes(this.cur)) { this.motifs.push(this.cur); if (this.motifs.length > 4) this.motifs.shift(); }
-      this.left = 3 + Math.floor(rnd() * 3);
+      this.left = 3 + Math.floor(rnd() * 3); this.sec++;
     }
     this.left--;
-    const top = this.n - 1, notes = [], slow = 1.25 - 0.5 * flow; let b = 0, d = clamp(this.at + Math.round(rr(-1, 1)), 1, top - 1);
-    const play = (deg, len) => { notes.push({ b, d: clamp(deg, 0, top), len }); b += len; };
-    const sing = (m, start) => { let x = start; m.cell.forEach((len, i) => { x = clamp(x + m.steps[i], 0, top); play(x, len * slow); }); return x; };
+    const notes = [], slow = 1.25 - 0.5 * fl; let b = 0, d = clamp(this.at + lift + Math.round(rr(-1, 1)), 1, top - 1);
+    const play = (deg, len, orn) => { notes.push({ b, d: clamp(deg, 0, top), len, orn }); b += len; };
+    const sing = (m, start) => { let x = start; m.cell.forEach((len, i) => { x = clamp(x + m.steps[i], 0, top); play(x, len * slow, len >= 2 && rnd() < 0.2 * fl ? 'grace' : 0); }); return x; };
     d = sing(this.cur, d); // the motif
-    if (rnd() < 0.5 + 0.4 * flow) { const shift = rnd() < 0.5 ? 1 : rnd() < 0.5 ? -1 : 2; d = sing(this.cur, clamp(d - this.cur.steps.reduce((a, x) => a + x, 0) + shift, 1, top - 1)); } // its answer, a step higher or lower
-    const goal = rnd() < 0.7 ? this.home : this.home + 2; // home, or the note a third or fifth above it
-    while (d > goal + 1 && notes.length < 14) { d -= rnd() < 0.8 ? 1 : 2; play(d, (rnd() < 0.6 ? 1 : 2) * slow); } // falling home
-    play(goal, 4 * slow); // and resting there
-    const B = b, last = notes.length - 1;
-    for (const [i, nt] of notes.entries()) nt.v = (0.62 + 0.26 * Math.sin(Math.PI * Math.min(1, nt.b / B * 1.15)) - (i === last ? 0.12 : 0)) * rr(0.92, 1.06); // the swell
+    if (rnd() < 0.5 + 0.4 * fl) { const shift = rnd() < 0.5 ? 1 : rnd() < 0.5 ? -1 : 2; d = sing(this.cur, clamp(d - this.cur.steps.reduce((a, x) => a + x, 0) + shift, 1, top - 1)); } // its answer, a step higher or lower
+    // question and answer: phrases come in pairs, the first left open on the fifth or third, the second closed on home
+    const goal = this.open ? (rnd() < 0.6 ? this.home + 4 : this.home + 2) : (rnd() < 0.85 ? this.home : this.home + 2); this.open = !this.open;
+    const climb = this.sec % 3 === 2 && rnd() < 0.5; // now and then a phrase climbs instead of falling: the peak of a section
+    if (climb) { while (d < Math.min(top, goal + 5) && notes.length < 14) { d += rnd() < 0.8 ? 1 : 2; play(d, (rnd() < 0.6 ? 1 : 2) * slow); } }
+    else while (d > goal + 1 && notes.length < 14) { d -= rnd() < 0.8 ? 1 : 2; play(d, (rnd() < 0.6 ? 1 : 2) * slow); } // falling home
+    play(climb ? clamp(d, 0, top) : goal, 4 * slow, rnd() < 0.3 ? 'ding' : 0); // and resting there, sometimes with the low note under it
+    const B = b, last = notes.length - 1, loud = 0.56 + 0.2 * tide2;
+    for (const [i, nt] of notes.entries()) nt.v = (loud + 0.26 * Math.sin(Math.PI * Math.min(1, nt.b / B * 1.15)) - (i === last ? 0.12 : 0)) * rr(0.92, 1.06); // the swell
     if (notes.length > 2) { notes[last - 1].len *= 1.15; notes[last].b += notes[last - 1].len * 0.15; } // a little slower into the last note
     this.at = clamp(goal + 2 + Math.round(rr(-1, 2)), 1, top - 1);
-    return { notes, beats: B + 4 * slow * 0.15, rest: lr(1.5, 5) * (1.4 - 0.8 * flow) }; // beats, then a rest in beats
+    return { notes, beats: B + 4 * slow * 0.15, rest: lr(1.5, 5) * (1.4 - 0.8 * fl) * (this.open ? 1 : 0.6) }; // beats, then a rest: longer after a closed phrase
   }
 }
 function Player(voice, scaleOf, bass) { // drives one instrument: an improviser per scale, notes scheduled ahead, the voices rendered
@@ -2103,8 +2110,13 @@ function Player(voice, scaleOf, bass) { // drives one instrument: an improviser 
     if (sc.key !== key) { key = sc.key; imp = new Improviser(sc.notes.length, sc.home); }
     while (t < n) {
       const ph = imp.phrase(p.flow), jit = () => Math.floor(rr(-0.03, 0.03) * beat); // never quite metronomic
-      for (const nt of ph.notes) voices.push(...voice(Math.max(0, t + Math.floor(nt.b * beat) + jit()), sc.notes[nt.d], nt.v, sc));
-      if (bass && rnd() < 0.7) voices.push(...voice(t, sc.bass, 0.5 * rr(0.85, 1), sc, true)); // the low note, softly, under the phrase
+      for (const nt of ph.notes) {
+        const at = Math.max(0, t + Math.floor(nt.b * beat) + jit());
+        if (nt.orn === 'grace') voices.push(...voice(Math.max(0, at - Math.floor(0.09 * beat)), sc.notes[Math.max(0, nt.d - 1)], nt.v * 0.45, sc)); // a quick grace note from below
+        voices.push(...voice(at, sc.notes[nt.d], nt.v, sc));
+        if (nt.orn === 'ding' && bass) voices.push(...voice(at + Math.floor(0.5 * beat), sc.bass, 0.35 * rr(0.85, 1), sc, true));
+      }
+      if (bass && rnd() < 0.6) voices.push(...voice(t, sc.bass, 0.3 * rr(0.85, 1), sc, true)); // the low note, softly, under the phrase
       t += Math.floor((ph.beats + ph.rest) * beat);
     }
     t -= n;
@@ -2113,12 +2125,19 @@ function Player(voice, scaleOf, bass) { // drives one instrument: an improviser 
 }
 const HP_SCALE = { // handpans: a central low note (the ding) and eight notes around it, semitones above D3
   kurd: [7, 8, 10, 12, 14, 15, 17, 19], celtic: [7, 10, 12, 14, 15, 17, 19, 22], sunny: [7, 9, 12, 14, 16, 19, 21, 24] };
-function hpNote(off, f, v, sc, ding) { // a handpan note: fundamental, octave and twelfth, each a close pair that shimmers; a soft palm
-  const t60 = 5 * Math.sqrt(280 / f) * (ding ? 1.2 : 1), tau = t60 / 6.9, a = v * 0.2, pan = ding ? 0 : rr(-0.45, 0.45), w = () => rr(0.12, 0.35);
-  const out = [vModal(off, a, pan, [{ f, a: 1, tau }, { f: f + w(), a: 0.6, tau: tau * 0.9 }, { f: 2 * f, a: K.hp_h2, tau: tau * 0.55 }, { f: 2 * f + w(), a: K.hp_h2 * 0.6, tau: tau * 0.5 },
-    { f: 3 * f, a: K.hp_h3, tau: tau * 0.32 }, { f: 3.01 * f, a: K.hp_h3 * 0.5, tau: tau * 0.3 }, { f: 4.02 * f, a: K.hp_h4, tau: tau * 0.2 }, { f: 5.05 * f, a: K.hp_h4 * 0.5, tau: tau * 0.14 }], 0),
-    vNoise(off, a * K.hp_palm, pan, 0.0025, lr(700, 1400), 0.6), vNoise(off, a * K.hp_slap, pan, 0.0012, lr(2000, 5000) * K.hp_sf, 0.5)];
-  for (const g of sc.notes) if (g !== f && rnd() < 0.35) out.push(vModal(off + Math.floor(0.01 * SR), a * K.hp_symp * rr(0.5, 1), rr(-0.6, 0.6), [{ f: g, a: 1, tau: tau * 0.8 }], 0)); // other notes ring along
+function hpNote(off, f, v, sc, ding) { // a handpan note, built from measured recordings (tools/hpscan.py on hang1-2):
+  // the fundamental dies in 3-4 s while its tuned octave and fifth-above-the-octave ring on for 6-10 s, so the note blooms
+  // brighter as it fades; every partial is a close pair that beats slowly; the strike peaks within 5 ms with a bright
+  // skin slap; and the neighbouring notes of the pan ring along, 3-15 dB down.
+  const tau = 3.6 * Math.sqrt(280 / f) / 6.9, a = v * K.hp_A * (ding ? 0.5 : 1), pan = ding ? 0 : rr(-0.45, 0.45), bt = () => rr(0.5, 1.6);
+  const P = [[1, 1, 1], [2, K.hp_h2, 1.9], [3, K.hp_h3, 2.3], [1.5, K.hp_h15, 1.2], [4, K.hp_h4, 1.3], [5, K.hp_h4 * 0.6, 1.1], [6.02, K.hp_h4 * 0.35, 1], [2.25, 0.05, 1.4], [3.38, 0.04, 1.1]]; // ratio, level, decay vs the fundamental
+  const modes = [];
+  for (const [r, lv, dk] of P) modes.push({ f: f * r, a: lv, tau: tau * dk }, { f: f * r + bt(), a: lv * 0.6, tau: tau * dk * 0.9 });
+  for (let k = 0; k < 8; k++) modes.push({ f: f * lr(3.5, 9), a: K.hp_ring * rr(0.5, 1), tau: rr(0.06, 0.2) * K.hp_ringT }); // the strike's bright metallic shimmer, gone within a second
+  const out = [vModal(off, a, pan, modes, K.hp_click), vNoise(off, a * K.hp_slap, pan, 0.004, lr(500, 1200), 1.2), vNoise(off, a * K.hp_slap * 0.25, pan, 0.0012, lr(2200, 4500), 0.8)];
+  const near = sc.notes.filter(g => g !== f).sort((x, y) => Math.abs(Math.log(x / f)) - Math.abs(Math.log(y / f)));
+  near.forEach((g, k) => { if (rnd() < (k < 2 ? 0.9 : 0.4)) out.push(vModal(off + Math.floor(rr(0.004, 0.012) * SR), a * (k < 2 ? K.hp_symp : K.hp_symp * 0.4) * rr(0.6, 1), rr(-0.6, 0.6),
+    [{ f: g, a: 1, tau: tau * 1.1 }, { f: g + bt(), a: 0.6, tau }, { f: 2 * g, a: 0.35, tau: tau * 1.6 }, { f: 3 * g, a: 0.2, tau: tau * 1.8 }], 0)); }); // the neighbours ring along
   return out;
 }
 function Handpan() {
@@ -2127,11 +2146,15 @@ function Handpan() {
 }
 const TD_SCALE = { // steel tongue drums, eight tongues, semitones above D4
   minor: [0, 3, 5, 7, 10, 12, 15, 17], major: [0, 2, 4, 7, 9, 12, 14, 16], akebono: [0, 2, 3, 7, 8, 12, 14, 15] };
-function tdNote(off, f, v, sc) { // a tongue: a clear ring with one faint overtone, the rubber mallet's soft tok, the other tongues answering
-  const t60 = 3.5 * Math.sqrt(390 / f), tau = t60 / 6.9, a = v * 0.2, pan = rr(-0.4, 0.4);
-  const out = [vModal(off, a, pan, [{ f, a: 1, tau }, { f: f + rr(0.1, 0.3), a: 0.4, tau: tau * 0.85 }, { f: f * K.td_ovr, a: K.td_h, tau: tau * 0.2 }, { f: f * K.td_ovr2, a: K.td_h * 0.5, tau: tau * 0.1 }], 0),
-    vNoise(off, a * K.td_tok, pan, 0.0018, lr(900, 1800), 0.7), vNoise(off, a * K.td_tick, pan, 0.0008, lr(2500, 6000), 0.5)];
-  for (const g of sc.notes) if (g !== f && rnd() < 0.45) out.push(vModal(off + Math.floor(0.008 * SR), a * K.td_symp * rr(0.4, 1), rr(-0.6, 0.6), [{ f: g, a: 1, tau: tau * 0.9 }], 0));
+function tdNote(off, f, v, sc) { // a tongue, built from a measured recording (tools/hpscan.py on tongue1): a clear ring that lasts
+  // 4-15 s with one partner partial close above it, a bright metallic shimmer in the first quarter second (the body
+  // of the sound sits near 1.5 kHz), the rubber mallet's soft tok, and the other tongues ringing along 13-23 dB down
+  const t60 = 5 * Math.sqrt(390 / f), tau = t60 / 6.9, a = v * K.td_A, pan = rr(-0.4, 0.4);
+  const modes = [{ f, a: 1, tau }, { f: f + rr(0.1, 0.4), a: 0.4, tau: tau * 0.85 }, { f: f * K.td_ovr, a: K.td_h, tau: tau * 0.25 }, { f: f * K.td_ovr2, a: K.td_h * 0.5, tau: tau * 0.12 }];
+  for (let k = 0; k < 6; k++) modes.push({ f: f * lr(2.2, 5.5), a: K.td_ring * rr(0.5, 1), tau: rr(0.05, 0.18) });
+  const out = [vModal(off, a, pan, modes, K.td_click), vNoise(off, a * K.td_tok, pan, 0.003, lr(500, 1200), 1), vNoise(off, a * K.td_tick, pan, 0.0008, lr(1500, 3500), 0.6)];
+  const near = sc.notes.filter(g => g !== f).sort((x, y) => Math.abs(Math.log(x / f)) - Math.abs(Math.log(y / f)));
+  near.forEach((g, k) => { if (rnd() < (k < 2 ? 0.9 : 0.45)) out.push(vModal(off + Math.floor(rr(0.001, 0.004) * SR), a * (k < 2 ? K.td_symp : K.td_symp * 0.4) * rr(0.5, 1), rr(-0.6, 0.6), [{ f: g, a: 1, tau: tau * 1.2 }, { f: g + rr(0.1, 0.4), a: 0.5, tau }], 0)); });
   return out;
 }
 function TongueDrum() {
