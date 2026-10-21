@@ -782,8 +782,8 @@ const K = {
   // thunder
   t_dir: 0.15, t_absK: 1300, t_absE: 0.62, t_shadow: 6,
   // wind
-  w_leafRate: 6000, w_leafG: 0.01, w_whis: 1.4, w_gdb: 14, w_fast: 1.2, w_fexp: 0.35, w_chp: 280, w_clp: 3400, w_lf: 4500, w_lq: 0.55, w_ca: 0.82,
-  w_sexp: 0.72, w_la: 0.53, w_lexp: 3, w_flut2: 0.2, w_rumble: 1.35, w_col: 5,
+  w_leafRate: 6000, w_leafG: 0.01, w_whis: 1.77, w_gdb: 19.6, w_fast: 1.2, w_fexp: 0.35, w_chp: 280, w_clp: 3400, w_lf: 7454, w_lq: 0.55, w_ca: 0.58,
+  w_sexp: 0.72, w_la: 0.265, w_lexp: 3, w_flut2: 0.2, w_rumble: 1.35, w_col: 10, // tuned against five wind recordings (tools/tune.py): CLAP 0.44 to 0.54; gusts stay capped at 9 dB
   // ocean
   o_tb: 0.5001, o_att: 1.4, o_tau: 1.1, o_A: 1.875, o_fc0: 280.7, o_fcB: 734.3, o_fcK: 6640, o_fcExp: 3.668, o_q: 0.3328, o_xlp: 1566,
   o_sub: 0.1147, o_back: 0.1767, o_foamRate: 3.001, o_foamG: 0.02074, o_ba: 0.7538, o_sa: 0.3516, o_saLp: 1379, o_farRate: 0.4914, o_farG: 0.3451,
@@ -2803,7 +2803,7 @@ const SOUNDS = [
       { id: 'distance', label: 'Storm distance', def: 0.5, fmt: v => tpl('{km} km away', { km: (0.5 * Math.pow(30, v)).toFixed(1) }) },
       { id: 'strike', label: 'Strike now', type: 'action' },
     ] },
-  { id: 'wind', field: true, name: 'Wind', vol: 0.6, trim: 0.884, send: 0.1, create: Wind,
+  { id: 'wind', field: true, name: 'Wind', vol: 0.6, trim: 0.56, send: 0.1, create: Wind,
     blurb: 'Gust-driven filtered noise, the whistling Aeolian tone of air around wires and edges, and moving foliage.',
     params: [
       { id: 'speed', label: 'Wind speed', def: 0.4, fmt: v => { const k = windKmh(v); const b = BEAUFORT.findIndex(x => k < x[0]); return tpl('{kmh} km/h · force {force} · {beaufort}', { kmh: Math.round(k), force: b, beaufort: BEAUFORT[b][1] }); } },
@@ -3073,8 +3073,8 @@ const SCENES = [
   { g: 'Nature', id: 'sea', name: 'Seaside', sub: 'Waves, sea breeze', space: 'open', mix: { ocean: {}, wind: { vol: 0.4, p: { speed: 0.35, trees: 0, whistle: 0.1, gust: 0.4 } } } },
   { g: 'Night', id: 'camp', name: 'Campfire night', sub: 'Fire, crickets', space: 'open', mix: { fire: {}, crickets: { vol: 0.68, pos: 0.4, p: { count: 7, temp: 22, distance: 0.45 } }, wind: { vol: 0.37, p: { speed: 0.15, trees: 0.6, whistle: 0 } } } },
   { g: 'Night', id: 'pond', name: 'Night pond', sub: 'Frogs, crickets', space: 'open', mix: { frogs: { vol: 0.71, pos: 0.3 }, crickets: { vol: 0.45, pos: -0.4, p: { count: 4, distance: 0.6 } }, wind: { vol: 0.26, p: { speed: 0.08, trees: 0.4, whistle: 0 } } } },
-  { g: 'Night', id: 'owl', name: 'Owl wood', sub: 'Owls, night breeze', space: 'valley', mix: { birds: { vol: 1.00, p: { kind: 'owls', count: 2, activity: 0.5, distance: 0.5 } }, wind: { vol: 0.80, p: { speed: 0.12, trees: 0.5, whistle: 0 } }, crickets: { vol: 0.67, p: { count: 3, distance: 0.7 } } } },
-  { g: 'Night', id: 'gale', name: 'Winter gale', sub: 'Strong wind', space: 'valley', mix: { wind: { vol: 0.46, p: { speed: 0.82, gust: 0.8, whistle: 0.7, trees: 0.3 } } } },
+  { g: 'Night', id: 'owl', name: 'Owl wood', sub: 'Owls, night breeze', space: 'valley', mix: { birds: { vol: 1.00, p: { kind: 'owls', count: 2, activity: 0.5, distance: 0.5 } }, wind: { vol: 0.98, p: { speed: 0.12, trees: 0.5, whistle: 0 } }, crickets: { vol: 0.82, p: { count: 3, distance: 0.7 } } } },
+  { g: 'Night', id: 'gale', name: 'Winter gale', sub: 'Strong wind', space: 'valley', mix: { wind: { vol: 0.58, p: { speed: 0.82, gust: 0.8, whistle: 0.7, trees: 0.3 } } } },
   { g: 'Home', id: 'fireside', name: 'Fireside', sub: 'A small fire in the hearth, rain on the window', space: 'indoors', mix: { fire: { vol: 1.00, pos: 0.2, p: { size: 0.35, crackle: 0.3, hiss: 0.1 } }, rain: { vol: 0.94, p: { intensity: 0.35, surface: 'window', size: 0.4, closeness: 0.35, drips: 0, gusts: 0.15 } } } },
   { g: 'Home', id: 'lap', name: 'Cat on your lap', sub: 'A cat purring on your lap', space: 'indoors', mix: { purr: { p: { closeness: 0.8 } } } },
   { g: 'Home', id: 'catfire', name: 'Cat by the fire', sub: 'Purring, a small fire, rain on the window', space: 'indoors', mix: { purr: { vol: 0.45, pos: -0.2, p: { closeness: 0.6 } }, fire: { vol: 0.42, pos: 0.45, p: { size: 0.3, crackle: 0.35, hiss: 0.1 } }, rain: { vol: 0.35, p: { intensity: 0.35, surface: 'window', size: 0.4, closeness: 0.4, drips: 0, gusts: 0.15 } } } },
@@ -3090,7 +3090,7 @@ const SCENES = [
   { g: 'Nature', id: 'underice', name: 'Under the ice', sub: 'A hydrophone below the ice: creaks and hums above, a bearded seal’s long note', space: 'open', mix: { deep: { vol: 0.93, p: { depth: 0.2, whales: 0.15, seals: 0.5, ice: 0.8 } } } },
   { g: 'Nature', id: 'whales', name: 'Whale song', sub: 'Humpbacks singing in the dark water, long moans and rising calls', space: 'open', mix: { deep: { vol: 0.8, p: { depth: 0.6, whales: 0.95, seals: 0, ice: 0 } } } },
   { g: 'Nature', id: 'deepsea', name: 'Deep sea', sub: 'The even hush of the deep, humpback whales singing far off', space: 'open', mix: { deep: { vol: 0.94, p: { depth: 0.75, whales: 0.6, seals: 0.15, ice: 0.05 } } } },
-  { g: 'Nature', id: 'mountainpass', name: 'Mountain pass', sub: 'Thin wind over a high pass, chimes on a line somewhere below', space: 'valley', mix: { wind: { vol: 0.57, p: { speed: 0.5, trees: 0, whistle: 0.3, gust: 0.5 } }, chimes: { vol: 0.20, pos: 0.4, p: { kind: 'metal', breeze: 0.6, pitch: 0.6 } } } },
+  { g: 'Nature', id: 'mountainpass', name: 'Mountain pass', sub: 'Thin wind over a high pass, chimes on a line somewhere below', space: 'valley', mix: { wind: { vol: 0.71, p: { speed: 0.5, trees: 0, whistle: 0.3, gust: 0.5 } }, chimes: { vol: 0.25, pos: 0.4, p: { kind: 'metal', breeze: 0.6, pitch: 0.6 } } } },
   { g: 'Nature', id: 'lakeshore', name: 'Lake shore', sub: 'Small waves lapping on pebbles, a trickle nearby', space: 'open', mix: { ocean: { vol: 0.7, p: { size: 0.05, period: 5, distance: 0.05 } }, stream: { vol: 0.3, pos: 0.2, p: { flow: 0.12, size: 0.4, babble: 0.3 } } } },
   { g: 'Nature', id: 'lakebirds', name: 'Morning by the lake', sub: 'Small waves on the shore, songbirds in the trees', space: 'open', mix: { ocean: { vol: 0.45, p: { size: 0.05, period: 5, distance: 0.1 } }, stream: { vol: 0.2, pos: 0.3, p: { flow: 0.1, size: 0.4, babble: 0.3 } }, birds: { vol: 0.6, p: { kind: 'woodland', count: 5, activity: 0.4, distance: 0.42 } }, wind: { vol: 0.15, p: { speed: 0.1, trees: 0.5, whistle: 0 } } } },
   { g: 'Home', id: 'restpulse', name: 'Resting pulse', sub: 'A slow, deep heartbeat-like beat that settles, over the softest brown noise', space: 'indoors', mix: { pulse: { vol: 0.65, p: { rate: 0.4, settle: 'on', softness: 0.5 } }, noise: { vol: 0.2, p: { color: 'brown', tone: 0.25 } } } },
