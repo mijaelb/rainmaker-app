@@ -4948,10 +4948,12 @@ function applyScene(sc, start = true) {
 
 /* ---------- the live visual: soft light that follows the sound ----------
    Five glows (each with a fainter twin), low sounds at the bottom and high ones at the top. Each brightens with the
-   sound in its band and drifts slowly, eased so the light moves like weather, not like a meter. The canvas is drawn at
+   sound in its band (its power: a bowl's few pure tones light it as a wash of rain does) and drifts slowly, eased so
+   the light moves like weather, not like a meter. The canvas is drawn at
    a third of its size and scaled up, which blurs it for free. The colours are the look's --aura tokens. */
 const cv = $('#cv'), g2 = cv.getContext('2d'), zcv = $('#zcv'), zg = zcv.getContext('2d'); let zenLit = false; // zcv: the same light, full screen
 const BANDS = [[30, 160], [160, 500], [500, 1600], [1600, 5000], [5000, 15000]], REST = [0.5, 0.44, 0.5, 0.4, 0.3]; // Hz, and the glow at rest
+const AURA_FIT = [[1.535, 0.018], [1.331, 0.0164], [1.123, 0.0138], [1.158, 0.0164], [1.31, 0.0205]]; // each band's power (dB) to its glow: fit to the old bin-average reading where that worked (105 scene renders)
 const auraLv = Float32Array.from(REST), lessMotion = matchMedia('(prefers-reduced-motion: reduce)');
 let aura = null, auraBins = null, auraT = 0, auraLast = 0;
 function readAura() { // the look's colours, read again whenever the look changes; while the light is live, the old colours glide to the new
@@ -4981,12 +4983,12 @@ function sizeZen() { zcv.width = Math.max(16, Math.round(innerWidth / 6)); zcv.h
 addEventListener('resize', () => { if (zenLit) sizeZen(); });
 function drawAura(ts) { // one frame: each band's level from the analyser, eased; at rest or paused the glows settle
   const dt = Math.min(0.1, (ts - (auraLast || ts)) / 1000), an = eng && playing ? eng.an : null, calm = lessMotion.matches; auraLast = ts;
-  if (an && (!auraBins || auraBins.length !== an.frequencyBinCount)) auraBins = new Uint8Array(an.frequencyBinCount);
-  if (an) an.getByteFrequencyData(auraBins);
+  if (an && (!auraBins || auraBins.length !== an.frequencyBinCount)) auraBins = new Float32Array(an.frequencyBinCount);
+  if (an) an.getFloatFrequencyData(auraBins);
   let moving = false;
   for (let i = 0; i < BANDS.length; i++) {
     let to = REST[i];
-    if (an) { const hz = SR / an.fftSize, lo = Math.max(1, Math.round(BANDS[i][0] / hz)), hi = Math.min(auraBins.length - 1, Math.round(BANDS[i][1] / hz)); let s = 0; for (let k = lo; k <= hi; k++) s += auraBins[k]; to = clamp((s / (hi - lo + 1) / 255 - 0.18) / 0.7, 0, 1); } // most scenes read 0.3 to 0.85 here
+    if (an) { const hz = SR / an.fftSize, lo = Math.max(1, Math.round(BANDS[i][0] / hz)), hi = Math.min(auraBins.length - 1, Math.round(BANDS[i][1] / hz)); let s = 0; for (let k = lo; k <= hi; k++) s += 10 ** (clamp(auraBins[k], -110, -35) / 10); to = clamp(AURA_FIT[i][0] + AURA_FIT[i][1] * 10 * Math.log10(s), 0, 1); } // the band's power, so a few pure tones light it as a wash of noise does; most scenes read 0.3 to 0.85 here
     const d = to - auraLv[i]; auraLv[i] += d * Math.min(1, dt * (d > 0 ? 3 : 1.2) * (calm ? 0.35 : 1));
     if (Math.abs(d) > 0.003) moving = true;
   }
