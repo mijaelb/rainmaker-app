@@ -847,7 +847,7 @@ const K = {
   tr_rumble: 0.45, tr_mid: 0.3, tr_hiss: 0.035, tr_thud: 0.7, tr_knock: 0.16, tr_rattle: 0.03, // night train
   tp_A: 0.09, tp_inh: 1, tp_width: 1.2, // tanpura
   kt_A: 0.216, kt_h2: 0.6, kt_h3: 0.5, kt_h4: 0.3, kt_body: 0.08, kt_click: 0.4, kt_pick: 0.6, kt_symp: 0.2, // koto
-  fl_A: 0.2, fl_breath: 0.3, fl_edge: 0.08, fl_chiff: 0.35, fl_flut: 0.25, // flutes
+  fl_A: 0.2, fl_breath: 0.3, fl_edge: 0.08, fl_chiff: 0.35, fl_flut: 0.25, fl_inhale: 0.012, // flutes
   rs_rate: 60, rs_tick: 0.22, rs_fizz: 0.012, g_A: 0.3, g_thump: 0.3, g_bloom: 1, g_cloud: 0.07, // rain stick, gong
   kb_A: 0.240, kb_h6: 0.22, kb_h2: 0.22, kb_h3: 0.1, kb_box: 380, kb_boxA: 0.3, kb_click: 0.3, kb_nail: 0.5, kb_symp: 0.3, // kalimba
   cz_f: 1, cz_q: 30, cz_line: 25, cz_depth: 0.75, cz_buzz: 1.2, cz_A: 0.05, cz_air: 0.004, cz_low: 0.01, dp_wR: 1, dp_wA: 0.12, dp_sR: 1, dp_sA: 0.05, dp_iR: 1, dp_iA: 0.1, dp_bed: 0.02, dp_rum: 0.04, dp_sub: 0.05, dp_bR: 1, dp_boom: 0.06, // cicadas, under the sea
@@ -2705,7 +2705,7 @@ function Flute() {
   const voice = (off, f, v, sc, low, dur) => [vFlute(off, Math.max(0.35, (dur || 1.2) * 0.7) * rr(0.85, 1.25), f, v, rr(-0.2, 0.2), kind)];
   const pl = Player(voice, p => { kind = FLUTE[p.kind] ? p.kind : 'shakuhachi'; const F = FLUTE[kind], root = F.root * Math.pow(2, Math.round((p.pitch - 0.5) * 8) / 12);
     return { key: kind + root, notes: F.scale.map(x => root * Math.pow(2, x / 12)), home: 0 }; }, false, { mono: true, pulseX: 2, stats: PLAYED.flute,
-    breath: (at, v) => [vNoise(at, K.fl_breath * (0.5 + v), 0, 0.12, lr(900, 2200), 0.5)] }); // a soft inhale before each phrase
+    breath: (at, v) => [vNoise(at, K.fl_inhale * (0.5 + v), 0, 0.12, lr(900, 2200), 0.5)] }); // a soft inhale before each phrase
   return { render(L, R, n, p) { pl.render(L, R, n, p); } };
 }
 
