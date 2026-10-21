@@ -2329,7 +2329,7 @@ class Improviser {
     }
     if (nn > 2) { notes[nn - 2].len *= 1.2; notes[nn - 1].b += notes[nn - 2].len * 0.2; }
     this.at = clamp(d + 2 + Math.round(rr(-1, 2)), 1, top - 1); this.lastStep = last;
-    return { notes, beats: B + 4 * slow * 0.2, rest: lr(1.5, 5) * S.rest * (closed ? 1 : 0.6) * (this.ending ? 1.8 : 1) }; // the longest breath after a release
+    return { notes, beats: B + 4 * slow * 0.2, rest: lr(1.5, 5) * S.rest * (closed ? 1 : 0.6) * (this.ending ? 1.3 : 1) }; // the longest breath after a release
   }
 }
 /* Ways of playing, as handpan, tongue drum and kalimba players do (recordings through tools/melscan.py, and players' own
@@ -2353,7 +2353,9 @@ const PLAY = {
 };
 const FREE = ['ballad', 'echo', 'tremolo'], GRID = ['groove', 'rolling', 'lilt', 'waltz', 'five', 'seven', 'ostinato'], SHIFTS = [-5, -3, -2, 0, 2, 3, 5];
 function Player(voice, scaleOf, bass, opt = {}) { // drives one instrument: an improviser per key, a way of playing per piece, notes scheduled ahead, the voices rendered
-  const voices = [], mono = !!opt.mono; let imp = null, key = '', t = Math.floor(rr(0.15, 0.45) * SR), piece = null, lastName = '', lastShift = 0, bar = 0, mq = [], gap = 0, hold = 0, cur = 0, started = false; // the first note comes soon after play
+  const voices = [], mono = !!opt.mono; let base = 0;
+  const V = (off, f, v, sc, low, dur) => { if (typeof NOTE_LOG !== 'undefined') NOTE_LOG.push([(base + off) / SR, f, v, !!low]); return voice(off, f, v, sc, low, dur); }; // the test hook, otherwise the voice itself
+  let imp = null, key = '', t = Math.floor(rr(0.15, 0.45) * SR), piece = null, lastName = '', lastShift = 0, bar = 0, mq = [], gap = 0, hold = 0, cur = 0, started = false; // the first note comes soon after play
   const pick = p => { let pool = PLAY[p.style] ? [p.style] : p.style === 'groove' ? GRID : p.style === 'spacious' ? FREE : [...FREE, ...GRID];
     if (mono) pool = pool.filter(x => !PLAY[x].poly && x !== 'tremolo'); if (!pool.length) pool = ['ballad'];
     let s; do { s = pool[Math.floor(rnd() * pool.length)]; } while (s === lastName && pool.length > 1); lastName = s; return s; };
@@ -2364,8 +2366,9 @@ function Player(voice, scaleOf, bass, opt = {}) { // drives one instrument: an i
       do { piece.shift = SHIFTS[Math.floor(rnd() * SHIFTS.length)]; } while (piece.shift === lastShift); lastShift = piece.shift;
       if (opt.scales && rnd() < 0.5) piece.scale = opt.scales[Math.floor(rnd() * opt.scales.length)];
     }
-    bar = 0; mq = []; gap = 0; hold = 0; cur = 0;
+    bar = 0; mq = []; gap = 0; hold = 0; cur = 0; if (typeof PLAY_LOG !== 'undefined') PLAY_LOG.push({ at: (base + t) / SR, name, shift: piece.shift, scale: piece.scale, tempoX: piece.tempoX });
     if (started) t += Math.floor((piece.free ? lr(5, 10) : lr(3, 6)) * SR); started = true; // a breath between pieces
+    piece.at0 = (base + t) / SR; piece.maxS = lr(120, 240); // and a piece lasts two to four minutes
   };
   const tune = p => { // the scale of this piece's drum, and an improviser for its key
     let sc = scaleOf(piece.scale ? Object.assign({}, p, { scale: piece.scale }) : p);
@@ -2374,23 +2377,23 @@ function Player(voice, scaleOf, bass, opt = {}) { // drives one instrument: an i
       imp = new Improviser(sc.notes.length, home, semis); cur = imp.home; }
     return sc;
   };
-  const low = (at, v, sc, dur) => voices.push(...(bass ? voice(at, sc.bass, v, sc, true) : voice(at, sc.notes[imp.home], v, sc, false, dur)));
+  const low = (at, v, sc, dur) => voices.push(...(bass ? V(at, sc.bass, v, sc, true) : V(at, sc.notes[imp.home], v, sc, false, dur)));
   const free = (p, sc, beat) => { // one phrase, with its rubato
     const ph = imp.phrase(p.flow), jit = () => Math.floor(rr(-0.03, 0.03) * beat), top = sc.notes.length - 1;
     for (const nt of ph.notes) {
       const at = Math.max(0, t + Math.floor(nt.b * beat) + jit()), f = sc.notes[nt.d]; nt.v *= piece.gain || 1;
-      if (nt.orn === 'grace') voices.push(...voice(Math.max(0, at - Math.floor(0.09 * beat)), sc.notes[Math.max(0, nt.d - 1)], nt.v * 0.45, sc)); // a quick grace note from below
+      if (nt.orn === 'grace') voices.push(...V(Math.max(0, at - Math.floor(0.09 * beat)), sc.notes[Math.max(0, nt.d - 1)], nt.v * 0.45, sc)); // a quick grace note from below
       if (piece.roll && nt.len >= 3 && rnd() < piece.roll) { const nS = 6 + Math.floor(rnd() * 5), dt = rr(0.1, 0.14) * SR; // a roll: the note repeated quickly, swelling then easing
-        for (let k = 0; k < nS; k++) voices.push(...voice(at + Math.floor(k * dt * rr(0.96, 1.04)), f, nt.v * (0.4 + 0.5 * Math.sin(Math.PI * (k + 0.5) / nS)), sc)); }
-      else voices.push(...voice(at, f, nt.v, sc, false, nt.len * beat / SR));
-      if (piece.dyads && nt.len >= 2 && rnd() < piece.dyads) { const lo = imp.chordBelow(nt.d); if (lo >= 0) voices.push(...voice(at + Math.floor(rr(0.005, 0.02) * SR), sc.notes[lo], nt.v * 0.6, sc)); } // two notes together, the second hand a touch later
-      if (nt.orn === 'ding' && bass) voices.push(...voice(at + Math.floor(0.5 * beat), sc.bass, 0.35 * rr(0.85, 1), sc, true));
-      if (nt.orn === 'echo') { const prev = ph.notes[ph.notes.indexOf(nt) - 1]; if (prev) { voices.push(...voice(at + Math.floor(nt.len * beat * 0.55), sc.notes[prev.d], nt.v * 0.45, sc, false, prev.len * beat / SR * 0.6)); voices.push(...voice(at + Math.floor(nt.len * beat * 0.55 + prev.len * beat * 0.6), sc.notes[nt.d], nt.v * 0.35, sc, false, nt.len * beat / SR * 0.5)); } } // an echo of the last two notes, softer
+        for (let k = 0; k < nS; k++) voices.push(...V(at + Math.floor(k * dt * rr(0.96, 1.04)), f, nt.v * (0.4 + 0.5 * Math.sin(Math.PI * (k + 0.5) / nS)), sc)); }
+      else voices.push(...V(at, f, nt.v, sc, false, nt.len * beat / SR));
+      if (piece.dyads && nt.len >= 2 && rnd() < piece.dyads) { const lo = imp.chordBelow(nt.d); if (lo >= 0) voices.push(...V(at + Math.floor(rr(0.005, 0.02) * SR), sc.notes[lo], nt.v * 0.6, sc)); } // two notes together, the second hand a touch later
+      if (nt.orn === 'ding' && bass) voices.push(...V(at + Math.floor(0.5 * beat), sc.bass, 0.35 * rr(0.85, 1), sc, true));
+      if (nt.orn === 'echo') { const prev = ph.notes[ph.notes.indexOf(nt) - 1]; if (prev) { voices.push(...V(at + Math.floor(nt.len * beat * 0.55), sc.notes[prev.d], nt.v * 0.45, sc, false, prev.len * beat / SR * 0.6)); voices.push(...V(at + Math.floor(nt.len * beat * 0.55 + prev.len * beat * 0.6), sc.notes[nt.d], nt.v * 0.35, sc, false, nt.len * beat / SR * 0.5)); } } // an echo of the last two notes, softer
     }
-    if (bass && rnd() < 0.6) voices.push(...voice(t, sc.bass, 0.3 * rr(0.85, 1), sc, true)); // the low note, softly, under the phrase
+    if (bass && rnd() < 0.6) voices.push(...V(t, sc.bass, 0.3 * rr(0.85, 1), sc, true)); // the low note, softly, under the phrase
     let span = ph.beats;
     if (piece.echo && ph.notes.length >= 3) { const tail = ph.notes.slice(-3), t0 = tail[0].b, e0 = t + Math.floor((ph.beats + 1) * beat); // the last three notes again, an octave away and softer
-      for (const nt of tail) { const e = nt.d + imp.oct <= top ? nt.d + imp.oct : nt.d - imp.oct >= 0 ? nt.d - imp.oct : nt.d; voices.push(...voice(e0 + Math.floor((nt.b - t0) * 0.85 * beat) + jit(), sc.notes[e], nt.v * 0.45, sc, false, nt.len * beat / SR)); }
+      for (const nt of tail) { const e = nt.d + imp.oct <= top ? nt.d + imp.oct : nt.d - imp.oct >= 0 ? nt.d - imp.oct : nt.d; voices.push(...V(e0 + Math.floor((nt.b - t0) * 0.85 * beat) + jit(), sc.notes[e], nt.v * 0.45, sc, false, nt.len * beat / SR)); }
       span += 1 + (tail[2].b - t0) * 0.85 + tail[2].len; }
     t += Math.floor((span + ph.rest) * beat);
   };
@@ -2413,16 +2416,16 @@ function Player(voice, scaleOf, bass, opt = {}) { // drives one instrument: an i
       else if (k === 'm') {
         if (hold > 0) { hold--; return; }
         if (!mq.length) return;
-        if (rnd() < 0.12) { voices.push(...voice(at, sc.notes[cur], dyn * 0.7 * rr(0.9, 1.06), sc, false, pd)); return; } // players often repeat the note
-        const nt = mq.shift(); cur = nt.d; hold = nt.hold; voices.push(...voice(at, sc.notes[nt.d], nt.v * (strong ? 1.2 : 0.85) * piece.gain * rr(0.92, 1.06), sc, false, pd * (1 + hold)));
+        if (rnd() < 0.12) { voices.push(...V(at, sc.notes[cur], dyn * 0.7 * rr(0.9, 1.06), sc, false, pd)); return; } // players often repeat the note
+        const nt = mq.shift(); cur = nt.d; hold = nt.hold; voices.push(...V(at, sc.notes[nt.d], nt.v * (strong ? 1.2 : 0.85) * piece.gain * rr(0.92, 1.06), sc, false, pd * (1 + hold)));
       } else if (k === 'c' || k === 'l' || k === 'h') {
         if (rnd() > thin) return;
-        if (mono) { if (rnd() < 0.4 && cur !== imp.home) voices.push(...voice(at, sc.notes[cur + (cur > imp.home ? -1 : 1)], dyn * 0.5 * rr(0.9, 1.06), sc, false, pd)); return; } // one line only: a passing note toward home, or nothing
+        if (mono) { if (rnd() < 0.4 && cur !== imp.home) voices.push(...V(at, sc.notes[cur + (cur > imp.home ? -1 : 1)], dyn * 0.5 * rr(0.9, 1.06), sc, false, pd)); return; } // one line only: a passing note toward home, or nothing
         const set = imp.chordIn(imp.home, Math.max(imp.home, cur)); if (!set.length) return;
-        const d = k === 'l' ? set[0] : k === 'h' ? set[set.length - 1] : set[Math.floor(set.length / 2)]; if (d === cur && k === 'c') return;
-        voices.push(...voice(at, sc.notes[d], dyn * (k === 'h' ? 0.6 : 0.5) * rr(0.9, 1.06), sc, false, pd));
-      } else if (k === 'p') voices.push(...voice(at, sc.notes[imp.home], dyn * 0.5 * rr(0.9, 1.06), sc, false, pd));
-      else if (k === 'r') { if (rnd() < 0.85 + 0.15 * thin) voices.push(...voice(at, sc.notes[piece.riffDeg[i]], dyn * 0.55 * rr(0.9, 1.06), sc, false, pd)); }
+        const under = set.filter(x => x < cur), d = k === 'l' ? set[0] : k === 'h' ? set[set.length - 1] : under.length ? under[under.length - 1] : -1; if (d < 0) return;
+        voices.push(...V(at, sc.notes[d], dyn * (k === 'h' ? 0.55 : 0.45) * rr(0.9, 1.06), sc, false, pd));
+      } else if (k === 'p') voices.push(...V(at, sc.notes[imp.home], dyn * 0.5 * rr(0.9, 1.06), sc, false, pd));
+      else if (k === 'r') { if (rnd() < 0.85 + 0.15 * thin) voices.push(...V(at, sc.notes[piece.riffDeg[i]], dyn * 0.55 * rr(0.9, 1.06), sc, false, pd)); }
     });
     if (!mq.length && gap > 0) gap--;
     t += Math.floor(L * pulse * rr(0.995, 1.005)); bar++;
@@ -2430,11 +2433,12 @@ function Player(voice, scaleOf, bass, opt = {}) { // drives one instrument: an i
   return { render(L, R, n, p) {
     let sc = piece ? tune(p) : null;
     while (t < n) {
+      if (piece && (base + t) / SR - piece.at0 > piece.maxS && !imp.ending) { imp.sec = 'release'; imp.left = 0; } // time to close this piece
       if (!piece || (!mq.length && gap <= 0 && imp.ending)) { newPiece(p); sc = tune(p); }
       const beat = 60 / (48 + 36 * p.tempo) * SR * piece.tempoX;
       if (piece.free) free(p, sc, beat); else gridBar(p, sc, beat);
     }
-    t -= n;
+    t -= n; base += n;
     runVoices(voices, L, R, n);
   } };
 }
