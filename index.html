@@ -2275,6 +2275,8 @@ function Lullaby() {
 const CALM_CELLS = [[2, 2], [1, 1, 2], [2, 1, 1], [1, 1, 1, 1], [3, 1], [1.5, 0.5, 2], [1, 1, 2, 4], [2, 2, 4]]; // note lengths in beats
 const notePlace = (sc, f, w) => { const i = sc.notes.indexOf(f), n = sc.notes.length; return i < 0 ? rr(-w, w) : clamp(-w + 2 * w * i / Math.max(1, n - 1) + rr(-0.08, 0.08), -1, 1); }; // where this note sits on the instrument, low to high
 const notePlaceAlt = (sc, f, w) => { const i = sc.notes.indexOf(f); return i < 0 ? rr(-w, w) : clamp((i % 2 ? 1 : -1) * w * (0.25 + 0.75 * i / Math.max(1, sc.notes.length - 1)) + rr(-0.06, 0.06), -1, 1); }; // kalimba tines: alternating sides, further out the higher
+const PLAYED = {"handpan":{"same":0.472,"ratio":[0.21,0.107,0.359,0.116,0.133,0.074],"size":[[0.059,0.257,0.683],[0.039,0.238,0.723],[0.039,0.579,0.383],[0.1,0.172,0.728],[0.085,0.293,0.622],[0.243,0.142,0.615],[0.218,0.366,0.417],[0.092,0.26,0.648],[0.187,0.206,0.607]],"len":14},"tongue":{"same":0.428,"ratio":[0.28,0.141,0.231,0.108,0.1,0.141],"size":[[0.585,0.166,0.249],[0.544,0.319,0.137],[0.578,0.067,0.356],[0.776,0.18,0.044],[0.497,0.338,0.166],[0.62,0.118,0.261],[0.69,0.061,0.249],[0.118,0.411,0.47],[0.051,0.177,0.772]],"len":7},"kalimba":{"same":0.278,"ratio":[0.197,0.106,0.392,0.06,0.163,0.083],"size":[[0.231,0.135,0.634],[0.103,0.358,0.539],[0.255,0.469,0.276],[0.679,0.149,0.171],[0.579,0.247,0.174],[0.478,0.178,0.344],[0.032,0.678,0.29],[0.218,0.532,0.249],[0.319,0.091,0.59]],"len":5},"koto":{"same":0.183,"ratio":[0.179,0.047,0.516,0.047,0.164,0.047],"size":[[0.347,0.059,0.594],[0.318,0.09,0.592],[0.116,0.709,0.175],[0.523,0.167,0.31],[0.354,0.516,0.13],[0.573,0.149,0.277],[0.491,0.081,0.428],[0.286,0.286,0.429],[0.494,0.158,0.349]],"len":15},"guqin":{"same":0.158,"ratio":[0.189,0.105,0.51,0.054,0.071,0.071],"size":[[0.167,0.028,0.805],[0.363,0.041,0.596],[0.142,0.444,0.414],[0.118,0.704,0.177],[0.243,0.142,0.615],[0.134,0.327,0.539],[0.059,0.493,0.449],[0.142,0.243,0.615],[0.403,0.087,0.51]],"len":3},"flute":{"same":0.5,"ratio":[0.176,0.121,0.505,0.121,0.011,0.066],"size":[[0.117,0.117,0.767],[0.167,0.167,0.666],[0.166,0.166,0.668],[0.704,0.118,0.177],[0.626,0.261,0.113],[0.318,0.092,0.59],[0.286,0.286,0.429],[0.286,0.286,0.429],[0.696,0.081,0.224]],"len":2}}; // learned from the recordings (tools/style_model.py): repeat share, spacing ratios 0.5..3, step/small/leap after each interval class, median phrase length
+const RATIOS = [0.5, 0.67, 1, 1.5, 2, 3], pickW = w => { let r = rnd() * w.reduce((a, b) => a + b, 0); for (let i = 0; i < w.length; i++) { r -= w[i]; if (r <= 0) return i; } return w.length - 1; };
 class Improviser {
   // A melody made the way singable melodies are made (Huron 2006, Narmour 1990, and what players do):
   //   - mostly steps, and after a leap a step back the other way (gap fill);
@@ -2284,8 +2286,8 @@ class Improviser {
   //   - one motif at a time, developed rather than replaced: shifted, inverted, stretched, cut short, sequenced,
   //     and brought back later, so the listener can follow and let go;
   //   - a form over minutes: a sparse low intro, a build, a peak higher and fuller, a release; then a new piece.
-  constructor(n, home, semis) {
-    this.n = n; this.home = home; this.semis = semis; this.motifs = []; this.cur = null; this.at = clamp(home + 2, 1, n - 2); this.open = true; this.sec = 'intro'; this.left = 2; this.k = 0; this.lastStep = 0; this.loud = 0.5; this.tempoX = 1;
+  constructor(n, home, semis, stats) {
+    this.n = n; this.home = home; this.semis = semis; this.stats = stats || null; this.lastCls = 4; this.motifs = []; this.cur = null; this.at = clamp(home + 2, 1, n - 2); this.open = true; this.sec = 'intro'; this.left = 2; this.k = 0; this.lastStep = 0; this.loud = 0.5; this.tempoX = 1;
     const cls = new Set(semis.map(x => ((x % 12) + 12) % 12)); // the key's chord: root, fifth, and its third (the fourth where the scale has none)
     this.third = cls.has(3) ? 3 : cls.has(4) ? 4 : cls.has(5) ? 5 : 2; this.fifth = cls.has(7) ? 7 : this.third; this.ch = new Set([0, 7, this.third]);
     const o = semis.findIndex(x => x >= semis[0] + 12); this.oct = o > 0 ? o : Math.min(5, n - 1); // degrees in an octave
@@ -2299,10 +2301,17 @@ class Improviser {
     for (let k = 0; k < 3; k++) { if (d - k >= 0 && this.chord(d - k)) return d - k; if (d + k <= top && this.chord(d + k)) return d + k; }
     return d;
   }
-  newMotif() {
-    const cell = CALM_CELLS[Math.floor(rnd() * CALM_CELLS.length)], steps = [0];
-    for (let i = 1; i < cell.length; i++) { const leap = rnd() < 0.2, dir = rnd() < 0.55 ? 1 : -1; steps.push(rnd() < 0.1 ? 0 : (leap ? 2 : 1) * dir); }
+  newMotif() { // the rhythm cell: each note's length relates to the last as the players' do; the steps: their sizes too
+    let cell, steps = [0];
+    if (this.stats) { cell = [rnd() < 0.5 ? 1 : 2]; const n = 3 + Math.floor(rnd() * 3); for (let i = 1; i < n; i++) cell.push(clamp(Math.round(cell[i - 1] * RATIOS[pickW(this.stats.ratio)] * 2) / 2, 0.5, 4)); cell[n - 1] = Math.max(cell[n - 1], 2); }
+    else cell = CALM_CELLS[Math.floor(rnd() * CALM_CELLS.length)];
+    for (let i = 1; i < cell.length; i++) { const size = this.stepSize(steps[i - 1]), dir = rnd() < 0.55 ? 1 : -1; steps.push(rnd() < 0.1 ? 0 : size * dir); }
     return { cell, steps };
+  }
+  stepSize(prev) { // 1, 2 or 3 degrees, as the players move after a step like the last one
+    if (!this.stats) return rnd() < 0.2 ? 2 : 1;
+    const a = Math.abs(prev), c = prev === 0 ? 4 : 4 + (a <= 1 ? 1 : a <= 2 ? 2 : 3) * (prev > 0 ? 1 : -1), p = this.stats.size[c];
+    return [1, 2, 3][pickW(p)];
   }
   variant(m, name) { // develop the motif to a plan, not at random: stated plainly first, then sequenced and stretched, inverted at the peak, cut and brought home
     const plan = { intro: ['same', 'same', 'cut'], build: ['sequence', 'stretched', 'same'], peak: ['inverted', 'sequence', 'same'], release: ['cut', 'same', 'same'] };
@@ -2337,7 +2346,7 @@ class Improviser {
       d = clamp(d + step, 0, top); last = step; return d;
     };
     const m = this.variant(this.cur), peakT = clamp(this.home + (this.sec === 'peak' ? this.oct + 1 : this.sec === 'build' ? Math.round(0.7 * this.oct) : Math.round(0.5 * this.oct)), 1, top); // where this phrase should crest
-    const toward = (target, step) => (rnd() < 0.72 ? (Math.sign(target - d) || Math.sign(step) || 1) : Math.sign(step) || 1) * Math.max(1, Math.min(2, Math.abs(step))); // mostly toward the target, in the motif's own size of step
+    const toward = (target, step) => (rnd() < 0.72 ? (Math.sign(target - d) || Math.sign(step) || 1) : Math.sign(step) || 1) * Math.max(1, Math.min(3, Math.abs(step))); // mostly toward the target, in the motif's own size of step
     const qdeg = [];
     m.cell.forEach((len, k) => { // the question: the motif, its contour bent toward the crest; long notes land on chord tones
       let deg = k ? move(toward(peakT, m.steps[k] || 1)) : d; if (len >= 2 && !this.chord(deg) && rnd() < 0.7) { deg = this.snapChord(deg, top); last = deg - (notes.length ? notes[notes.length - 1].d : deg); d = deg; }
@@ -2413,7 +2422,7 @@ function Player(voice, scaleOf, bass, opt = {}) { // drives one instrument: an i
     let sc = scaleOf(piece.scale ? Object.assign({}, p, { scale: piece.scale }) : p);
     if (piece.shift) { const r = Math.pow(2, piece.shift / 12); sc = Object.assign({}, sc, { key: sc.key + '@' + piece.shift, notes: sc.notes.map(f => f * r), bass: sc.bass && sc.bass * r }); }
     if (sc.key !== key) { key = sc.key; const base = sc.bass || sc.notes[0], semis = sc.notes.map(f => Math.round(12 * Math.log2(f / base))), home = Math.max(0, semis.findIndex(x => ((x % 12) + 12) % 12 === 0));
-      imp = new Improviser(sc.notes.length, home, semis); cur = imp.home; }
+      imp = new Improviser(sc.notes.length, home, semis, opt.stats); cur = imp.home; }
     return sc;
   };
   const low = (at, v, sc, dur) => voices.push(...(bass ? V(at, sc.bass, v, sc, true) : V(at, sc.notes[imp.home], v, sc, false, dur)));
@@ -2457,7 +2466,7 @@ function Player(voice, scaleOf, bass, opt = {}) { // drives one instrument: an i
       else if (k === 'm') {
         if (hold > 0) { hold--; return; }
         if (!mq.length) { if (rnd() < 0.2 && !mono) voices.push(...V(at, sc.notes[cur], dyn * 0.22 * rr(0.8, 1.1), sc, false, pd)); return; } // a ghost note, the hand barely touching
-        if (rnd() < 0.12) { voices.push(...V(at, sc.notes[cur], dyn * 0.7 * rr(0.9, 1.06), sc, false, pd)); return; } // players often repeat the note
+        if (rnd() < (opt.stats ? opt.stats.same * 0.55 : 0.12)) { voices.push(...V(at, sc.notes[cur], dyn * 0.7 * rr(0.9, 1.06), sc, false, pd)); return; } // players repeat the note as often as the recordings show
         const nt = mq.shift(); cur = nt.d; hold = nt.hold; voices.push(...V(at, sc.notes[nt.d], nt.v * (strong ? 1.1 : 0.85) * piece.gain * rr(0.94, 1.05), sc, false, pd * (1 + hold)));
       } else if (k === 'c' || k === 'l' || k === 'h') {
         if (rnd() > thin) return;
@@ -2504,7 +2513,7 @@ function hpNote(off, f, v, sc, ding) { // a handpan note, from spectrograms and 
 }
 function Handpan() {
   return Player(hpNote, p => { const root = 146.83 * Math.pow(2, Math.round((p.pitch - 0.5) * 10) / 12), st = HP_SCALE[p.scale] || HP_SCALE.kurd;
-    return { key: p.scale + root, notes: st.map(x => root * Math.pow(2, x / 12)), home: 0, bass: root }; }, true, { scales: Object.keys(HP_SCALE) });
+    return { key: p.scale + root, notes: st.map(x => root * Math.pow(2, x / 12)), home: 0, bass: root }; }, true, { scales: Object.keys(HP_SCALE), stats: PLAYED.handpan });
 }
 const TD_SCALE = { // steel tongue drums, eight tongues, semitones above D4
   minor: [0, 3, 5, 7, 10, 12, 15, 17], major: [0, 2, 4, 7, 9, 12, 14, 16], akebono: [0, 2, 3, 7, 8, 12, 14, 15] };
@@ -2522,7 +2531,7 @@ function tdNote(off, f, v, sc) { // a tongue, built from a measured recording (t
 }
 function TongueDrum() {
   return Player(tdNote, p => { const root = 293.66 * Math.pow(2, Math.round((p.pitch - 0.5) * 10) / 12), st = TD_SCALE[p.scale] || TD_SCALE.minor;
-    return { key: p.scale + root, notes: st.map(x => root * Math.pow(2, x / 12)), home: 0, bass: root }; }, true, { scales: Object.keys(TD_SCALE) });
+    return { key: p.scale + root, notes: st.map(x => root * Math.pow(2, x / 12)), home: 0, bass: root }; }, true, { scales: Object.keys(TD_SCALE), stats: PLAYED.tongue });
 }
 
 /* ================= KALIMBA =================
@@ -2541,7 +2550,7 @@ function kbNote(off, f, v, sc, low) {
 }
 function Kalimba() {
   return Player(kbNote, p => { const root = 261.63 * Math.pow(2, Math.round((p.pitch - 0.5) * 10) / 12), st = KB_SCALE[p.scale] || KB_SCALE.major;
-    return { key: p.scale + root, notes: st.map(x => root * Math.pow(2, x / 12)), home: 0, bass: root }; }, true, { scales: Object.keys(KB_SCALE) });
+    return { key: p.scale + root, notes: st.map(x => root * Math.pow(2, x / 12)), home: 0, bass: root }; }, true, { scales: Object.keys(KB_SCALE), stats: PLAYED.kalimba });
 }
 
 /* ================= RAIN STICK =================
@@ -2627,7 +2636,7 @@ function Flute() {
   let kind = 'shakuhachi';
   const voice = (off, f, v, sc, low, dur) => [vFlute(off, Math.max(0.35, (dur || 1.2) * 0.7) * rr(0.85, 1.25), f, v, rr(-0.2, 0.2), kind)];
   const pl = Player(voice, p => { kind = FLUTE[p.kind] ? p.kind : 'shakuhachi'; const F = FLUTE[kind], root = F.root * Math.pow(2, Math.round((p.pitch - 0.5) * 8) / 12);
-    return { key: kind + root, notes: F.scale.map(x => root * Math.pow(2, x / 12)), home: 0 }; }, false, { mono: true, pulseX: 2,
+    return { key: kind + root, notes: F.scale.map(x => root * Math.pow(2, x / 12)), home: 0 }; }, false, { mono: true, pulseX: 2, stats: PLAYED.flute,
     breath: (at, v) => [vNoise(at, K.fl_breath * (0.5 + v), 0, 0.12, lr(900, 2200), 0.5)] }); // a soft inhale before each phrase
   return { render(L, R, n, p) { pl.render(L, R, n, p); } };
 }
@@ -2648,7 +2657,7 @@ function ktNote(off, f, v, sc, low) {
 }
 function Koto() {
   return Player(ktNote, p => { const root = 329.63 * Math.pow(2, Math.round((p.pitch - 0.5) * 8) / 12), st = KOTO_SCALE[p.scale] || KOTO_SCALE.hirajoshi;
-    return { key: p.scale + root, notes: st.map(x => root * Math.pow(2, x / 12)), home: 0, bass: root }; }, true, { scales: Object.keys(KOTO_SCALE) });
+    return { key: p.scale + root, notes: st.map(x => root * Math.pow(2, x / 12)), home: 0, bass: root }; }, true, { scales: Object.keys(KOTO_SCALE), stats: PLAYED.koto });
 }
 
 /* ================= TANPURA =================
@@ -2773,7 +2782,7 @@ function gqNote(off, f, v, sc) {
   return out;
 }
 function Guqin() {
-  const pl = Player(gqNote, p => { const root = 65.41 * Math.pow(2, Math.round((p.pitch - 0.5) * 8) / 12); return { key: 'gq' + root, notes: GQ_SCALE.map(x => root * Math.pow(2, x / 12)), home: 0 }; }, false, { pulseX: 2 });
+  const pl = Player(gqNote, p => { const root = 65.41 * Math.pow(2, Math.round((p.pitch - 0.5) * 8) / 12); return { key: 'gq' + root, notes: GQ_SCALE.map(x => root * Math.pow(2, x / 12)), home: 0 }; }, false, { pulseX: 2, stats: PLAYED.guqin });
   return { render(L, R, n, p) { pl.render(L, R, n, Object.assign({}, p, { style: 'spacious' })); } };
 }
 
