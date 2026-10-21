@@ -276,16 +276,21 @@ body.is-playing .play { animation: breathe var(--breath) ease-in-out infinite; }
 .player input[type=range], .dock input[type=range] { --range-fill: var(--stage-ink); --range-track: var(--stage-track); }
 
 /* ============================== soundscapes ============================== */
-.shelf { display: flex; flex-direction: column; gap: var(--space-3); } /* the need chips, the note under them, and the group index */
+.shelf { display: flex; flex-direction: column; gap: var(--space-3); } /* the need chips and the note under them */
 .needs { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .need { --btn-bg: transparent; } /* the shelf sits on the page, not on cards */
 .need-note, .mix-empty { color: var(--muted); font-size: var(--size-sm); max-width: 68ch; text-wrap: pretty; }
-.grp-index { display: flex; align-items: center; gap: var(--space-1) var(--space-2); flex-wrap: wrap; margin-top: var(--space-2); } /* a quiet table of contents: tap a name to jump to its group */
-.grp-index:empty { display: none; }
+.grp-bar { position: sticky; top: 0; z-index: 10; margin-block: calc(-1 * var(--space-2)); padding-block: var(--space-2); border-bottom: 1px solid transparent;
+  transition: background-color var(--med) var(--ease), border-color var(--med) var(--ease); } /* the group index rides along the top of the list (STUCK in the script) */
+.grp-bar.stuck { background: color-mix(in oklab, var(--bg) 92%, transparent); border-color: var(--line); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); } /* stuck: the page's colour, frosted, with a hairline */
+.grp-bar:has(.grp-index:empty) { display: none; }
+.grp-index { display: flex; align-items: center; gap: var(--space-1) var(--space-2); flex-wrap: wrap; } /* a quiet table of contents: tap a name to jump to its group */
 .grp-index button { position: relative; display: inline-flex; align-items: center; gap: var(--space-2); min-height: var(--control-h-sm); padding: 0 var(--space-2); border: 0; border-radius: var(--radius-xs); background: none;
   color: var(--muted); font: 500 var(--size-sm)/1.2 var(--font-body); transition: color var(--fast) var(--ease), background-color var(--fast) var(--ease); }
 .grp-index button::before { content: ""; position: absolute; inset: calc((var(--control-h-sm) - var(--tap)) / 2) 0; } /* the 44px touch area */
-.grp-index button::after { content: ""; order: -1; width: 6px; height: 6px; border-radius: 50%; background: var(--hue); opacity: 0.9; } /* the group's colour */
+.grp-index button::after { content: ""; order: -1; width: 6px; height: 6px; border-radius: 50%; background: var(--hue); opacity: 0.9; transition: box-shadow var(--med) var(--ease), opacity var(--med) var(--ease); } /* the group's colour */
+.grp-index button[aria-current] { color: var(--ink); } /* the group most in view: darker ink and a halo on its dot */
+.grp-index button[aria-current]::after { opacity: 1; box-shadow: 0 0 0 2.5px color-mix(in oklab, var(--hue) 30%, transparent); }
 .scene-groups { display: flex; flex-direction: column; gap: var(--group-gap); }
 .chip-group, .grp-index button { --hue: var(--hue-noise); } /* data-g picks a group's hue, for its cards, its heading and its entry in the index */
 [data-g="Rain"] { --hue: var(--hue-rain); }
@@ -298,8 +303,7 @@ body.is-playing .play { animation: breathe var(--breath) ease-in-out infinite; }
 [data-g="Travel"] { --hue: var(--hue-travel); }
 [data-g="Noise"] { --hue: var(--hue-noise); }
 [data-g="Saved"] { --hue: var(--accent); }
-.chip-group { display: flex; flex-direction: column; gap: var(--space-4); scroll-margin-top: var(--space-4); }
-.grp-row { display: flex; align-items: center; gap: var(--space-3); min-height: var(--control-h-sm); }
+.chip-group { display: flex; flex-direction: column; gap: var(--space-4); scroll-margin-top: calc(var(--control-h-sm) + 2 * var(--space-2) + var(--space-3)); } /* jumped to: it lands under the stuck index */.grp-row { display: flex; align-items: center; gap: var(--space-3); min-height: var(--control-h-sm); }
 .grp { flex: 1; min-width: 0; display: flex; align-items: center; gap: var(--space-3); font: 450 19px/1.2 var(--font-display); letter-spacing: -0.005em; color: var(--ink); }
 .grp:focus-visible { outline-offset: 6px; border-radius: var(--radius-xs); } /* jumped to from the index with the keyboard: the ring shows where you landed */
 .grp .ic { width: 28px; height: 28px; padding: 6px; border-radius: 50%; background: color-mix(in oklab, var(--hue) var(--tint-badge), var(--surface)); color: var(--hue); }
@@ -323,6 +327,12 @@ body.is-playing .play { animation: breathe var(--breath) ease-in-out infinite; }
 .chip[aria-pressed="true"] .badge { background: var(--accent); color: var(--on-accent); }
 .chip[aria-pressed="true"] .badge.swatch { background: var(--sw); box-shadow: var(--ring-selected); }
 body.is-playing .chip[aria-pressed="true"] .badge { animation: breathe var(--breath) ease-in-out infinite; }
+.chip .live { position: absolute; top: calc(var(--card-pad) + 11px); left: calc(var(--card-pad) + 38px + var(--space-3)); display: none; align-items: flex-end; gap: 2px; height: 16px; } /* playing: three slow bars next to the badge */
+.chip .live i { width: 2px; height: 100%; border-radius: 1px; background: var(--accent); transform-origin: bottom; transform: scaleY(var(--s)); }
+.chip .live i:nth-child(1) { --s: 0.45; } .chip .live i:nth-child(2) { --s: 0.85; animation-delay: -0.9s; } .chip .live i:nth-child(3) { --s: 0.6; animation-delay: -1.8s; }
+body.is-playing .chip[aria-pressed="true"] .live { display: flex; }
+body.is-playing .chip[aria-pressed="true"] .live i { animation: live-bar 2.7s ease-in-out infinite; } /* breathing, not bouncing; still (at their resting heights) under reduced motion */
+@keyframes live-bar { 0%, 100% { transform: scaleY(0.3); } 50% { transform: scaleY(1); } }
 .chip.lit { animation: lit 1.6s var(--ease); } /* a soundscape just started: a soft light passes over its card */
 @keyframes lit { 0% { box-shadow: 0 0 0 0 var(--accent-glow); } 35% { box-shadow: 0 0 0 10px transparent, 0 0 40px 4px var(--accent-glow); } 100% { box-shadow: var(--shadow-selected); } }
 .saved { position: relative; display: flex; }
@@ -548,12 +558,13 @@ body.zen-on { overflow: hidden; }
   .tool.vol { flex: 1 1 calc(100% - var(--control-h) - var(--space-2)); padding-left: 0; } /* timer and bell in one row; volume and full screen in the next */
   .chips, .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .grp { font-size: 18px; }
-  .grp-index { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-inline: calc(-1 * var(--page-pad)); padding-inline: var(--page-pad); scroll-padding-inline: var(--page-pad);
+  .grp-bar { margin-inline: calc(-1 * var(--page-pad)); } /* the bar runs edge to edge; the names inside scroll sideways */
+  .grp-index { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-inline: var(--page-pad); scroll-padding-inline: var(--page-pad);
     -webkit-mask-image: linear-gradient(to right, transparent, #000 var(--page-pad), #000 calc(100% - 28px), transparent); mask-image: linear-gradient(to right, transparent, #000 var(--page-pad), #000 calc(100% - 28px), transparent); }
   .grp-index::-webkit-scrollbar { display: none; }
   .grp-index button { white-space: nowrap; }
   .grp-more { display: inline-flex; }
-  .chip-group:not(.open) .chips > :nth-child(n+5) { display: none; } /* four cards per group until "Show all" (FOLD in the script) */
+  .chip-group:not(.open) .chips > :nth-child(n+5) { display: none; } /* four cards per group until "Show all" (FOLD in the script, which also glides the height) */
   .chip-group.open .chips > :nth-child(n+5) { animation: tile-in var(--slow) var(--ease) backwards; } /* the rest unfold softly */
   .chip-group.open .chips > :nth-child(n+7) { animation-delay: 40ms; }
   .chip-group.open .chips > :nth-child(n+9) { animation-delay: 80ms; }
@@ -627,8 +638,8 @@ body.zen-on { overflow: hidden; }
     <div class="shelf">
       <div class="needs" id="needs" role="group" aria-label="What for"></div>
       <p class="need-note" id="need-note" hidden></p>
-      <nav class="grp-index" id="grp-index" aria-label="Jump to a group"></nav>
     </div>
+    <div class="grp-bar" id="grp-bar"><nav class="grp-index" id="grp-index" aria-label="Jump to a group"></nav></div>
     <div class="scene-groups" id="chips"></div>
   </section>
 
@@ -3702,15 +3713,15 @@ function buildScenes() {
     wrap.innerHTML = `<div class="grp-row"><h3 class="grp" id="${gid}" tabindex="-1">${icon(GROUP_ICON[grp] || 'sparkles')}${T(grp)}<span class="grp-n" aria-hidden="true">${list.length}</span></h3>${list.length > FOLD ? `<button class="grp-more" type="button" aria-controls="${gid}-cards"></button>` : ''}</div><div class="chips" id="${gid}-cards" role="group" aria-labelledby="${gid}"></div>`;
     if (groups.length > 2) { // the index under the shelf: one quiet entry per group, which scrolls the group into view
       const j = document.createElement('button'); j.type = 'button'; j.dataset.g = grp; j.textContent = T(grp);
-      j.addEventListener('click', () => { wrap.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); wrap.querySelector('.grp').focus({ preventScroll: true }); });
+      j.addEventListener('click', () => { wrap.style.scrollMarginTop = $('#grp-bar').offsetHeight + 12 + 'px'; wrap.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); wrap.querySelector('.grp').focus({ preventScroll: true }); }); // lands under the stuck index
       index.append(j);
     }
     const more = wrap.querySelector('.grp-more'), label = () => { const open = wrap.classList.contains('open'); more.textContent = open ? T('Show fewer') : tpl('Show all {n}', { n: list.length }); more.setAttribute('aria-expanded', open); };
-    if (more) { label(); more.addEventListener('click', () => { const open = wrap.classList.toggle('open'); if (open) openGroups.add(grp); else openGroups.delete(grp); label(); }); }
+    if (more) { label(); more.addEventListener('click', () => { const open = !wrap.classList.contains('open'); if (open) openGroups.add(grp); else openGroups.delete(grp); foldGroup(wrap, open); label(); }); }
     for (const sc of list) {
       const b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.dataset.id = sc.id; b.setAttribute('aria-pressed', 'false');
       const lead = Object.keys(sc.mix)[0], dot = lead === 'noise' && NOISE_DOT[(sc.mix.noise.p || {}).color]; // one lead icon; a noise shows its colour instead
-      b.title = sc.sub; b.innerHTML = (dot ? `<span class="badge swatch" style="--sw:${dot}"></span>` : `<span class="badge">${icon(ICON[lead] || 'audio-waveform')}</span>`) + `<span class="chip-text"><b>${sc.name}</b><small>${sc.sub}</small></span>`;
+      b.title = sc.sub; b.innerHTML = (dot ? `<span class="badge swatch" style="--sw:${dot}"></span>` : `<span class="badge">${icon(ICON[lead] || 'audio-waveform')}</span>`) + `<span class="chip-text"><b>${sc.name}</b><small>${sc.sub}</small></span><span class="live" aria-hidden="true"><i></i><i></i><i></i></span>`; // .live: the playing bars, shown by CSS on the chosen card while playing
       b.addEventListener('click', () => applyScene(sc));
       if (sc.g === 'Saved') {
         const box = document.createElement('div'); box.className = 'saved'; box.append(b);
@@ -3720,7 +3731,35 @@ function buildScenes() {
     }
     box.append(wrap);
   }
+  trackIndex();
 }
+function foldGroup(wrap, open) { // "Show all" / "Show fewer": the group's height glides to its new size while the cards fade (the CSS); instant under reduced motion
+  const cards = wrap.querySelector('.chips'), more = wrap.querySelector('.grp-more'), h0 = cards.offsetHeight;
+  wrap.classList.toggle('open', open);
+  if (!open) { const r = more.getBoundingClientRect(), lid = $('#grp-bar').offsetHeight + 12; if (r.top < lid || r.bottom > innerHeight) scrollBy(0, r.top - lid); } // folding from further down: "Show fewer" first comes back into view, then the group folds under it
+  const h1 = cards.offsetHeight;
+  if (h1 === h0 || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  cards.style.cssText = `height:${h0}px;overflow:clip;overflow-clip-margin:8px`; void cards.offsetHeight; // the old height, then one frame later the new one
+  cards.style.transition = 'height 260ms var(--ease)'; cards.style.height = h1 + 'px';
+  const done = () => { clearTimeout(t); cards.removeEventListener('transitionend', done); cards.style.cssText = ''; }, t = setTimeout(done, 400);
+  cards.addEventListener('transitionend', done);
+}
+let indexTick = false;
+function trackIndex() { // the index: frosted once it sticks (STUCK), and the group most in view gets the stronger dot
+  indexTick = false;
+  const bar = $('#grp-bar'), index = $('#grp-index'); if (!index.children.length) return;
+  const lid = bar.getBoundingClientRect().top <= 0 ? bar.offsetHeight : 0; bar.classList.toggle('stuck', lid > 0);
+  let best = null, most = 0;
+  for (const g of document.querySelectorAll('.chip-group')) { const r = g.getBoundingClientRect(), v = Math.min(r.bottom, innerHeight) - Math.max(r.top, lid); if (v > most) { most = v; best = g.dataset.g; } }
+  for (const b of index.children) {
+    if (b.dataset.g !== best) { b.removeAttribute('aria-current'); continue; }
+    if (b.hasAttribute('aria-current')) continue;
+    b.setAttribute('aria-current', 'true');
+    const x = b.getBoundingClientRect().left - index.getBoundingClientRect().left + index.scrollLeft, pad = 40; // on a phone the names scroll sideways: keep the current one in view
+    if (index.scrollWidth > index.clientWidth && (x < index.scrollLeft + pad || x + b.offsetWidth > index.scrollLeft + index.clientWidth - pad)) index.scrollTo({ left: x - pad, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  }
+}
+for (const ev of ['scroll', 'resize']) addEventListener(ev, () => { if (!indexTick) { indexTick = true; requestAnimationFrame(trackIndex); } }, { passive: true });
 function mixName() { const on = SOUNDS.filter(d => state.sounds[d.id].on).map(d => d.name); return on.length ? on.slice(0, 3).join(', ') : T('My mix'); }
 function saveMix(name) { // the sounds that are on, with their volume, place and settings, plus the space
   const mix = {}; for (const d of SOUNDS) { const st = state.sounds[d.id]; if (st.on) mix[d.id] = { vol: st.vol, pos: st.pos, p: Object.assign({}, st.p) }; }
