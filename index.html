@@ -2275,7 +2275,7 @@ class Improviser {
   //     and brought back later, so the listener can follow and let go;
   //   - a form over minutes: a sparse low intro, a build, a peak higher and fuller, a release; then a new piece.
   constructor(n, home, semis) {
-    this.n = n; this.home = home; this.semis = semis; this.motifs = []; this.cur = null; this.at = clamp(home + 2, 1, n - 2); this.open = true; this.sec = 'intro'; this.left = 2; this.lastStep = 0; this.loud = 0.5;
+    this.n = n; this.home = home; this.semis = semis; this.motifs = []; this.cur = null; this.at = clamp(home + 2, 1, n - 2); this.open = true; this.sec = 'intro'; this.left = 2; this.k = 0; this.lastStep = 0; this.loud = 0.5; this.tempoX = 1;
     const cls = new Set(semis.map(x => ((x % 12) + 12) % 12)); // the key's chord: root, fifth, and its third (the fourth where the scale has none)
     this.third = cls.has(3) ? 3 : cls.has(4) ? 4 : cls.has(5) ? 5 : 2; this.fifth = cls.has(7) ? 7 : this.third; this.ch = new Set([0, 7, this.third]);
     const o = semis.findIndex(x => x >= semis[0] + 12); this.oct = o > 0 ? o : Math.min(5, n - 1); // degrees in an octave
@@ -2294,17 +2294,19 @@ class Improviser {
     for (let i = 1; i < cell.length; i++) { const leap = rnd() < 0.2, dir = rnd() < 0.55 ? 1 : -1; steps.push(rnd() < 0.1 ? 0 : (leap ? 2 : 1) * dir); }
     return { cell, steps };
   }
-  variant(m) { // develop the motif rather than replace it
-    const r = rnd();
-    if (r < 0.3) return { cell: m.cell, steps: m.steps, name: 'same' };
-    if (r < 0.5) return { cell: m.cell, steps: m.steps.map(x => -x), name: 'inverted' };
-    if (r < 0.65) return { cell: m.cell.map(x => x * 2), steps: m.steps, name: 'stretched' };
-    if (r < 0.8) { const k = Math.max(2, Math.ceil(m.cell.length / 2)); return { cell: m.cell.slice(0, k), steps: m.steps.slice(0, k), name: 'cut' }; }
-    return { cell: [...m.cell, ...m.cell], steps: [...m.steps, -1, ...m.steps.slice(1)], name: 'sequence' }; // the motif, then again a step lower
+  variant(m, name) { // develop the motif to a plan, not at random: stated plainly first, then sequenced and stretched, inverted at the peak, cut and brought home
+    const plan = { intro: ['same', 'same', 'cut'], build: ['sequence', 'stretched', 'same'], peak: ['inverted', 'sequence', 'same'], release: ['cut', 'same', 'same'] };
+    name = name || plan[this.sec][Math.min(this.k, 2)];
+    if (name === 'inverted') return { cell: m.cell, steps: m.steps.map(x => -x), name };
+    if (name === 'stretched') return { cell: m.cell.map(x => x * 2), steps: m.steps, name };
+    if (name === 'cut') { const k = Math.max(2, Math.ceil(m.cell.length / 2)); return { cell: m.cell.slice(0, k), steps: m.steps.slice(0, k), name }; }
+    if (name === 'sequence') return { cell: [...m.cell, ...m.cell], steps: [...m.steps, -1, ...m.steps.slice(1)], name }; // the motif, then again a step lower
+    return { cell: m.cell, steps: m.steps, name: 'same' };
   }
   nextSection() {
     const order = ['intro', 'build', 'peak', 'release']; const k = order.indexOf(this.sec);
-    this.sec = order[(k + 1) % 4]; this.left = this.sec === 'peak' ? 2 + Math.floor(rnd() * 2) : 2 + Math.floor(rnd() * 3);
+    this.sec = order[(k + 1) % 4]; this.left = this.sec === 'peak' ? 2 + Math.floor(rnd() * 2) : 2 + Math.floor(rnd() * 3); this.k = 0;
+    this.tempoX = { intro: 0.96, build: 1, peak: 1.04, release: 0.94 }[this.sec]; // the sections breathe: a little quicker toward the peak, easing in the release
     if (this.sec === 'intro') { // a new piece: a new motif, or an old one remembered
       this.cur = this.motifs.length && rnd() < 0.35 ? this.motifs[Math.floor(rnd() * this.motifs.length)] : this.newMotif();
       if (!this.motifs.includes(this.cur)) { this.motifs.push(this.cur); if (this.motifs.length > 4) this.motifs.shift(); }
@@ -2314,9 +2316,9 @@ class Improviser {
   phrase(flow) { // returns notes [{ b: beat, d: degree, len, v, orn }] and the phrase length and the rest after it, in beats
     if (!this.cur) this.cur = this.newMotif(), this.motifs.push(this.cur);
     if (this.left <= 0) this.nextSection();
-    this.left--;
+    this.left--; this.k++;
     const S = { intro: { lift: -1, dens: -0.25, loud: 0.5, rest: 1.3 }, build: { lift: 0, dens: 0, loud: 0.6, rest: 1 }, peak: { lift: 2, dens: 0.25, loud: 0.74, rest: 0.8 }, release: { lift: -1, dens: -0.2, loud: 0.52, rest: 1.4 } }[this.sec];
-    this.loud = S.loud;
+    this.loud = S.loud + (this.open ? 0.03 : -0.04); // the question a touch firmer than the answer
     const top = this.n - 1, fl = clamp(flow + S.dens, 0, 1), slow = 1.25 - 0.5 * fl, notes = [];
     let b = 0, d = clamp(this.at + S.lift + Math.round(rr(-1, 1)), 1, top - 1), last = this.lastStep;
     const play = (deg, len, orn) => { deg = clamp(deg, 0, top); notes.push({ b, d: deg, len, orn }); b += len; };
@@ -2329,8 +2331,9 @@ class Improviser {
       let deg = k ? move(m.steps[k]) : d; if (len >= 2 && !this.chord(deg) && rnd() < 0.7) { deg = this.snapChord(deg, top); last = deg - (notes.length ? notes[notes.length - 1].d : deg); d = deg; }
       play(deg, len * slow, len >= 2 && rnd() < 0.15 * fl ? 'grace' : 0);
     });
-    if (rnd() < 0.45 + 0.4 * fl) { // the answer: the motif again from a step or a third away, or its inversion
-      const m2 = rnd() < 0.5 ? m : this.variant(this.cur), start = clamp(notes[0].d + (rnd() < 0.5 ? 1 : rnd() < 0.5 ? -1 : 2), 1, top - 1);
+    if (rnd() < 0.45 + 0.4 * fl) { // the answer follows the section: a step up in the intro, a third up in the build, inverted at the peak, a step down in the release
+      const A = { intro: [1, 'same'], build: [2, 'same'], peak: [1, 'inverted'], release: [-1, 'same'] }[this.sec];
+      const m2 = this.variant(this.cur, A[1]), start = clamp(notes[0].d + A[0], 1, top - 1);
       d = start; m2.cell.forEach((len, k) => { const deg = k ? move(m2.steps[k]) : d; play(deg, len * slow); });
     }
     // the cadence: open phrases rest on the fifth or third; closed ones come home; the peak section may climb instead
@@ -2341,7 +2344,7 @@ class Improviser {
     // the arch of loudness, the peak note a little stronger, the end softer, and rubato: a slight push through the middle, a stretch at the end
     const B = b, nn = notes.length, peakI = notes.reduce((p, x, i) => (x.d > notes[p].d ? i : p), 0);
     for (const [i, nt] of notes.entries()) {
-      const pos = nt.b / B; nt.v = (S.loud + 0.22 * Math.sin(Math.PI * Math.min(1, pos * 1.2)) + (i === peakI ? 0.08 : 0) - (i === nn - 1 ? 0.12 : 0)) * rr(0.93, 1.05);
+      const pos = nt.b / B; nt.v = (this.loud + 0.22 * Math.sin(Math.PI * Math.min(1, pos * 1.2)) + (i === peakI ? 0.08 : 0) - (i === nn - 1 ? 0.12 : 0)) * rr(0.93, 1.05);
       nt.b += 0.05 * Math.sin(Math.PI * pos) * (pos < 0.6 ? -1 : 1); // pressing on through the rise, easing into the fall
     }
     if (nn > 2) { notes[nn - 2].len *= 1.2; notes[nn - 1].b += notes[nn - 2].len * 0.2; }
@@ -2424,7 +2427,7 @@ function Player(voice, scaleOf, bass, opt = {}) { // drives one instrument: an i
     if (bar && bar % 4 === 0 && rnd() < 0.5) evolve();
     const pat = piece.bars[bar % piece.bars.length], pulse = beat * piece.pulse * (opt.pulseX || 1), jit = () => Math.floor(rr(-0.02, 0.02) * pulse), L = pat.length, pd = 0.9 * pulse / SR;
     if (!mq.length && gap <= 0) { const ph = imp.phrase(p.flow); mq = ph.notes.map(nt => ({ d: nt.d, v: nt.v, hold: nt.len >= 4 ? 2 : nt.len >= 2 ? 1 : 0 })); gap = Math.round(ph.rest / (L * piece.pulse * (opt.pulseX || 1))); } // the next phrase, then a rest measured in bars
-    const thin = imp.sec === 'intro' ? 0.5 : imp.sec === 'release' ? 0.75 : 1, dyn = (imp.loud + 0.06 * Math.sin(bar * 0.5)) * piece.gain; // sparser in the intro and the release
+    const thin = imp.sec === 'intro' ? 0.5 : imp.sec === 'release' ? 0.75 : 1, dyn = imp.loud * (1 + 0.1 * Math.sin(TAU * (bar % 8) / 8 - Math.PI / 2)) * piece.gain; // sparser in the intro and the release; an eight-bar swell
     pat.forEach((k, i) => {
       const at = t + Math.floor(i * pulse) + jit() + (i % 2 ? Math.floor(0.03 * pulse) : 0); // weak pulses a touch late, the relaxed feel
       const strong = i === 0 || i === { 8: 4, 6: 3, 10: 6, 7: 4 }[L];
@@ -2432,7 +2435,7 @@ function Player(voice, scaleOf, bass, opt = {}) { // drives one instrument: an i
       if (k === 'B' || k === 'b') { if (k === 'B' || rnd() < thin) low(at, (k === 'B' ? 0.55 : 0.4) * dyn * rr(0.9, 1), sc, pd); }
       else if (k === 'm') {
         if (hold > 0) { hold--; return; }
-        if (!mq.length) return;
+        if (!mq.length) { if (rnd() < 0.3 && !mono) voices.push(...V(at, sc.notes[cur], dyn * 0.3 * rr(0.8, 1.1), sc, false, pd)); return; } // a ghost note, the hand barely touching
         if (rnd() < 0.12) { voices.push(...V(at, sc.notes[cur], dyn * 0.7 * rr(0.9, 1.06), sc, false, pd)); return; } // players often repeat the note
         const nt = mq.shift(); cur = nt.d; hold = nt.hold; voices.push(...V(at, sc.notes[nt.d], nt.v * (strong ? 1.2 : 0.85) * piece.gain * rr(0.92, 1.06), sc, false, pd * (1 + hold)));
       } else if (k === 'c' || k === 'l' || k === 'h') {
@@ -2452,7 +2455,7 @@ function Player(voice, scaleOf, bass, opt = {}) { // drives one instrument: an i
     while (t < n) {
       if (piece && (base + t) / SR - piece.at0 > piece.maxS && !imp.ending) { imp.sec = 'release'; imp.left = 0; } // time to close this piece
       if (!piece || (!mq.length && gap <= 0 && imp.ending)) { newPiece(p); sc = tune(p); }
-      const beat = 60 / (48 + 36 * p.tempo) * SR * piece.tempoX;
+      const beat = 60 / (48 + 36 * p.tempo) * SR * piece.tempoX * imp.tempoX;
       if (piece.free) free(p, sc, beat); else gridBar(p, sc, beat);
     }
     t -= n; base += n;
@@ -2465,11 +2468,11 @@ function hpNote(off, f, v, sc, ding) { // a handpan note, from spectrograms and 
   // in the sustain almost everything lies below 1 kHz: the fundamental as a slowly beating pair, its tuned octave and
   // fifth-above-the-octave well below it, and the whole pan humming along (the ding and the nearest notes). The highs
   // live only in the strike: a soft skin slap and a metallic shimmer gone within 60 ms.
-  const tau = 3.6 * Math.sqrt(280 / f) / 6.9, a = v * K.hp_A * (ding ? 0.5 : 1), pan = ding ? 0 : rr(-0.45, 0.45), bt = () => rr(0.5, 1.6);
-  const modes = [{ f, a: 1, tau }, { f: f + bt(), a: 0.6, tau: tau * 0.9 }, { f: 2 * f, a: K.hp_h2, tau: tau * 1.9 }, { f: 2 * f + bt(), a: K.hp_h2 * 0.6, tau: tau * 1.7 },
-    { f: 3 * f, a: K.hp_h3, tau: tau * 2.3 }, { f: 3.01 * f, a: K.hp_h3 * 0.5, tau: tau * 2 }, { f: 1.5 * f, a: K.hp_h15, tau: tau * 1.2 }, { f: 4.01 * f, a: K.hp_h4, tau: tau * 0.5 }];
-  for (let k = 0; k < 6; k++) modes.push({ f: f * lr(3, 9), a: K.hp_ring * rr(0.5, 1), tau: rr(0.008, 0.03) }); // the strike's metallic shimmer, gone within 60 ms
-  const out = [vModal(off, a, pan, modes, K.hp_click), vNoise(off, a * K.hp_slap, pan, 0.004, lr(400, 1000), 1.2)];
+  const tau = 3.6 * Math.sqrt(280 / f) / 6.9, a = v * K.hp_A * (ding ? 0.5 : 1), pan = ding ? 0 : rr(-0.45, 0.45), bt = () => rr(0.5, 1.6), hard = clamp(v / 0.6, 0.35, 1.7); // how hard the hand strikes: brighter and slappier when hard, rounder when soft
+  const modes = [{ f, a: 1, tau }, { f: f + bt(), a: 0.6, tau: tau * 0.9 }, { f: 2 * f, a: K.hp_h2 * Math.pow(hard, 0.6), tau: tau * 1.9 }, { f: 2 * f + bt(), a: K.hp_h2 * 0.6 * Math.pow(hard, 0.6), tau: tau * 1.7 },
+    { f: 3 * f, a: K.hp_h3 * Math.pow(hard, 0.8), tau: tau * 2.3 }, { f: 3.01 * f, a: K.hp_h3 * 0.5 * Math.pow(hard, 0.8), tau: tau * 2 }, { f: 1.5 * f, a: K.hp_h15, tau: tau * 1.2 }, { f: 4.01 * f, a: K.hp_h4, tau: tau * 0.5 }];
+  for (let k = 0; k < 6; k++) modes.push({ f: f * lr(3, 9), a: K.hp_ring * rr(0.5, 1) * Math.pow(hard, 1.5), tau: rr(0.008, 0.03) }); // the strike's metallic shimmer, gone within 60 ms, more of it when struck hard
+  const out = [vModal(off, a, pan, modes, K.hp_click * hard), vNoise(off, a * K.hp_slap * hard, pan, 0.004, lr(400, 1000), 1.2)];
   const near = sc.notes.filter(g => g !== f).sort((x, y) => Math.abs(Math.log(x / f)) - Math.abs(Math.log(y / f)));
   near.forEach((g, k) => { if (rnd() < (k < 3 ? 0.9 : 0.5)) out.push(vModal(off + Math.floor(rr(0.003, 0.01) * SR), a * K.hp_symp * (k < 3 ? 1 : 0.5) * rr(0.6, 1), rr(-0.6, 0.6),
     [{ f: g, a: 1, tau: tau * 1.3 }, { f: g + bt(), a: 0.6, tau: tau * 1.1 }, { f: 2 * g, a: 0.12, tau: tau * 1.5 }], 0)); }); // the pan hums along: the nearest notes, mostly their fundamentals
@@ -2485,10 +2488,10 @@ const TD_SCALE = { // steel tongue drums, eight tongues, semitones above D4
 function tdNote(off, f, v, sc) { // a tongue, built from a measured recording (tools/hpscan.py on tongue1): a clear ring that lasts
   // 4-15 s with one partner partial close above it, a bright metallic shimmer in the first quarter second (the body
   // of the sound sits near 1.5 kHz), the rubber mallet's soft tok, and the other tongues ringing along 13-23 dB down
-  const t60 = 5 * Math.sqrt(390 / f), tau = t60 / 6.9, a = v * K.td_A, pan = rr(-0.4, 0.4);
-  const modes = [{ f, a: 1, tau }, { f: f + rr(0.1, 0.4), a: 0.4, tau: tau * 0.85 }, { f: f * K.td_ovr, a: K.td_h, tau: tau * 0.25 }, { f: f * K.td_ovr2, a: K.td_h * 0.5, tau: tau * 0.12 }];
-  for (let k = 0; k < 6; k++) modes.push({ f: f * lr(2.2, 5.5), a: K.td_ring * rr(0.5, 1), tau: rr(0.05, 0.18) });
-  const out = [vModal(off, a, pan, modes, K.td_click), vNoise(off, a * K.td_tok, pan, 0.003, lr(500, 1200), 1), vNoise(off, a * K.td_tick, pan, 0.0008, lr(1500, 3500), 0.6)];
+  const t60 = 5 * Math.sqrt(390 / f), tau = t60 / 6.9, a = v * K.td_A, pan = rr(-0.4, 0.4), hard = clamp(v / 0.6, 0.35, 1.7); // the mallet's pressure: brighter when hard
+  const modes = [{ f, a: 1, tau }, { f: f + rr(0.1, 0.4), a: 0.4, tau: tau * 0.85 }, { f: f * K.td_ovr, a: K.td_h * Math.pow(hard, 0.6), tau: tau * 0.25 }, { f: f * K.td_ovr2, a: K.td_h * 0.5 * Math.pow(hard, 0.8), tau: tau * 0.12 }];
+  for (let k = 0; k < 6; k++) modes.push({ f: f * lr(2.2, 5.5), a: K.td_ring * rr(0.5, 1) * Math.pow(hard, 1.5), tau: rr(0.05, 0.18) });
+  const out = [vModal(off, a, pan, modes, K.td_click * hard), vNoise(off, a * K.td_tok * hard, pan, 0.003, lr(500, 1200), 1), vNoise(off, a * K.td_tick * hard, pan, 0.0008, lr(1500, 3500), 0.6)];
   const near = sc.notes.filter(g => g !== f).sort((x, y) => Math.abs(Math.log(x / f)) - Math.abs(Math.log(y / f)));
   near.forEach((g, k) => { if (rnd() < (k < 2 ? 0.9 : 0.45)) out.push(vModal(off + Math.floor(rr(0.001, 0.004) * SR), a * (k < 2 ? K.td_symp : K.td_symp * 0.4) * rr(0.5, 1), rr(-0.6, 0.6), [{ f: g, a: 1, tau: tau * 1.2 }, { f: g + rr(0.1, 0.4), a: 0.5, tau }], 0)); });
   return out;
@@ -2504,10 +2507,10 @@ function TongueDrum() {
    of 2-5 kHz in the first milliseconds, the box's low knock, and the neighbouring tine humming a few dB down. */
 const KB_SCALE = { major: [0, 2, 4, 5, 7, 9, 11, 12, 14, 16], penta: [0, 2, 4, 7, 9, 12, 14, 16, 19, 21], minor: [0, 2, 3, 5, 7, 8, 10, 12, 14, 15] }; // semitones above the lowest tine
 function kbNote(off, f, v, sc, low) {
-  const tau = 2.6 * Math.sqrt(262 / f) / 6.9, a = v * K.kb_A * (low ? 0.7 : 1), pan = rr(-0.35, 0.35), bt = () => rr(0.3, 1.2);
-  const modes = [{ f, a: 1, tau }, { f: f + bt(), a: 0.5, tau: tau * 0.9 }, { f: f * 6.27, a: K.kb_h6, tau: tau * 0.12 }, { f: f * 17.55, a: K.kb_h6 * 0.35, tau: tau * 0.05 }, { f: f * 2.01, a: K.kb_h2, tau: tau * 0.4 },
+  const tau = 2.6 * Math.sqrt(262 / f) / 6.9, a = v * K.kb_A * (low ? 0.7 : 1), pan = rr(-0.35, 0.35), bt = () => rr(0.3, 1.2), hard = clamp(v / 0.6, 0.35, 1.7); // the thumb's pressure: a brighter flash and nail when firm
+  const modes = [{ f, a: 1, tau }, { f: f + bt(), a: 0.5, tau: tau * 0.9 }, { f: f * 6.27, a: K.kb_h6 * Math.pow(hard, 1.2), tau: tau * 0.12 }, { f: f * 17.55, a: K.kb_h6 * 0.35 * Math.pow(hard, 1.5), tau: tau * 0.05 }, { f: f * 2.01, a: K.kb_h2, tau: tau * 0.4 },
     { f: K.kb_box * lr(0.9, 1.1), a: K.kb_boxA, tau: 0.05 }]; // the tine, its bright flash, and the box's knock
-  const out = [vModal(off, a, pan, modes, K.kb_click), vNoise(off, a * K.kb_nail, pan, 0.0012, lr(2200, 5000), 0.8)];
+  const out = [vModal(off, a, pan, modes, K.kb_click * hard), vNoise(off, a * K.kb_nail * hard, pan, 0.0012, lr(2200, 5000), 0.8)];
   const near = sc.notes.filter(g => g !== f).sort((x, y) => Math.abs(Math.log(x / f)) - Math.abs(Math.log(y / f)));
   near.slice(0, 2).forEach((g, k) => { if (rnd() < 0.8) out.push(vModal(off + Math.floor(rr(0.002, 0.006) * SR), a * K.kb_symp * (k ? 0.5 : 1) * rr(0.6, 1), rr(-0.4, 0.4), [{ f: g, a: 1, tau: tau * 0.9 }, { f: g + bt(), a: 0.5, tau: tau * 0.8 }], 0)); }); // the next tines hum along
   return out;
@@ -2610,10 +2613,10 @@ function Flute() {
    two, a 10 ms attack centred near 2.3 kHz, and the body humming an octave below. */
 const KOTO_SCALE = { hirajoshi: [0, 2, 3, 7, 8, 12, 14, 15, 19, 20], insen: [0, 1, 5, 7, 10, 12, 13, 17, 19, 22], penta: [0, 2, 4, 7, 9, 12, 14, 16, 19, 21] }; // semitones above the lowest string
 function ktNote(off, f, v, sc, low) {
-  const tau = 3.2 * Math.sqrt(330 / f) / 6.9, a = v * K.kt_A * (low ? 0.8 : 1), pan = rr(-0.4, 0.4), bt = () => rr(0.3, 1.2);
-  const modes = [{ f, a: 1, tau }, { f: f + bt(), a: 0.4, tau: tau * 0.9 }, { f: f * 2.002, a: K.kt_h2, tau: tau * 0.8 }, { f: f * 3.005, a: K.kt_h3, tau: tau * 0.65 }, { f: f * 4.01, a: K.kt_h4, tau: tau * 0.5 },
+  const tau = 3.2 * Math.sqrt(330 / f) / 6.9, a = v * K.kt_A * (low ? 0.8 : 1), pan = rr(-0.4, 0.4), bt = () => rr(0.3, 1.2), hard = clamp(v / 0.6, 0.35, 1.7); // the pick's force: more upper harmonics and pick noise when firm
+  const modes = [{ f, a: 1, tau }, { f: f + bt(), a: 0.4, tau: tau * 0.9 }, { f: f * 2.002, a: K.kt_h2, tau: tau * 0.8 }, { f: f * 3.005, a: K.kt_h3 * Math.pow(hard, 0.5), tau: tau * 0.65 }, { f: f * 4.01, a: K.kt_h4 * Math.pow(hard, 0.8), tau: tau * 0.5 },
     { f: f * 5.02, a: K.kt_h4 * 0.6, tau: tau * 0.4 }, { f: f * 6.03, a: K.kt_h4 * 0.4, tau: tau * 0.35 }, { f: f * 0.5, a: K.kt_body, tau: tau * 1.5 }]; // the string's harmonics, and the body an octave below
-  const out = [vModal(off, a, pan, modes, K.kt_click), vNoise(off, a * K.kt_pick, pan, 0.0025, lr(1800, 3600), 1)];
+  const out = [vModal(off, a, pan, modes, K.kt_click * hard), vNoise(off, a * K.kt_pick * hard, pan, 0.0025, lr(1800, 3600), 1)];
   const near = sc.notes.filter(g => g !== f).sort((x, y) => Math.abs(Math.log(x / f)) - Math.abs(Math.log(y / f)));
   near.slice(0, 2).forEach((g, k) => { if (rnd() < 0.6) out.push(vModal(off + Math.floor(rr(0.002, 0.006) * SR), a * K.kt_symp * (k ? 0.5 : 1) * rr(0.6, 1), rr(-0.4, 0.4), [{ f: g, a: 1, tau: tau * 0.9 }], 0)); }); // the next strings hum along
   return out;
