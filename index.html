@@ -2982,7 +2982,7 @@ const SOUNDS = [
       { id: 'settle', label: 'Settle', type: 'choice', def: 'on', options: [['on', 'Start quicker, slow down'], ['off', 'Steady from the start']] },
       { id: 'softness', label: 'Softness', def: 0.5, fmt: v => T(v < 0.33 ? 'a clear beat' : v < 0.66 ? 'soft' : 'barely there') },
     ] },
-  { id: 'guqin', name: 'Guqin', vol: 0.5, trim: 1, send: 0.3, create: Guqin,
+  { id: 'guqin', name: 'Guqin', vol: 0.5, trim: 2.2, send: 0.3, create: Guqin,
     blurb: 'The seven-string zither of Chinese scholars, played for stillness: low plucked notes ringing for seconds with the open strings humming along, wide leaps, long silences. Read off recordings; the calm improviser plays it slowly.',
     params: [
       { id: 'tempo', label: 'Tempo', def: 0.15, fmt: v => tpl('{n} beats a minute', { n: Math.round(48 + 36 * v) }) },
