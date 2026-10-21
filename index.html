@@ -2229,18 +2229,27 @@ class Improviser {
 function Player(voice, scaleOf, bass) { // drives one instrument: an improviser per scale, notes scheduled ahead, the voices rendered
   const voices = []; let imp = null, key = '', t = Math.floor(rr(0.15, 0.45) * SR), bar = 0, pat = null; // the first note comes soon after play
   return { render(L, R, n, p) {
-    const sc = scaleOf(p), beat = 60 / (48 + 24 * p.tempo) * SR;
+    const sc = scaleOf(p), beat = 60 / (48 + 36 * p.tempo) * SR;
     if (sc.key !== key) { key = sc.key; imp = new Improviser(sc.notes.length, sc.home); pat = null; }
-    if (p.style === 'groove') { // the groove: bars of eight pulses, the ding on the first (and often the fifth), the melody circling a
-      // motif between them, as handpan players do; the motif turns a little every bar and changes with the sections
+    if (p.style === 'groove') { // the groove, matched to recorded players (tools/melscan.py): bars of eight pulses, the ding on the
+      // first and fifth, a figure circling between them that often repeats a note, strong and weak pulses, a figure that
+      // turns a little every bar and changes with the sections, and a bar's rest only between sections
       const pulse = beat / 2;
       while (t < n) {
-        if (!pat || bar % 8 === 0) { imp.phrase(p.flow); const m = imp.cur, top = sc.notes.length - 1; let d = clamp(imp.at, 1, top - 1); // a new figure every 8 bars, drawn from the improviser's current motif
-          pat = { deg: m.steps.map(st => (d = clamp(d + st, 1, top))), slots: [1, 2, 3, 5, 6, 7].filter(() => rnd() < 0.55 + 0.4 * p.flow) }; if (pat.slots.length < 2) pat.slots = [1, 3, 5]; }
-        const loud = 0.5 + 0.1 * Math.sin(bar * 0.7), jit = () => Math.floor(rr(-0.02, 0.02) * pulse);
-        if (bass) voices.push(...voice(t + jit(), sc.bass, 0.42 * rr(0.9, 1), sc, true)); // the ding
-        if (bass && rnd() < 0.5) voices.push(...voice(t + Math.floor(4 * pulse) + jit(), sc.bass, 0.3 * rr(0.9, 1), sc, true));
-        pat.slots.forEach((sl, k) => { const dg = pat.deg[(k + bar) % pat.deg.length], v = (loud + (sl % 2 ? 0 : 0.08)) * rr(0.9, 1.05); voices.push(...voice(t + Math.floor(sl * pulse) + jit(), sc.notes[rnd() < 0.15 ? clamp(dg + (rnd() < 0.5 ? 1 : -1), 0, sc.notes.length - 1) : dg], v, sc)); });
+        if (!pat || bar % 8 === 0) { imp.phrase(p.flow); const m = imp.cur, top = sc.notes.length - 1; let d = clamp(imp.at, 1, top - 1);
+          const deg = m.steps.map(st => (d = clamp(d + st, 1, top))); // a new figure every 8 bars, drawn from the improviser's current motif
+          pat = { deg, slots: [1, 2, 3, 5, 6, 7].filter(k => rnd() < 0.7 + 0.28 * p.flow), rep: 0.35 + 0.3 * rnd() }; // players repeat a note 37-62% of the time
+          if (pat.slots.length < 3) pat.slots = [1, 3, 5, 7];
+          if (bar && rnd() < 0.5) { t += Math.floor(8 * pulse); } // a breath between sections
+        }
+        const jit = () => Math.floor(rr(-0.02, 0.02) * pulse), loud = 0.52 + 0.08 * Math.sin(bar * 0.6);
+        if (bass) { voices.push(...voice(t + jit(), sc.bass, 0.7 * rr(0.9, 1), sc, true)); voices.push(...voice(t + Math.floor(4 * pulse) + jit(), sc.bass, 0.5 * rr(0.9, 1), sc, true)); } // the ding, strong then weaker
+        let prev = -1;
+        pat.slots.forEach((sl, k) => {
+          let dg = pat.deg[(k + bar) % pat.deg.length]; if (prev >= 0 && rnd() < pat.rep) dg = prev; else if (rnd() < 0.12) dg = clamp(dg + (rnd() < 0.5 ? 1 : -1), 0, sc.notes.length - 1); prev = dg; // repeats and small turns
+          const strong = sl === 1 || sl === 5 || (sl === 3 && rnd() < 0.4), v = loud * (strong ? 1.35 : 0.6) * rr(0.9, 1.08); // about 7 dB between strong and weak
+          voices.push(...voice(t + Math.floor(sl * pulse) + jit(), sc.notes[dg], v, sc));
+        });
         t += Math.floor(8 * pulse * rr(0.995, 1.005)); bar++;
       }
       t -= n; runVoices(voices, L, R, n); return;
@@ -2610,7 +2619,7 @@ const SOUNDS = [
     params: [
       { id: 'scale', label: 'Scale', type: 'choice', def: 'kurd', options: [['kurd', 'Kurd, soft minor'], ['celtic', 'Celtic, airy'], ['sunny', 'Major, warm']] },
       { id: 'style', label: 'Playing', type: 'choice', def: 'groove', options: [['groove', 'Steady groove'], ['spacious', 'Slow phrases']] },
-      { id: 'tempo', label: 'Tempo', def: 0.3, fmt: v => tpl('{n} beats a minute', { n: Math.round(48 + 24 * v) }) },
+      { id: 'tempo', label: 'Tempo', def: 0.5, fmt: v => tpl('{n} beats a minute', { n: Math.round(48 + 36 * v) }) },
       { id: 'flow', label: 'Notes', def: 0.4, fmt: v => T(v < 0.3 ? 'spacious' : v < 0.7 ? 'gentle' : 'flowing') },
       { id: 'pitch', label: 'Pitch', def: 0.5, fmt: v => T(v < 0.35 ? 'deeper' : v < 0.65 ? 'middle' : 'higher') },
     ] },
@@ -2619,7 +2628,7 @@ const SOUNDS = [
     params: [
       { id: 'scale', label: 'Scale', type: 'choice', def: 'minor', options: [['minor', 'Minor pentatonic, dreamy'], ['major', 'Major pentatonic, bright'], ['akebono', 'Akebono, Japanese']] },
       { id: 'style', label: 'Playing', type: 'choice', def: 'spacious', options: [['groove', 'Steady groove'], ['spacious', 'Slow phrases']] },
-      { id: 'tempo', label: 'Tempo', def: 0.3, fmt: v => tpl('{n} beats a minute', { n: Math.round(48 + 24 * v) }) },
+      { id: 'tempo', label: 'Tempo', def: 0.3, fmt: v => tpl('{n} beats a minute', { n: Math.round(48 + 36 * v) }) },
       { id: 'flow', label: 'Notes', def: 0.4, fmt: v => T(v < 0.3 ? 'spacious' : v < 0.7 ? 'gentle' : 'flowing') },
       { id: 'pitch', label: 'Pitch', def: 0.5, fmt: v => T(v < 0.35 ? 'deeper' : v < 0.65 ? 'middle' : 'higher') },
     ] },
@@ -2707,7 +2716,7 @@ const SCENES = [
   { g: 'Nature', id: 'jpforest', name: 'Japanese wood at dusk', sub: 'Evening cicadas, a bush warbler, a mountain stream', space: 'forest', mix: { cicadas: { p: { count: 5, distance: 0.5 } }, birds: { vol: 0.4, p: { kind: 'japan', count: 2, activity: 0.3, distance: 0.5 } }, stream: { vol: 0.3, pos: -0.4, p: { flow: 0.2, babble: 0.15 } } } },
   { g: 'Nature', id: 'underice', name: 'Under the ice', sub: 'A hydrophone below the ice: creaks and hums above, a bearded seal’s long note', space: 'open', mix: { deep: { p: { depth: 0.2, whales: 0.15, seals: 0.5, ice: 0.8 } } } },
   { g: 'Nature', id: 'deepsea', name: 'Deep sea', sub: 'The even hush of the deep, humpback whales singing far off', space: 'open', mix: { deep: { p: { depth: 0.75, whales: 0.6, seals: 0.15, ice: 0.05 } } } },
-  { g: 'Nature', id: 'mountainpass', name: 'Mountain pass', sub: 'Thin wind over a high pass, chimes on a line somewhere below', space: 'valley', mix: { wind: { p: { speed: 0.55, trees: 0, whistle: 0.35, gust: 0.5 } }, chimes: { vol: 0.2, pos: 0.4, p: { kind: 'metal', breeze: 0.6, pitch: 0.6 } } } },
+  { g: 'Nature', id: 'mountainpass', name: 'Mountain pass', sub: 'Thin wind over a high pass, chimes on a line somewhere below', space: 'valley', mix: { wind: { vol: 0.42, p: { speed: 0.5, trees: 0, whistle: 0.3, gust: 0.5 } }, chimes: { vol: 0.15, pos: 0.4, p: { kind: 'metal', breeze: 0.6, pitch: 0.6 } } } },
   { g: 'Nature', id: 'lakeshore', name: 'Lake shore', sub: 'Small waves lapping on pebbles, a trickle nearby', space: 'open', mix: { ocean: { vol: 0.7, p: { size: 0.05, period: 5, distance: 0.05 } }, stream: { vol: 0.3, pos: 0.2, p: { flow: 0.12, size: 0.4, babble: 0.3 } } } },
   { g: 'Nature', id: 'lakebirds', name: 'Morning by the lake', sub: 'Small waves on the shore, songbirds in the trees', space: 'open', mix: { ocean: { vol: 0.45, p: { size: 0.05, period: 5, distance: 0.1 } }, stream: { vol: 0.2, pos: 0.3, p: { flow: 0.1, size: 0.4, babble: 0.3 } }, birds: { vol: 0.6, p: { kind: 'woodland', count: 5, activity: 0.4, distance: 0.42 } }, wind: { vol: 0.15, p: { speed: 0.1, trees: 0.5, whistle: 0 } } } },
   { g: 'Baby', id: 'womb', name: 'Back in the womb', sub: 'A mother’s heartbeat, muffled, over soft brown noise', space: 'indoors', mix: { womb: { p: { rate: 0.6, whoosh: 0.5, muffle: 0.7 } }, noise: { vol: 0.25, p: { color: 'brown', tone: 0.3 } } } },
