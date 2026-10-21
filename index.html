@@ -842,7 +842,7 @@ function seedRandom(seed) { let t = seed >>> 0; rnd = () => { t = (t + 0x6D2B79F
 // recordings (texture statistics, AI listeners, loudness); the test tools can override them.
 const K = {
   sz_A: 0.25, sz_trick: 0.5, sz_knock: 0.9, sz_click: 0.6, sz_tok: 0.8, sz_thud: 0.6, sz_gush: 5, // bamboo fountain: trickle level, knock, its slap and thud, the pour after a knock (a flow factor)
-  gq_A: 0.108, gq_fmt: 900, gq_bw: 0.9, gq_fund: 0.25, gq_pluck: 0.26, gq_kmax: 30, gq_wash: 0, gq_slide: 0.5, gq_vib: 0.25, gq_click: 0.4, gq_nail: 0.9, gq_symp: 0.35, // guqin
+  gq_A: 0.108, gq_fmt: 630, gq_bw: 0.745, gq_fund: 0.25, gq_pluck: 0.26, gq_kmax: 30, gq_wash: 0, gq_slide: 0.8, gq_vib: 0.25, gq_click: 0.4, gq_nail: 1.1, gq_symp: 0.35, // guqin
   pu_A: 1.1, pu_bed: 0.012, // resting pulse
   tr_rumble: 0.45, tr_mid: 0.3, tr_hiss: 0.035, tr_thud: 0.7, tr_knock: 0.16, tr_rattle: 0.03, // night train
   tp_A: 0.09, tp_inh: 1, tp_width: 1.2, // tanpura
@@ -3351,7 +3351,7 @@ const SCENES = [
   { g: 'Meditation', id: 'chimes', name: 'Wind chimes', sub: 'Chimes in a light breeze', space: 'open', mix: { chimes: { p: { kind: 'metal', breeze: 0.4 } }, wind: { vol: 0.28, p: { speed: 0.15, trees: 0.5, whistle: 0, gust: 0.4 } } } },
   { g: 'Meditation', id: 'rods', name: 'Tuned rods', sub: 'Pure chime rods, a soft breeze', space: 'open', mix: { chimes: { p: { kind: 'koshi', breeze: 0.3 } }, wind: { vol: 0.22, p: { speed: 0.12, trees: 0.4, whistle: 0 } } } },
   { g: 'Music', id: 'tanpura', name: 'Tanpura drone', sub: 'The endless shimmering drone of Indian meditation, over the softest brown noise', space: 'indoors', mix: { tanpura: { p: { tuning: 'pa', pace: 0.45 } }, noise: { vol: 0.12, p: { color: 'brown', tone: 0.3 } } } },
-  { g: 'Music', id: 'guqin', name: 'Guqin', sub: 'The scholar’s zither, slow and spacious, in a quiet room', space: 'hall', mix: { guqin: { p: { tempo: 0.15, flow: 0.25 } } } },
+  { g: 'Music', id: 'guqin', name: 'Guqin', sub: 'The scholar’s zither, slow and spacious, in a quiet room', space: 'hall', mix: { guqin: { vol: 0.60, p: { tempo: 0.15, flow: 0.25 } } } },
   { g: 'Music', id: 'guqinrain', name: 'Guqin in the rain', sub: 'Low plucked notes and long silences, soft rain on the roof', space: 'indoors', mix: { guqin: { vol: 0.64, p: { tempo: 0.15, flow: 0.2 } }, rain: { vol: 0.38, p: { intensity: 0.3, surface: 'roof', size: 0.4, closeness: 0.3, drips: 0, gusts: 0.05 } } } },
   { g: 'Music', id: 'koto', name: 'Koto', sub: 'A koto, piece by piece in different ways, in the Japanese hirajoshi scale', space: 'hall', mix: { koto: { vol: 0.77, p: { scale: 'hirajoshi', tempo: 0.45, flow: 0.55 } } } },
   { g: 'Music', id: 'kotogarden', name: 'Koto in the garden', sub: 'Koto, a garden stream and a bush warbler', space: 'open', mix: { koto: { vol: 0.81, p: { scale: 'hirajoshi', tempo: 0.4, flow: 0.5 } }, stream: { vol: 0.48, pos: 0.4, p: { flow: 0.2, size: 0.4, babble: 0.3 } }, birds: { vol: 0.48, p: { kind: 'japan', count: 2, activity: 0.25, distance: 0.6 } } } },
