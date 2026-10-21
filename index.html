@@ -259,7 +259,8 @@ body.is-playing .play { animation: breathe var(--breath) ease-in-out infinite; }
 @keyframes breathe { 0%, 100% { box-shadow: 0 0 12px 0 var(--accent-glow); } 40% { box-shadow: 0 0 34px 9px var(--accent-glow); } }
 .now { flex: 1 1 220px; min-width: 0; display: flex; flex-direction: column; gap: 2px; } /* the type hierarchy of the player and the dock: a serif name, then a quiet sans line */
 .now b { font: 450 var(--size-now)/1.2 var(--font-display); letter-spacing: -0.015em; color: var(--stage-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.now-piece { display: block; margin-top: 2px; font-size: 13px; color: var(--muted); font-style: italic; min-height: 1.2em; }
+.now-piece { display: block; margin-top: 2px; font-size: 13px; line-height: 1.4; color: var(--stage-muted); font-style: italic; letter-spacing: 0.005em; min-height: 1.4em;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } /* the piece under the sounds line: the stage's quiet tone, one line, italic */
 .now-sounds { display: flex; align-items: center; gap: 2px 6px; flex-wrap: wrap; font-size: var(--size-sm); line-height: 1.4; color: var(--stage-muted); }
 .now-sounds .ic { width: 15px; height: 15px; opacity: 0.85; }
 .now-sounds span:not(:last-child)::after { content: "\00b7"; content: "\00b7" / ""; margin-left: var(--space-2); opacity: 0.7; } /* a silent separator for screen readers */
@@ -281,10 +282,11 @@ body.is-playing .play { animation: breathe var(--breath) ease-in-out infinite; }
 .shelf { display: flex; flex-direction: column; gap: var(--space-3); } /* the need chips and the note under them */
 .needs { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .need { --btn-bg: transparent; } /* the shelf sits on the page, not on cards */
-.mix-notch { display: grid; grid-template-columns: 1fr auto; gap: var(--space-1) var(--space-3); align-items: center; max-width: 68ch; margin-top: var(--space-2); font-size: var(--size-sm); color: var(--muted); }
-.mix-notch label { grid-column: 1 / -1; }
-.mix-notch input { width: 100%; }
-.mix-notch output { font-variant-numeric: tabular-nums; }
+.mix-notch { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "label out" "input input"; align-items: center; gap: var(--space-2) var(--space-3);
+  max-width: 68ch; margin-top: var(--space-2); } /* the whole-mix notch: a tile slider's shape (the label and its reading on one line, the slider under them) */
+.mix-notch label { grid-area: label; align-self: baseline; font-size: var(--size-sm); font-weight: 500; line-height: 1.3; color: var(--ink); text-wrap: pretty; }
+.mix-notch output { grid-area: out; align-self: baseline; white-space: nowrap; } /* the reading: the quiet small figure every slider has, on the label's first line */
+.mix-notch input[type=range] { grid-area: input; width: 100%; height: var(--tap); margin-block: calc((24px - var(--tap)) / 2); } /* a 44px touch band around the usual 24px slider row */
 .need-note, .mix-empty { color: var(--muted); font-size: var(--size-sm); max-width: 68ch; text-wrap: pretty; }
 .grp-bar { position: sticky; top: 0; z-index: 10; margin-block: calc(-1 * var(--space-2)); padding-block: var(--space-2); border-bottom: 1px solid transparent;
   transition: background-color var(--med) var(--ease), border-color var(--med) var(--ease); } /* the group index rides along the top of the list (STUCK in the script) */
@@ -414,6 +416,12 @@ input[type=range]:active::-moz-range-thumb { box-shadow: var(--shadow-thumb), 0 
   .seg:not(.ci) button { height: 100%; padding-block: var(--space-2); white-space: normal; line-height: 1.2; } /* height: 100%: the two options of a row stand the same height when one of them wraps */
   .seg[data-cols="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); } /* three short options (one, two, three) in one row, no orphan */
   .seg[data-cols="1"] { grid-template-columns: minmax(0, 1fr); } } /* long names (the lullaby tunes) as a list, each on one line */
+/* the six places: one row where they fit; where they would break unevenly (a tablet, a wide phone) three by two, on a phone two by three, every pill the same height, no orphan */
+@container (max-width: 700px) {
+  #spaces { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: 1fr; }
+  #spaces button { height: 100%; padding-block: var(--space-2); white-space: normal; line-height: 1.2; text-wrap: balance; } }
+@container (max-width: 440px) { #spaces { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+#space-desc { max-width: 68ch; }
 /* the nine practices: three by three, the icon above the name, every cell the same height; the chosen one fills with the soft accent like any option */
 #pracs { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); grid-auto-rows: 1fr; gap: var(--space-2); } /* three across on phones, five on desktop: ten practices in two even rows */
 #pracs button { flex-direction: column; justify-content: center; gap: var(--space-2); height: 100%; min-height: 72px; padding: var(--space-3) 6px; border-radius: var(--radius-md);
@@ -613,6 +621,7 @@ body.zen-on { overflow: hidden; }
 @media (pointer: coarse) {
   #save-name, #list, #sleep { font-size: 16px; } /* iPhone zooms into fields under 16px */
   input[type=range] { height: var(--tap); }
+  .mix-notch input[type=range] { margin-block: 0; } /* on touch every slider row is already 44px tall */
   input[type=range]::-webkit-slider-thumb { width: 24px; height: 24px; margin-top: -10px; }
   input[type=range]::-moz-range-thumb { width: 22px; height: 22px; }
   .switch { width: 52px; height: 32px; }
@@ -840,7 +849,7 @@ const K = {
   rs_rate: 60, rs_tick: 0.22, rs_fizz: 0.012, g_A: 0.3, g_thump: 0.3, g_bloom: 1, g_cloud: 0.07, // rain stick, gong
   kb_A: 0.240, kb_h6: 0.22, kb_h2: 0.22, kb_h3: 0.1, kb_box: 380, kb_boxA: 0.3, kb_click: 0.3, kb_nail: 0.5, kb_symp: 0.3, // kalimba
   cz_f: 1, cz_q: 30, cz_line: 25, cz_depth: 0.75, cz_buzz: 1.2, cz_A: 0.05, cz_air: 0.004, cz_low: 0.01, dp_wR: 1, dp_wA: 0.12, dp_sR: 1, dp_sA: 0.05, dp_iR: 1, dp_iA: 0.1, dp_bed: 0.02, dp_rum: 0.04, dp_sub: 0.05, dp_bR: 1, dp_boom: 0.06, // cicadas, under the sea
-  hp_A: 0.22, hp_h2: 0.14, hp_h3: 0.1, hp_h15: 0.07, hp_h4: 0.03, hp_ring: 0.22, hp_click: 0.1, hp_slap: 0.16, hp_symp: 0.22, hp_hum: 0.12, hp_wash: 0.25, td_A: 0.25, td_ovr: 2.805, td_ovr2: 5.9, td_h: 0.3, td_ring: 0.12, td_rich: 0.08, td_click: 0.06, td_mallet: 0.5, td_tok: 0.12, td_wash: 0.12, td_tick: 0.1, td_symp: 0.2, // handpan, tongue drum (tuned with tools/tune.py against hang1-2 and tongue1)
+  hp_A: 0.22, hp_h2: 0.108, hp_h3: 0.1, hp_h15: 0.07, hp_h4: 0.03, hp_ring: 0.3, hp_click: 0.1, hp_slap: 0.16, hp_symp: 0.132, hp_hum: 0.24, hp_wash: 0.38, // tuned against hang1-2 + ia_hp1-3 (tools/tune.py, CLAP 0.78 to 0.84); ring and wash capped below the tuner's ask to keep the soft touch td_A: 0.25, td_ovr: 2.805, td_ovr2: 5.9, td_h: 0.3, td_ring: 0.12, td_rich: 0.08, td_click: 0.06, td_mallet: 0.5, td_tok: 0.12, td_wash: 0.12, td_tick: 0.1, td_symp: 0.2, // handpan, tongue drum (tuned with tools/tune.py against hang1-2 and tongue1)
   // rain
   r_gs: 0.35, r_hgs: 0.8, r_col: 3, r_wEqLo: 6, r_hiDens: 0.6, r_bub: 0.6, r_slow: 0.05, // high grains mostly as smooth hiss, fewer bubble plinks: tuned against four rain recordings (tools/tune.py), CLAP 0.51 to 0.57
   // thunder
