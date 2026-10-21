@@ -924,7 +924,7 @@ const K = {
   cz_f: 1, cz_q: 30, cz_line: 25, cz_depth: 0.75, cz_buzz: 1.2, cz_A: 0.05, cz_air: 0.004, cz_low: 0.01, dp_wR: 1, dp_wA: 0.1, dp_sR: 1, dp_sA: 0.05, dp_iR: 1, dp_iA: 0.1, dp_bed: 0.035, dp_rum: 0.012, dp_sub: 0, dp_bR: 1, dp_boom: 0.06, // cicadas, under the sea
   hp_A: 0.22, hp_h2: 0.108, hp_h3: 0.1, hp_h15: 0.07, hp_h4: 0.03, hp_ring: 0.3, hp_click: 0.1, hp_slap: 0.16, hp_symp: 0.132, hp_hum: 0.24, hp_wash: 0.38, td_A: 0.25, td_ovr: 3.1416, td_ovr2: 5.9, td_h: 0.3, td_ring: 0.12, td_rich: 0.08, td_click: 0.06, td_mallet: 0.8, td_tok: 0.12, td_wash: 0.12, td_tick: 0.1, td_symp: 0.155, // handpan, tongue drum (tuned with tools/tune.py against hang1-2 and tongue1)
   // rain
-  r_gs: 0.35, r_hgs: 0.8, r_col: 3, r_wEqLo: 6, r_hiDens: 0.6, r_bub: 0.6, r_slow: 0.05, r_vlp: 1, r_hgH: 0.8, r_hfx: 1.2, r_wan: 0.35, r_w2: 1, r_wR2: 1.5, r_fl: 0.2, r_tkA: 2, r_tkE: 0.0008, r_tkP: 0.3, // high grains mostly as smooth hiss, fewer bubble plinks: tuned against four rain recordings (tools/tune.py), CLAP 0.51 to 0.57
+  r_gs: 0.35, r_hgs: 0.3, r_col: 3, r_wEqLo: 6, r_hiDens: 0.6, r_bub: 0.6, r_slow: 0.05, r_vlp: 1, r_hgH: 0.8, r_hfx: 1.2, r_wan: 0.35, r_w2: 1, r_wR2: 1.5, r_fl: 0.2, r_tkA: 2, r_tkE: 0.0012, r_tkP: 0.2, // high grains mostly as smooth hiss, fewer bubble plinks: tuned against four rain recordings (tools/tune.py), CLAP 0.51 to 0.57
   // thunder
   t_dir: 0.15, t_absK: 1300, t_absE: 0.62, t_shadow: 6,
   // wind
@@ -1222,7 +1222,7 @@ function Rain() {
     switch (s.near) {
       case 'drop': // body of the impact plus a faint bright splash
         nc.add(lr(400, 2200) * fs, rr(2, 3.5), amp * (rnd() < 0.5 ? 1 : -1), pan);
-        voices.push(vNoise(i, amp * K.r_tkA * (rnd() < K.r_tkP ? 1 : 0.15), pan, K.r_tkE * rr(0.6, 1.4), lr(6000, 12000), 0.8)); break; // a third land as a crisp, separate tick
+        voices.push(vNoise(i, amp * K.r_tkA * (rnd() < K.r_tkP ? 1 : 0.15), pan, K.r_tkE * rr(0.6, 1.4), lr(6000, 12000), 0.8)); break; // a fifth land as a clear, separate tick
       case 'leaf':
         voices.push(vNoise(i, amp * 0.7, pan, lr(0.0015, 0.005), lr(1500, 5000) * fs, rr(1, 2)));
         if (rnd() < 0.4) nc.add(lr(350, 900) * fs, 3, amp * 0.5, pan); break;
@@ -1256,7 +1256,7 @@ function Rain() {
     const dens = (1500 + 26000 * Math.pow(I, 1.4)) * s.dn, bedMean = SR / dens, meanQ = (s.bq[0] + s.bq[1]) / 2;
     const g = (0.01 + 0.13 * Math.pow(I, 1.15)) * s.bg / Math.sqrt(dens * meanQ / (1000 * Math.PI) * 0.125);
     const fsz = 1.15 - 0.3 * S, nearMean = SR / ((1 + 60 * Math.pow(I, 1.3)) * (0.2 + 1.3 * C) * s.nr), nearA = (0.15 + 0.6 * C) * 0.5;
-    // air: the crisp top end of rain, a thinner cloud of very short high grains (4-14 kHz)
+    // air: the top end of rain (4-16 kHz), mostly a smooth hiss with a thin cloud of short grains in it: real rain's top octave is smooth, as many grains it sizzles
     const sHi = s.hi;
     const hDens = dens * Math.min(1.5, K.r_hiDens), hMean = SR / hDens, gh = HI_LEVEL * (0.01 + 0.13 * Math.pow(I, 1.15)) * sHi * (0.7 + 0.6 * C) / Math.sqrt(hDens * 1.8 / (1000 * Math.PI) * 0.0714);
     if (gt > bedMean * 6) gt = bedMean;
