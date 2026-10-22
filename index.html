@@ -595,12 +595,11 @@ input[type=range]:active::-webkit-slider-thumb { transform: scale(1.25); }
 .ci-row { container: ci / inline-size; }
 .ci-q { display: inline-flex; align-items: center; gap: var(--space-2); }
 .ci-q .ic { width: 16px; height: 16px; color: var(--muted); }
-.ci { display: grid; grid-template-columns: repeat(6, minmax(var(--tap), 1fr)); gap: 0; max-width: 340px; } /* 0-10 as a quiet scale: small numerals, the chosen one on an ink disc */
-.ci + .ci-scale { max-width: 340px; }
-@container ci (max-width: 483.98px) { .ci + .ci-scale { justify-content: flex-start; gap: var(--space-6); } } /* two rows of numbers: the ends read as a legend, not as the ends of one row */
-@container ci (min-width: 484px) { .ci, .ci + .ci-scale { max-width: none; } .ci { grid-template-columns: repeat(11, minmax(var(--tap), 1fr)); } }
-.ci button { aspect-ratio: 1; min-width: 0; min-height: 0; padding: 0; border-color: transparent; background: none; color: var(--muted); font-size: var(--control-font-sm); font-variant-numeric: tabular-nums; }
-.ci button[aria-pressed="true"] { border-color: transparent; background: radial-gradient(circle, var(--btn-on-line) 15.5px, transparent 16.5px); color: var(--bg); font-weight: 600; }
+.ci { display: grid; grid-template-columns: repeat(11, minmax(0, 1fr)); gap: 0; max-width: 560px; /* 0-10 on one line, like a ruler: small numerals, the chosen one on an ink disc */
+  background: linear-gradient(to right, color-mix(in oklab, var(--muted) 30%, transparent), color-mix(in oklab, var(--accent-text) 75%, transparent)) center bottom / calc(100% - 100% / 11) 2px no-repeat; } /* under them a hairline from calm to tense, centre to centre */
+.ci + .ci-scale { max-width: 560px; margin-top: calc(-1 * var(--space-1)); }
+.ci button { height: var(--tap); min-width: 0; min-height: 0; padding: 0 0 2px; border-color: transparent; background: none; color: var(--muted); font-size: var(--control-font-sm); font-variant-numeric: tabular-nums; } /* on a phone each is about 32 x 44 px, an iPhone key's size (WCAG 2.2 asks 24) */
+.seg.ci button[aria-pressed="true"] { border-color: transparent; background: radial-gradient(circle, var(--ink) 14px, transparent 15px) no-repeat; color: var(--bg); font-weight: 600; }
 .ci-scale { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); min-height: 20px; padding-inline: var(--space-1); font-size: var(--size-xs); color: var(--muted); }
 #list-row .ci-scale { min-height: var(--control-h-sm); }
 
@@ -714,8 +713,8 @@ body.is-playing .dock-orb { animation: dock-glow var(--breath) ease-in-out infin
   .need:hover { color: var(--ink); }
   .params .seg button:not(:disabled):hover { border-color: transparent; background: color-mix(in oklab, var(--ink) 8%, transparent) padding-box; color: var(--ink); }
   .params .seg button[aria-pressed="true"]:hover { background: var(--bg) padding-box; color: var(--ink); }
-  .ci button:not(:disabled):hover { border-color: transparent; background: var(--btn-hover); color: var(--ink); }
-  .ci button[aria-pressed="true"]:hover { border-color: transparent; background: radial-gradient(circle, var(--btn-on-line) 15.5px, transparent 16.5px); color: var(--bg); }
+  .seg.ci button:not(:disabled):hover { border-color: transparent; background: radial-gradient(circle, var(--btn-hover) 14px, transparent 15px) no-repeat; color: var(--ink); }
+  .seg.ci button[aria-pressed="true"]:hover { border-color: transparent; background: radial-gradient(circle, var(--ink) 14px, transparent 15px) no-repeat; color: var(--bg); }
   .btn.primary:not(:disabled):hover { border-color: color-mix(in oklab, var(--ink) 84%, var(--bg)); background: color-mix(in oklab, var(--ink) 84%, var(--bg)); }
   .btn.primary:not(:disabled):hover .ic { color: currentColor; }
   .look-pop button:hover { background: var(--surface-2); color: var(--ink); }
