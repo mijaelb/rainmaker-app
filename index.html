@@ -36,7 +36,7 @@
   /* type: a light serif for names and titles, a plain sans for the rest; the fallbacks keep the look offline */
   --font-display: 'Newsreader', 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
   --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  --size-brand: 19px; --size-h2: 36px; --size-h3: 22px; --size-now: 44px; --size-name: 18px;
+  --size-brand: 19px; --size-h2: clamp(36px, 4.6vw, 48px); --size-h3: 22px; --size-now: clamp(44px, 6.6vw, 76px); --size-name: 18px;
   --size-body: 15px; --size-sm: 13.5px; --size-xs: 12px; --size-label: 11px;
   --weight-display: 340; --track-label: 0.14em;
   --logo: 24px; --logo-gap: 10px;  /* the mark and its gap to the name; the tagline lines up with the name */
@@ -52,7 +52,7 @@
   --panel-pad: clamp(20px, 2.4vw, 24px);    /* inside an open tile, a menu */
   --card-pad: var(--space-4);               /* inside tiles */
   --item-pad: var(--space-3);               /* around a soundscape in the catalogue */
-  --orb: 48px;                              /* a soundscape's light */
+  --orb: 52px;                              /* a soundscape's light */
   --grid-gap: var(--space-3);               /* between tiles */
   --param-gap: var(--space-5);              /* between the groups of controls in an open tile */
   /* controls: one button system (see "buttons" in the rules) */
@@ -66,6 +66,7 @@
   --breath: 10.9s; /* glows breathe at 5.5 breaths a minute, like the Slow pattern */
   --ring-selected: 0 0 0 2px var(--bg), 0 0 0 3.5px var(--accent);
   --swatch-ring: rgba(128, 128, 128, 0.3);
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 .045 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); /* a whisper of film grain: the ground feels like paper or night air, not a screen */
   --swatch-night: radial-gradient(circle at 68% 30%, #E8C48A 0 13%, transparent 14%), linear-gradient(155deg, #26344A, #0B0D11 72%);
   --swatch-dusk: radial-gradient(circle at 68% 30%, #F0B391 0 13%, transparent 14%), linear-gradient(155deg, #6E3654, #120E15 76%);
   --swatch-dawn: radial-gradient(circle at 68% 30%, #A9532F 0 13%, transparent 14%), linear-gradient(155deg, #EBC6A8, #F5F3EE 58%, #D3DFEC);
@@ -128,7 +129,7 @@
 * { box-sizing: border-box; }
 [hidden] { display: none !important; opacity: 0; pointer-events: none; } /* opacity: the fade of a display transition */
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
-body { margin: 0; min-height: 100vh; overflow-x: clip; color: var(--ink); background: var(--bg); font: 400 var(--size-body)/1.6 var(--font-body);
+body { margin: 0; min-height: 100vh; overflow-x: clip; color: var(--ink); background: var(--grain) var(--bg); font: 400 var(--size-body)/1.6 var(--font-body);
   font-optical-sizing: auto; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
 ::selection { background: color-mix(in oklab, var(--accent) 30%, transparent); }
 button, select, input, textarea { margin: 0; font: inherit; color: inherit; }
@@ -138,7 +139,9 @@ p, ul, h4 { margin: 0; } /* spacing comes from the gaps of the containers, never
 .dock :focus-visible, .zen :focus-visible { outline-color: var(--stage-focus); }
 .ic { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
 h1, h2, h3 { margin: 0; font-family: var(--font-display); font-weight: 400; letter-spacing: -0.01em; text-wrap: balance; }
-h2 { font-size: var(--size-h2); font-weight: var(--weight-display); line-height: 1.05; letter-spacing: -0.02em; }
+h2 { font-size: var(--size-h2); font-weight: var(--weight-display); line-height: 1.05; letter-spacing: -0.025em; }
+.sec-head h2::before { display: block; margin-bottom: var(--space-3); font: 500 var(--size-label)/1 var(--font-body); letter-spacing: var(--track-label); color: var(--muted); } /* numbered like the chapters of a book */
+.scenes .sec-head h2::before { content: "01" / ""; } .mix .sec-head h2::before { content: "02" / ""; } .calm .sec-head h2::before { content: "03" / ""; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .lbl { font-size: var(--size-sm); font-weight: 500; color: var(--ink); }
 
@@ -213,11 +216,11 @@ h2 { font-size: var(--size-h2); font-weight: var(--weight-display); line-height:
 
 /* ============================== the player: the sound's light, its name, one row of controls ==============================
    No card: the live light spreads under the header and fades into the ground on every side; the name sits in its
-   lower glow, the play disc under it, then the quiet tools. */
+   lower glow, set like a title page: large, left, its details in small capitals; the disc and the tools on one line. */
 .player { position: relative; isolation: isolate; color: var(--ink); }
-.scope { position: relative; height: 280px; margin-inline: calc(-1 * var(--page-pad)); overflow: hidden; transition: height var(--slow) var(--ease); }
+.scope { position: relative; height: 300px; margin-inline: calc(-1 * var(--page-pad)); overflow: hidden; transition: height var(--slow) var(--ease); }
 .scope canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; transition: opacity 2s;
-  -webkit-mask-image: radial-gradient(ellipse 50% 50% at 50% 55%, #000 35%, transparent 100%); mask-image: radial-gradient(ellipse 50% 50% at 50% 55%, #000 35%, transparent 100%); }
+  -webkit-mask-image: radial-gradient(ellipse 54% 50% at 46% 58%, #000 30%, transparent 100%); mask-image: radial-gradient(ellipse 54% 50% at 46% 58%, #000 30%, transparent 100%); }
 body.sleepy .scope canvas { opacity: 0.35; } /* bedtime: the light dims to a faint glow */
 :root.relook, :root.relook *, :root.relook *::before, :root.relook *::after { /* a new look (or Sleep mode) arrives like dusk, not like a switch */
   transition: background-color 0.6s var(--ease), color 0.6s var(--ease), border-color 0.6s var(--ease), outline-color 0.6s var(--ease), fill 0.6s var(--ease), stroke 0.6s var(--ease), box-shadow 0.6s var(--ease) !important; }
@@ -225,23 +228,25 @@ body.sleepy .scope canvas { opacity: 0.35; } /* bedtime: the light dims to a fai
 .scope-meta { position: absolute; right: var(--page-pad); top: var(--space-4); display: flex; gap: var(--space-2); flex-wrap: wrap; justify-content: flex-end; }
 .pill { display: inline-flex; align-items: center; min-height: var(--control-h-sm); padding: 0 var(--space-3); border-radius: var(--radius-pill); border: 1px solid var(--line-strong); color: var(--ink);
   background: color-mix(in oklab, var(--bg) 70%, transparent); font-size: var(--size-xs); font-weight: 500; letter-spacing: 0.02em; font-variant-numeric: tabular-nums; -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
-.idle { position: absolute; inset: 0; display: grid; place-content: center; padding: var(--space-4); text-align: center; }
+.idle { position: absolute; inset: auto var(--page-pad) 136px; display: block; } /* Press play: a small capital line over the name */
 .idle strong { font: 500 var(--size-label)/1.2 var(--font-body); letter-spacing: var(--track-label); text-transform: uppercase; color: var(--muted); }
 .pacer b, .pacer small, .guide b, .guide small { text-shadow: 0 0 2px var(--stage-shadow), 0 1px 16px var(--stage-shadow); } /* text over the moving light keeps a soft halo */
 .bolt { position: absolute; inset: 0; background: radial-gradient(60% 90% at 50% 40%, var(--flash), transparent 70%); opacity: 0; pointer-events: none; }
 .bolt.on { animation: bolt 0.9s ease-out; }
 @keyframes bolt { 0% { opacity: 0.7 } 8% { opacity: 0.1 } 14% { opacity: 0.45 } 100% { opacity: 0 } }
 body.sleepy .bolt { display: none; } /* bedtime: no flashes in a dark room */
-.transport { position: relative; display: flex; flex-direction: column; align-items: center; gap: var(--space-6); margin-top: -88px; text-align: center; transition: margin-top var(--calm) var(--ease); }
+.transport { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "now now" "play tools"; align-items: center; gap: var(--space-6) var(--space-6);
+  margin-top: -116px; transition: margin-top var(--calm) var(--ease); }
 .scope:has(> .pacer:not([hidden])) ~ .transport { margin-top: calc(-1 * var(--space-2)); } /* the breathing ring or a practice needs the light to itself: the name steps down below it */
 .scope.guided ~ .transport { margin-top: var(--space-5); }
-.now { order: -1; width: 100%; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: var(--space-1); } /* the name first, in the light; then the disc */
-.now b { max-width: 100%; font: var(--weight-display) var(--size-now)/1.08 var(--font-display); letter-spacing: -0.025em; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.now-sounds { display: flex; align-items: center; justify-content: center; gap: 2px 6px; flex-wrap: wrap; font-size: var(--size-sm); line-height: 1.4; color: var(--muted); }
-.now-sounds .ic { width: 14px; height: 14px; opacity: 0.8; }
+.now { grid-area: now; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); } /* the name first, in the light; then the disc */
+.now b { max-width: 100%; font: 320 var(--size-now)/1.02 var(--font-display); letter-spacing: -0.035em; color: var(--ink); text-wrap: balance;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; } /* a long name takes a second line, never an ellipsis */
+.now-sounds { display: flex; align-items: center; gap: 2px 8px; flex-wrap: wrap; font: 500 var(--size-label)/1.4 var(--font-body); letter-spacing: var(--track-label); text-transform: uppercase; color: var(--muted); }
+.now-sounds .ic { width: 13px; height: 13px; opacity: 0.8; }
 .now-sounds span:not(:last-child)::after { content: "\00b7"; content: "\00b7" / ""; margin-left: var(--space-2); opacity: 0.7; } /* a silent separator for screen readers */
-.now-piece { display: block; max-width: 100%; min-height: 1.4em; font: italic 400 15px/1.4 var(--font-display); color: var(--muted); letter-spacing: 0.005em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.play { --d: 68px; position: relative; width: var(--d); height: var(--d); border-radius: 50%; border: 0; display: grid; place-items: center; flex: none; /* one play disc: the player's, and the dock's at --d: 48px */
+.now-piece { display: block; max-width: 100%; min-height: 1.4em; margin-top: -2px; font: italic 400 17px/1.4 var(--font-display); color: var(--muted); letter-spacing: 0.005em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.play { --d: 68px; grid-area: play; position: relative; width: var(--d); height: var(--d); border-radius: 50%; border: 0; display: grid; place-items: center; flex: none; /* one play disc: the player's, and the dock's at --d: 48px */
   background: var(--accent); color: var(--on-accent); transition: transform var(--fast) var(--ease), box-shadow var(--slow) var(--ease); }
 .play .ic { width: calc(var(--d) * 0.36); height: calc(var(--d) * 0.36); fill: currentColor; stroke-width: 1.5; }
 .play .ic, #zen-play .ic { animation: ic-in var(--med) var(--ease); } /* a keyframe name per state: the swap restarts the settle */
@@ -250,7 +255,7 @@ body.is-playing .play .ic { animation-name: fadein; }
 .play:active { transform: scale(0.95); }
 body.is-playing .play { animation: breathe var(--breath) ease-in-out infinite; } /* playing: a slow glow, one breath at a time */
 @keyframes breathe { 0%, 100% { box-shadow: 0 0 0 0 var(--accent-glow); } 40% { box-shadow: 0 0 30px 6px var(--accent-glow); } }
-.tools { display: flex; align-items: center; justify-content: center; gap: var(--space-2) var(--space-3); flex-wrap: wrap; } /* timer, bell, volume and full screen: one quiet row */
+.tools { grid-area: tools; display: flex; align-items: center; gap: var(--space-2) var(--space-3); flex-wrap: wrap; } /* timer, bell, volume and full screen: one quiet row beside the disc */
 .tool { position: relative; display: flex; align-items: center; gap: var(--space-2); color: var(--muted); }
 .tool > .ic { width: var(--control-icon); height: var(--control-icon); }
 .tool.timer > .ic:first-child { position: absolute; left: var(--control-pad-icon); pointer-events: none; color: var(--btn-icon); } /* the clock sits inside the pill, like a button's icon */
@@ -261,7 +266,7 @@ body.is-playing .play { animation: breathe var(--breath) ease-in-out infinite; }
   transition: background-color var(--fast) var(--ease), border-color var(--fast) var(--ease); }
 .tool select option { background: var(--surface); color: var(--ink); }
 .tool .chev-s { position: absolute; right: var(--control-pad-icon); width: 16px; height: 16px; pointer-events: none; color: var(--btn-icon); }
-.hint { margin-top: var(--space-5); text-align: center; color: var(--muted); font-size: var(--size-sm); text-wrap: balance; animation: fadein 1.2s ease-out; } /* the first visit: one quiet line under the player, gone after the first play */
+.hint { margin-top: var(--space-5); text-align: left; color: var(--muted); font-size: var(--size-sm); text-wrap: balance; animation: fadein 1.2s ease-out; } /* the first visit: one quiet line under the player, gone after the first play */
 
 /* ============================== soundscapes: a catalogue ============================== */
 .shelf { display: flex; flex-direction: column; gap: var(--space-3); } /* the purposes and the note under them */
@@ -316,7 +321,9 @@ body.is-playing .play { animation: breathe var(--breath) ease-in-out infinite; }
     radial-gradient(80% 70% at var(--x1, 30%) 88%, color-mix(in srgb, var(--aura-1) calc(var(--l1, 0) * 72%), transparent), transparent),
     var(--orb-base);
   box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--ink) 7%, transparent); transition: box-shadow var(--med) var(--ease), transform var(--quick) var(--ease); }
-.chip .badge .ic { width: 20px; height: 20px; }
+.chip .badge::after { content: ""; position: absolute; inset: 0; border-radius: 50%; pointer-events: none; /* light in glass: a soft highlight above, a shade below */
+  background: radial-gradient(60% 50% at 34% 26%, rgba(255, 255, 255, 0.2), transparent 70%), radial-gradient(80% 70% at 60% 92%, rgba(0, 0, 0, 0.16), transparent 70%); }
+.chip .badge .ic { position: relative; z-index: 1; width: 20px; height: 20px; }
 .chip .badge.swatch { background: var(--sw); } /* a noise shows its colour */
 .chip-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; padding-top: 3px; padding-right: var(--space-6); } /* the name level with the orb's upper half */
 .chip b { font: 400 var(--size-name)/1.25 var(--font-display); letter-spacing: -0.008em; } /* named like a piece */
@@ -488,7 +495,7 @@ input[type=range]:active::-webkit-slider-thumb { transform: scale(1.25); }
 .pacer b { position: relative; display: block; font: 400 20px/1.2 var(--font-display); color: var(--stage-ink); }
 .pacer small { position: relative; display: block; font-size: var(--size-xs); color: var(--stage-muted); font-variant-numeric: tabular-nums; }
 .scope.guided { height: 340px; }
-.guide { position: absolute; left: var(--page-pad); right: var(--page-pad); bottom: var(--space-5); display: grid; gap: var(--space-1); justify-items: center; text-align: center; pointer-events: none; }
+.guide { position: absolute; left: var(--page-pad); right: var(--page-pad); bottom: var(--space-5); display: grid; gap: var(--space-1); justify-items: start; text-align: left; pointer-events: none; }
 .guide b { max-width: 46ch; font: 400 21px/1.3 var(--font-display); color: var(--stage-ink); text-wrap: balance; }
 .guide small { max-width: 70ch; font-size: var(--size-sm); line-height: 1.45; color: var(--stage-muted); text-wrap: balance; }
 .zen { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; color: var(--stage-ink); background: var(--stage);
@@ -600,7 +607,7 @@ body.zen-on { overflow: hidden; }
 /* ============================== tablets and phones ============================== */
 @media (min-width: 761px) { .dock { display: none; } }
 @media (max-width: 760px) {
-  :root { --size-brand: 18px; --size-h2: 30px; --size-now: 34px; --size-name: 17px; --orb: 44px; }
+  :root { --size-brand: 18px; --size-h2: 34px; --size-now: 42px; --size-name: 17px; --orb: 46px; }
   .wrap { padding-top: max(var(--space-3), env(safe-area-inset-top, 0px)); padding-bottom: calc(112px + env(safe-area-inset-bottom, 0px)); }
   #look-btn { width: var(--control-h); padding: 0; justify-content: center; }
   #look-name { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; } /* the icon is enough on a phone */
@@ -610,11 +617,12 @@ body.zen-on { overflow: hidden; }
   .needs::-webkit-scrollbar { display: none; }
   .scope { height: 220px; }
   .scope.guided { height: 300px; }
-  .transport { margin-top: -72px; gap: var(--space-5); }
+  .transport { margin-top: -92px; gap: var(--space-5) var(--space-4); }
+  .idle { bottom: 116px; }
   .scope:has(.idle:not([hidden])) .scope-meta { display: none; }
   .pacer { --d: 160px; }
   .play { --d: 64px; }
-  .tools { gap: var(--space-2); width: min(100%, 360px); }
+  .tools { gap: var(--space-2); }
   .tool.vol { order: 9; flex: 1 1 100%; padding-inline: var(--space-2); } /* the volume on a row of its own, under the timer, bell and full screen */
   .tool input[type=range] { width: 100%; }
   .chips { grid-template-columns: minmax(0, 1fr); gap: 0; }
@@ -634,7 +642,7 @@ body.zen-on { overflow: hidden; }
   .guide { bottom: var(--space-4); }
   .guide b { font-size: 19px; }
 }
-@media (max-width: 380px) { :root { --size-brand: 17px; --size-now: 30px; --logo: 22px; --logo-gap: var(--space-2); } }
+@media (max-width: 380px) { :root { --size-brand: 17px; --size-now: 36px; --logo: 22px; --logo-gap: var(--space-2); } }
 @media (pointer: coarse) {
   #save-name, #list, #sleep { font-size: 16px; } /* iPhone zooms into fields under 16px */
   input[type=range] { height: var(--tap); }
