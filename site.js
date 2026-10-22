@@ -7,5 +7,5 @@ if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catc
   const tip = document.createElement('p'); tip.className = 'tip';
   tip.innerHTML = T('For a full-screen app that keeps playing when your phone locks: tap <b>Share</b>, then <b>Add to Home Screen</b>.') + ` <button class="linkish" type="button">${T('Got it')}</button>`;
   tip.querySelector('button').addEventListener('click', () => { tip.remove(); try { localStorage.setItem(KEY, '1'); } catch (e) {} });
-  document.querySelector('.top').after(tip);
+  document.querySelector('#v-listen').prepend(tip); // at the top of Listen
 })();
