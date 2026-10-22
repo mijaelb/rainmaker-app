@@ -232,7 +232,9 @@ body.sleepy .scope canvas { opacity: 0.35; } /* bedtime: the light dims to a fai
 .bolt.on { animation: bolt 0.9s ease-out; }
 @keyframes bolt { 0% { opacity: 0.7 } 8% { opacity: 0.1 } 14% { opacity: 0.45 } 100% { opacity: 0 } }
 body.sleepy .bolt { display: none; } /* bedtime: no flashes in a dark room */
-.transport { position: relative; display: flex; flex-direction: column; align-items: center; gap: var(--space-6); margin-top: -88px; text-align: center; }
+.transport { position: relative; display: flex; flex-direction: column; align-items: center; gap: var(--space-6); margin-top: -88px; text-align: center; transition: margin-top var(--calm) var(--ease); }
+.scope:has(> .pacer:not([hidden])) ~ .transport { margin-top: calc(-1 * var(--space-2)); } /* the breathing ring or a practice needs the light to itself: the name steps down below it */
+.scope.guided ~ .transport { margin-top: var(--space-5); }
 .now { order: -1; width: 100%; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: var(--space-1); } /* the name first, in the light; then the disc */
 .now b { max-width: 100%; font: var(--weight-display) var(--size-now)/1.08 var(--font-display); letter-spacing: -0.025em; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .now-sounds { display: flex; align-items: center; justify-content: center; gap: 2px 6px; flex-wrap: wrap; font-size: var(--size-sm); line-height: 1.4; color: var(--muted); }
@@ -336,6 +338,7 @@ body.is-playing .chip[aria-pressed="true"] .live i { animation: live-bar 2.7s ea
 .saved { position: relative; display: flex; }
 .chip-del { position: absolute; top: 50%; right: var(--space-2); margin-top: calc(var(--control-h-sm) / -2); }
 .saved .chip-text { padding-right: var(--space-8); }
+.saved .chip .live { right: calc(var(--control-h-sm) + var(--space-4)); } /* the playing bars clear the delete button */
 
 /* ============================== your mix ============================== */
 .mix-grid { display: flex; flex-direction: column; gap: var(--grid-gap); } /* the tiles, and the picker that opens under them */
@@ -485,7 +488,7 @@ input[type=range]:active::-webkit-slider-thumb { transform: scale(1.25); }
 .pacer b { position: relative; display: block; font: 400 20px/1.2 var(--font-display); color: var(--stage-ink); }
 .pacer small { position: relative; display: block; font-size: var(--size-xs); color: var(--stage-muted); font-variant-numeric: tabular-nums; }
 .scope.guided { height: 340px; }
-.guide { position: absolute; left: var(--page-pad); right: var(--page-pad); bottom: calc(88px + var(--space-6)); display: grid; gap: var(--space-1); justify-items: center; text-align: center; pointer-events: none; }
+.guide { position: absolute; left: var(--page-pad); right: var(--page-pad); bottom: var(--space-5); display: grid; gap: var(--space-1); justify-items: center; text-align: center; pointer-events: none; }
 .guide b { max-width: 46ch; font: 400 21px/1.3 var(--font-display); color: var(--stage-ink); text-wrap: balance; }
 .guide small { max-width: 70ch; font-size: var(--size-sm); line-height: 1.45; color: var(--stage-muted); text-wrap: balance; }
 .zen { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; color: var(--stage-ink); background: var(--stage);
@@ -628,7 +631,7 @@ body.zen-on { overflow: hidden; }
   .chip-group.open .chips > :nth-child(n+9) { animation-delay: 80ms; }
   .tile, .picker { scroll-margin-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); } /* shown above the play dock */
   .add { min-height: 120px; }
-  .guide { bottom: calc(72px + var(--space-5)); }
+  .guide { bottom: var(--space-4); }
   .guide b { font-size: 19px; }
 }
 @media (max-width: 380px) { :root { --size-brand: 17px; --size-now: 30px; --logo: 22px; --logo-gap: var(--space-2); } }
