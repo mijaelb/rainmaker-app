@@ -1,7 +1,7 @@
 {
   "name": "Rainmaker",
   "short_name": "Rainmaker",
-  "description": "Nature soundscapes for calm, focus and sleep, synthesized live: no recordings, no loops.",
+  "description": "Nature soundscapes and calm music for focus and sleep, synthesized live: no recordings, no loops.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
