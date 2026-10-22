@@ -919,6 +919,7 @@ function seedRandom(seed) { let t = seed >>> 0; rnd = () => { t = (t + 0x6D2B79F
 // K: the inner settings of each sound, grouped by sound. Defaults were found by tuning against real
 // recordings (texture statistics, AI listeners, loudness); the test tools can override them.
 const K = {
+  kr_A: 0.4, kr_t60: 8, kr_lp: 0.06, kr_beta: 0.08, kr_round: 0.45, kr_noise: 0.3, kr_hp: 0.3, kr_nail: 0.05, kr_skin: 0.3, kr_body: 1.5, kr_direct: 0.2, // the kora's strings, fingers and calabash
   mr_beat: 0, mr_tor: -36, mr_rk: 0.5, mr_thud: 0.15, // the marimba's slow beat, its weak torsional and lateral modes (dB), the knock on every roll stroke, the bar's thud
   gq2_A: 0.29, gq2_t60: 6, gq2_lp: 0.55, gq2_round: 0.1, gq2_noise: 0.12, gq2_hp: 0.6, gq2_stopT: 0.6, gq2_stopLp: 0.08, gq2_openP: 0.8, gq2_fanP: 0.08, gq2_fanA: 0.6, gq2_fanT: 1.2, gq2_fanR: 0.5, gq2_slide: 0.5, gq2_vib: 0.8, gq2_slideA: 0.45, gq2_slideF: 1400, gq2_tick: 0.15, gq2_body: 2.5, gq2_direct: 0.08, gq2_symp: 0, gq2_sympT: 3, // the guqin's strings, hands and body
   pn_beat: 0.5, pn_beatA: 0.2, pn_bhz: 2.5, pn_wash: 2, pn_washT: 0.18, // the grand's tone: the partner strings' levels (re the harmonic: in the first ring, in the long ring) and their beat (Hz), the soundboard wash's level (re the knock) and decay (s)
@@ -2781,6 +2782,7 @@ function bandClock(now) { if (now < BAND.now) { BAND.m = {}; BAND.key = BAND.tem
 function bandKey(cx) { const now = cx && cx.t != null ? Math.round(cx.t * SR) : null; if (now != null) bandClock(now); else BAND.rc++; const B = BAND.key, m = B && BAND.m[B.by]; // the key the music instruments play in, if one plays now (a tuned sound calls this once a chunk)
   return m && !m.stop && BAND.rc - m.rc < 40 && (now == null || Math.abs(now - m.at) < SR) ? B : null; }
 function snapPc(f, pcs) { let best = f, bd = 99; for (let d = -6; d <= 6; d++) { const g = f * Math.pow(2, d / 12); if (pcs.includes(pcOf(g)) && Math.abs(d) < bd) { bd = Math.abs(d); best = g; } } return best; } // the nearest pitch of these classes, within half an octave
+let SCENE_XF = false; // set by the page for a few seconds after a scene change
 function Player(voice, scaleOf, bass, opt = {}) { // drives one instrument: an improviser per key, a way of playing per piece, notes scheduled ahead, the voices rendered
   const pk = [0, 0, 0], pink = () => { let s = 0; for (let j = 0; j < 3; j++) { const r = [0.5, 0.9, 0.98][j]; pk[j] = r * pk[j] + Math.sqrt(1 - r * r) * gauss(); s += [0.45, 0.35, 0.2][j] * pk[j]; } return s / 0.6; }; // the hand's timing wanders with a memory (1/f-like), as players' does
   const voices = [], mono = !!opt.mono, wander = new Drift(1 / 40); let base = 0, phr = 0, lastV = 0.5, mqFull = 0; // the pulse wanders slowly, as a player's does
@@ -3002,7 +3004,7 @@ function Player(voice, scaleOf, bass, opt = {}) { // drives one instrument: an i
       if (ens && !lead && fresh(BAND.tempo)) beat = BAND.tempo.beat; else if (lead) BAND.tempo = { by: me.seq, beat }; // one pulse: the leader's
       if (piece.opening && opt.follow && opt.follow(p)) piece.opening = false; // an answering instrument opens nothing
       if (piece.opening && ens && !lead) piece.opening = false; // nor one joining others: it comes in on their music
-      if (piece.opening) { piece.opening = false; low(t, 0.4 * rr(0.9, 1), sc, 2 * beat / SR); voices.push(...V(t + Math.floor(0.02 * SR), sc.notes[imp.home], 0.3, sc, false, 2 * beat / SR)); t += Math.floor(rr(2.5, 4) * beat); } // the piece opens on its home note, alone, and breathes
+      if (piece.opening) { piece.opening = false; low(t, 0.4 * rr(0.9, 1), sc, 2 * beat / SR); voices.push(...V(t + Math.floor(0.02 * SR), sc.notes[imp.home], 0.3, sc, false, 2 * beat / SR)); t += Math.floor((SCENE_XF ? rr(0.8, 1.3) : rr(2.5, 4)) * beat); } // the piece opens on its home note, alone, and breathes (only a beat while the page changes scenes, where the old sound is fading)
       if (opt.follow && opt.follow(p)) answer(p, sc, beat); else if (piece.free) free(p, sc, beat); else gridBar(p, sc, beat);
       flush();
     }
@@ -3464,9 +3466,22 @@ function koNote(off, f, v, sc, low) {
   for (const g of near) { const o = Math.log2(g / f), oct = Math.abs(o - Math.round(o)) < 0.03; if (rnd() < (oct ? 0.9 : 0.5)) out.push(vModal(off + Math.floor(rr(0.003, 0.01) * SR), a * K.ko_symp * (oct ? 1 : 0.4) * rr(0.5, 1), rr(-0.5, 0.5), [{ f: g, a: 1, tau: tau * 1.1 }, { f: g * 2.001, a: 0.4, tau: tau * 0.7 }], 0, null, 0.01)); }
   return out;
 }
+const KR_RING = []; // the note ringing on each string
+function koNote2(off, f, v, sc, low) {
+  const hard = clamp(v / 0.85, 0.25, 1.5), a = v * K.kr_A * (low ? 0.85 : 1), pan = notePlaceAlt(sc, f, 0.4), si = Math.round(12 * Math.log2(f / 87.31)); // each pitch its own string
+  const o = { t60: K.kr_t60 * Math.pow(262 / f, 0.45), lp: clamp(K.kr_lp - 0.04 * (hard - 0.5), 0.02, 0.9), det: rr(0.3, 1.2) * 0.0006, pol: 0.3, vert: 0.5, beta: K.kr_beta * rr(0.85, 1.15),
+    round: clamp(K.kr_round + 0.2 * (0.5 - hard), 0.02, 0.95), noise: K.kr_noise, ramp: 0.0015 + 0.003 * clamp(1 - hard, 0, 1), hp: K.kr_hp, bend: null };
+  const vs = vString2(off, f, a, pan, o); if (KR_RING[si] && KR_RING[si].stop) KR_RING[si].stop(off); KR_RING[si] = vs;
+  const out = [vs];
+  if (K.kr_nail) out.push(vNoise(off, a * K.kr_nail * hard * hard, pan, 0.003, lr(2500, 6000), 0.9)); // the fingertip's edge on the string
+  if (K.kr_skin) out.push(vNoise(off, a * K.kr_skin * hard, pan, 0.01, lr(250, 500), 0.7)); // the bridge knocking the skin
+  return out;
+}
+const KORA_BODY = [[115, 4, 1], [300, 7, 0.9], [460, 9, 0.6], [680, 11, 0.5], [950, 13, 0.45], [1300, 15, 0.4], [1800, 18, 0.35], [2500, 20, 0.3], [3400, 24, 0.22], [4600, 28, 0.15]]; // the gourd's air through its sound hole, then the skin
+function makeKoraBody() { const b = makeBodyBank(KORA_BODY, K.kr_body, K.kr_direct, null, 1); return (L, R, n) => b(L, R, n, 0); }
 function Kora() {
-  return Player(koNote, p => { const root = 174.61 * Math.pow(2, Math.round((p.pitch - 0.5) * 10) / 12), st = KORA_SCALE[p.scale] || KORA_SCALE.silaba; // F3, the kora's middle; the bass an octave under
-    return { key: p.scale + root, notes: st.map(x => root * Math.pow(2, x / 12)), home: 0, bass: root / 2 }; }, true, { scales: Object.keys(KORA_SCALE), stats: PLAYED.kora, follow: p => p.duet === 'answer',
+  return Player(koNote2, p => { const root = 174.61 * Math.pow(2, Math.round((p.pitch - 0.5) * 10) / 12), st = KORA_SCALE[p.scale] || KORA_SCALE.silaba; // F3, the kora's middle; the bass an octave under
+    return { key: p.scale + root, notes: st.map(x => root * Math.pow(2, x / 12)), home: 0, bass: root / 2 }; }, true, { scales: Object.keys(KORA_SCALE), stats: PLAYED.kora, follow: p => p.duet === 'answer', post: makeKoraBody,
     pool: ['ostinato', 'ostinato', 'groove', 'rolling', 'flowing', 'flowing', 'arpeggio', 'cascade', 'five', 'ballad', 'ballad', 'echo'] }); // the kumbengo riff most of all, then runs and rolled chords
 }
 
@@ -4940,7 +4955,7 @@ class Engine {
       if (!st.on && !(ch.out > 0)) { ch.live = false; continue; } // off, and its fade-out has finished
       if (st.on && ch.out > 0) { ch.fade = Math.floor(ch.out / (ch.outN || this.fadeN) * this.fadeN); ch.out = 0; if (ch.inst.stop) ch.inst.stop(false, false); } // switched back on while fading out: rise again from where it is (an instrument plays on)
       if (!ch.live) { ch.live = true; ch.fade = 0; ch.olds = null; if (ch.inst.stop) ch.inst.stop(false); // an instrument begins a new piece
-        if (ch.inst.hold && Object.values(this.ch).some(o => o !== ch && o.out > 0 && o.outN > this.fadeN)) ch.inst.hold(2); // another instrument is still ringing out: let it, then begin
+        if (ch.inst.hold && Object.values(this.ch).some(o => o !== ch && o.out > 0 && o.outN > this.fadeN)) ch.inst.hold(0.7); // another instrument is still ringing out: begin just after it (2 s left a hole once its last notes had died; the new one fades in on one soft note, so the tails overlap gently)
         ch.tL = new Float32Array(GD); ch.tR = new Float32Array(GD); ch.twL = new Float32Array(GD); ch.twR = new Float32Array(GD); for (const gn of [ch.g, ch.wg]) if (gn) { gn.gain.cancelScheduledValues(t); gn.gain.setValueAtTime(chanGain(d.id), t); } }
       // every change happens the way weather does: settings glide over a few seconds, and a new kind (another surface,
       // another bird, another colour) crossfades in while the old one fades away
@@ -5025,7 +5040,7 @@ class Engine {
     const ch = this.ch[id]; if (!state.sounds[id].on || !ch.live) return;
     const now = this.ctx.currentTime; for (const gn of [ch.g, ch.wg]) if (gn) { gn.gain.cancelScheduledValues(now); gn.gain.setTargetAtTime(chanGain(id), now, 0.05); }
   }
-  mute(id) { const ch = this.ch[id]; if (ch.live) { const ring = ch.inst.stop ? 2.5 : 1; if (ch.inst.stop) ch.inst.stop(true); ch.outN = Math.floor(this.fadeN * ring); ch.out = Math.floor(Math.min(this.fadeN, ch.fade) * ring); ch.fade = this.fadeN; } } // fade out from wherever it is; an instrument plays no new note and its last ones ring out, over 7.5 s
+  mute(id, slow = 1) { const ch = this.ch[id]; if (ch.live) { const ring = ch.inst.stop ? 2.5 : slow; if (ch.inst.stop) ch.inst.stop(true); ch.outN = Math.floor(this.fadeN * ring); ch.out = Math.floor(Math.min(this.fadeN, ch.fade) * ring); ch.fade = this.fadeN; } } // fade out from wherever it is; an instrument plays no new note and its last ones ring out, over 7.5 s
   setSpace(key) { // crossfade to a new acoustic space
     const c = this.ctx, now = c.currentTime, nx = 1 - this.cvOn, old = this.cvOn;
     this.cv[nx].buffer = spaceBuffer(c, key);
@@ -5380,13 +5395,15 @@ $('#save-btn').addEventListener('click', () => {
 });
 $('#save-cancel').addEventListener('click', () => { $('#save-form').hidden = true; });
 $('#save-form').addEventListener('submit', e => { e.preventDefault(); const n = $('#save-name').value.trim() || mixName(); $('#save-form').hidden = true; saveMix(n); });
+let xfTimer = 0;
 function applyScene(sc, start = true) {
-  const fresh = defaults();
+  const fresh = defaults(), music = SOUNDS.some(d => sc.mix[d.id] && d.params && d.params.some(q => q.id === 'style')), any = SOUNDS.some(d => state.sounds[d.id].on); // does the new scene bring an instrument in; was anything playing
+  if (eng && playing && any) { SCENE_XF = true; clearTimeout(xfTimer); xfTimer = setTimeout(() => { SCENE_XF = false; }, 8000); } // a change, not a start: an instrument coming in opens without its long rest
   for (const d of SOUNDS) {
     const st = state.sounds[d.id], m = sc.mix[d.id], was = st.on;
     st.on = !!m; st.vol = (m && m.vol) ?? fresh.sounds[d.id].vol; st.pos = (m && m.pos) || 0;
     st.p = Object.assign(fresh.sounds[d.id].p, m && m.p);
-    if (eng) { if (!st.on && was) eng.mute(d.id); else if (st.on) eng.setVol(d.id); }
+    if (eng) { if (!st.on && was) eng.mute(d.id, music ? 2 : 1); else if (st.on) eng.setVol(d.id); } // nature going out under incoming music fades over 6 s, carrying its first notes
   }
   if (sc.space && sc.space !== state.space) setSpace(sc.space);
   if (sc.breath) { state.breath.pattern = sc.breath; if (!state.breath.on) setBreath(true); }
