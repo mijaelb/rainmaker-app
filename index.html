@@ -3132,7 +3132,7 @@ function Player(voice, scaleOf, bass, opt = {}) { // drives one instrument: an i
   let imp = null, key = '', t = Math.floor(rr(0.15, 0.45) * SR), piece = null, lastName = '', lastShift = 0, bar = 0, mq = [], gap = 0, hold = 0, cur = 0, started = false; // the first note comes soon after play
   let stopping = false, lastPcs = null, lastTempo = 0, lastBusy = 0, curScale = null; // stopping: the page is ending this instrument (no new notes); lastPcs: the pitch classes of the key now playing
   const pcsOf = sc => new Set([...sc.notes, ...(sc.bass ? [sc.bass] : [])].map(f => ((Math.round(12 * Math.log2(f / 440)) % 12) + 12) % 12));
-  const me = { seq: ++BAND.seq, rc: -1e9, at: 0, join: 0, stop: false, ans: false, rejoin: true, kid: 0, comp: null }; let nowAbs = 0, ens = false, lead = true, bpc = 0; // this instrument in the band; the chunk's start on the band's clock (samples); playing with others; leading them; its pitch class at degree 0
+  const me = { seq: ++BAND.seq, rc: -1e9, at: 0, join: 0, stop: false, ans: false, rejoin: true, kid: 0, comp: null }; let nowAbs = 0, ens = false, alone = true, lead = true, bpc = 0; // this instrument in the band; the chunk's start on the band's clock (samples); playing with others; leading them; its pitch class at degree 0
   const live = x => !!x && !x.stop && BAND.rc - x.rc < 40 && Math.abs(nowAbs - x.at) < SR, fresh = g => !!g && live(BAND.m[g.by]); // a member still playing; what one still playing has set
   const famOf = x => { const P = PLAY[x]; if (P.free) return 'free'; const bt = P.bars[0].split(' ').length * P.pulse; return Math.abs(P.pulse - 1 / 3) < 1e-6 ? 'lilt' : Math.abs(bt % 2) < 1e-6 ? 'duple' : String(bt); }; // metres that go together: bars of two and four beats, threes, the lilt, five, seven
   const relOf = c => { const rel = c.pcs.map(x => ((x - bpc) % 12 + 12) % 12).filter(x => imp.scl.has(x)), r = ((c.root - bpc) % 12 + 12) % 12; return { root: imp.scl.has(r) ? r : 0, set: new Set(rel.length >= 2 ? rel : [0, 7, imp.third]) }; };
@@ -3199,7 +3199,7 @@ function Player(voice, scaleOf, bass, opt = {}) { // drives one instrument: an i
     let moved = false;
     if (ens && !lead && fresh(BAND.key)) { const f = fitBand(p); piece.shift = f.sh; piece.scale = f.scn; moved = f.sh !== lastShift || f.scn !== curScale; me.kid = BAND.key.kid; } // playing with others: the band's key, on this instrument's nearest scale
     else if (PLAY[p.style] || !started) { piece.shift = 0; piece.scale = null; } // a chosen way of playing stays in the chosen key
-    else if (!ens && (lastShift || curScale ? rnd() < 0.7 : rnd() < 0.5)) { // another drum, a nearby key, about every other piece; back to the first drum more often than on (not while others play along)
+    else if (alone && (lastShift || curScale ? rnd() < 0.7 : rnd() < 0.5)) { // another drum, a nearby key, about every other piece; back to the first drum more often than on (not while others play along)
       moved = true;
       if (lastShift || curScale) { piece.shift = 0; piece.scale = null; }
       else { // the key that shares the most notes with this one (a fourth or a fifth away, most often), so what still rings agrees with what begins
@@ -3213,7 +3213,7 @@ function Player(voice, scaleOf, bass, opt = {}) { // drives one instrument: an i
         piece.shift = cands[k].sh; piece.scale = cands[k].scn;
       }
     }
-    if (opt.breath && opt.scales && started && !ens && !PLAY[p.style]) { const m = [null, ...opt.scales][Math.floor(rnd() * (opt.scales.length + 1))]; moved = moved || m !== curScale; piece.shift = 0; piece.scale = m; } // a flute: each piece in a mode of its own, on the same home note
+    if (opt.breath && opt.scales && started && alone && !PLAY[p.style]) { const m = [null, ...opt.scales][Math.floor(rnd() * (opt.scales.length + 1))]; moved = moved || m !== curScale; piece.shift = 0; piece.scale = m; } // a flute: each piece in a mode of its own, on the same home note
     lastShift = piece.shift; curScale = piece.scale;
     bar = 0; mq = []; gap = 0; hold = 0; cur = 0; phr = 0; restBeats = 0; piece.fresh = true; piece.harm = rnd() < 0.5 ? 1 : 2; // chords change every bar or every two
     piece.slot = Array.from({ length: 16 }, () => rnd()); piece.fill = rnd() < 0.4; piece.secSeen = null; // which pulses repeat a note, carry a ghost or thin out, and whether groups end in a fill: kept all piece
@@ -3248,13 +3248,13 @@ function Player(voice, scaleOf, bass, opt = {}) { // drives one instrument: an i
     else imp.setChord(phr++);
     imp.chAt = chRel ? x => (chRel(x) || { set: imp.ch }).set : null; postChord(nowAbs + t, chRel && chRel(0));
     const ph = imp.phrase(p.flow * (1 - 0.5 * MUSIC_EASE)), jit = () => Math.floor(clamp(pink() * K.st_timing * SR, -0.04 * beat, 0.04 * beat)), top = sc.notes.length - 1; // fewer notes as a timer runs down
-    const c0 = { root: imp.croot, set: imp.ch }; if (!ens && ph.cad) { chRel = x => (x >= ph.cad.at - 0.05 ? ph.cad : c0); postChord(nowAbs + t + Math.floor(ph.cad.at * beat), ph.cad); } // alone, the harmony goes home with the melody at its cadence (strings under it follow)
+    const c0 = { root: imp.croot, set: imp.ch }; if (alone && ph.cad) { chRel = x => (x >= ph.cad.at - 0.05 ? ph.cad : c0); postChord(nowAbs + t + Math.floor(ph.cad.at * beat), ph.cad); } // alone, the harmony goes home with the melody at its cadence (strings under it follow)
     if (piece.dialog) { const dn = !imp.open && ph.notes.every(nt => nt.d >= imp.oct), up = imp.open && ph.notes.every(nt => nt.d + imp.oct <= top); if (dn || up) for (const nt of ph.notes) { nt.d += up ? imp.oct : -imp.oct; nt.v *= dn ? 0.92 : 1; } } // dialogue: the answer an octave below the question (or the question an octave above), as two hands or two registers reply
     postCall(ph, sc, beat); imp.chAt = null; if (ens && !me.ans) BAND.sing = { id: me.seq, until: nowAbs + t + Math.floor((ph.beats + (imp.open ? ph.rest * K.mu_rest + 1 : 0)) * beat) }; // singing: through the breath after a question, to the end of its answer
     const breath = ph.rest * K.mu_rest * (1 + 0.6 * MUSIC_EASE); pedalAt = base + t + Math.floor((ph.beats + breath) * beat); // the pedal is changed as the next phrase begins
     if (opt.breath) voices.push(...opt.breath(Math.max(0, t - Math.floor(0.45 * SR)), ph.notes[0].v)); // the player breathes in before the phrase
     for (const nt of ph.notes) {
-      if (chRel && !ens) { const c = chRel(nt.b); imp.croot = c.root; imp.ch = c.set; } // the chord under this note (the dyads take theirs from it)
+      if (chRel && alone) { const c = chRel(nt.b); imp.croot = c.root; imp.ch = c.set; } // the chord under this note (the dyads take theirs from it)
       const at = Math.max(0, t + Math.floor(nt.b * beat) + jit()), f = sc.notes[nt.d]; nt.v *= (piece.gain || 1) * (1 - 0.3 * MUSIC_EASE);
       if (nt.orn === 'grace') voices.push(...V(Math.max(0, at - Math.floor(0.09 * beat)), sc.notes[Math.max(0, nt.d - 1)], nt.v * 0.45, sc)); // a quick grace note from below
       if (piece.roll && nt.len >= 3 && rnd() < piece.roll) { const nS = 6 + Math.floor(rnd() * 5), dt = rr(0.1, 0.14) * SR; // a roll: the note repeated quickly, swelling then easing
@@ -3267,10 +3267,10 @@ function Player(voice, scaleOf, bass, opt = {}) { // drives one instrument: an i
     if (piece.lh) { const f0 = opt.lowF(sc, imp.croot), up = imp.third === 3 ? 2.378 : 2.52, st = piece.lhStep * (1 + MUSIC_EASE), B = ph.beats + Math.min(K.tc_lh, breath); // the left hand: the chord broken in the bass under the whole phrase and on through the breath after it, the pedal down
       for (let b = 0, k = 0; b < B; b += st, k++) { const x = piece.lh[k % piece.lh.length], c = (chRel && chRel(b)) || { root: imp.croot, set: imp.ch }; voices.push(...V(t + Math.floor(b * beat) + jit(), opt.lowF(sc, c.root) * (x === 10 ? (c.set.has((c.root + 3) % 12) ? 2.378 : c.set.has((c.root + 4) % 12) ? 2.52 : 2) : x === 1.5 && !imp.scl.has((c.root + 7) % 12) ? 2 : x), (k % piece.lh.length ? 0.17 : 0.26) * (0.8 + 0.35 * Math.sin(Math.PI * b / B)) * (1 - 0.3 * MUSIC_EASE), sc, true, 3 * st * beat / SR)); } }
     else if (bass && rnd() < 0.6) voices.push(...V(t, sc.bass, 0.3 * rr(0.85, 1), sc, true)); // the low note, softly, under the phrase
-    if (!piece.lh && !ens && !mono && K.br_fill) for (let i = 0; i + 1 < ph.notes.length; i++) { const a = ph.notes[i], g = ph.notes[i + 1].b - a.b, m = Math.round(g / K.br_step); // the hand keeps moving under a long note: soft chord tones below it, the ding by turns
+    if (!piece.lh && alone && !mono && K.br_fill) for (let i = 0; i + 1 < ph.notes.length; i++) { const a = ph.notes[i], g = ph.notes[i + 1].b - a.b, m = Math.round(g / K.br_step); // the hand keeps moving under a long note: soft chord tones below it, the ding by turns
       for (let k = 1; k < m && g >= K.br_fill; k++) { const lo = imp.chordBelow(a.d), ding = bass && (lo < 0 || k % 2 === 1); if (lo < 0 && !bass) break;
         voices.push(...V(t + Math.floor((a.b + k * g / m) * beat) + jit(), ding ? sc.bass : sc.notes[lo], a.v * K.br_v * Math.pow(0.85, k - 1) * rr(0.9, 1.05), sc, ding, beat / SR)); } }
-    if (!piece.lh && !ens && !mono && K.br_n) { const last = ph.notes[ph.notes.length - 1], end = ph.beats + ph.rest * K.mu_rest, ch = imp.chordIn(Math.max(0, imp.home - 2), Math.max(imp.home, last.d - 1)); // the breath: soft low chord tones under the last note and on through the rest
+    if (!piece.lh && alone && !mono && K.br_n) { const last = ph.notes[ph.notes.length - 1], end = ph.beats + ph.rest * K.mu_rest, ch = imp.chordIn(Math.max(0, imp.home - 2), Math.max(imp.home, last.d - 1)); // the breath: soft low chord tones under the last note and on through the rest
       let b = last.b + Math.max(1, last.len * 0.6);
       for (let k = 0; k < K.br_n && b < end + 0.5 && ch.length; k++, b += lr(1.6, 2.6)) { const d = ch[Math.floor(rnd() * Math.min(2, ch.length))], ding = bass && k === 0 && rnd() < 0.6;
         voices.push(...V(t + Math.floor(b * beat) + jit(), ding ? sc.bass : sc.notes[d], last.v * K.br_v * Math.pow(0.8, k) * rr(0.9, 1.05), sc, ding, 2 * beat / SR)); }
@@ -3323,7 +3323,7 @@ function Player(voice, scaleOf, bass, opt = {}) { // drives one instrument: an i
       if (k === 'B' || k === 'b') { if (k === 'B' || piece.slot[i % 16] < thin) low(at, (k === 'B' ? 0.5 : 0.38) * dyn * rr(0.9, 1), sc, pd); }
       else if (k === 'm') {
         if (hold > 0) { hold--; return; }
-        if (!mq.length) { const gs = K.br_grid && !ens && !mono ? imp.chordIn(Math.max(0, imp.home - 2), imp.home + K.br_grid) : []; if (gs.length && piece.slot[(i + 11) % 16] < thin) { voices.push(...V(at, sc.notes[gs[(i + bar) % gs.length]], dyn * accV * 0.45 * rr(0.96, 1.03), sc, false, pd)); return; } // the melody rests: its pulses keep the chord moving
+        if (!mq.length) { const gs = K.br_grid && alone && !mono ? imp.chordIn(Math.max(0, imp.home - 2), imp.home + K.br_grid) : []; if (gs.length && piece.slot[(i + 11) % 16] < thin) { voices.push(...V(at, sc.notes[gs[(i + bar) % gs.length]], dyn * accV * 0.45 * rr(0.96, 1.03), sc, false, pd)); return; } // the melody rests: its pulses keep the chord moving
           if (piece.slot[(i + 7) % 16] < 0.2 && !mono) voices.push(...V(at, sc.notes[cur], dyn * 0.22 * rr(0.8, 1.1), sc, false, pd)); return; } // a ghost note, the hand barely touching
         if (pat.filter(x => x === 'm').length >= 2 && piece.slot[(i + 3) % 16] < Math.min(K.ml_same, opt.stats ? opt.stats.same * 0.55 : 0.12)) { voices.push(...V(at, sc.notes[cur], dyn * 0.7 * rr(0.96, 1.03), sc, false, pd)); return; } // players repeat the note as often as the recordings show
         const lead = mq.length === mqFull ? -0.04 : mq.length === 1 ? 0.06 : 0; // the phrase's first note a touch early, its last a touch late
@@ -3331,7 +3331,7 @@ function Player(voice, scaleOf, bass, opt = {}) { // drives one instrument: an i
       } else if (k === 'c' || k === 'l' || k === 'h') {
         if (piece.slot[(i + 11) % 16] > thin) return;
         if (mono) { if (rnd() < 0.4 && cur !== imp.home) voices.push(...V(at, sc.notes[cur + (cur > imp.home ? -1 : 1)], dyn * 0.5 * rr(0.96, 1.03), sc, false, pd)); return; } // one line only: a passing note toward home, or nothing
-        const cc = !mq.length && K.br_grid && !ens ? Math.max(cur, imp.home + K.br_grid + 1) : cur, set = imp.chordIn(Math.max(0, imp.home - 2), cc - 1); if (!set.length) return; // under the melody, never on it (while it rests, the chord's tones up to br_grid above home)
+        const cc = !mq.length && K.br_grid && alone ? Math.max(cur, imp.home + K.br_grid + 1) : cur, set = imp.chordIn(Math.max(0, imp.home - 2), cc - 1); if (!set.length) return; // under the melody, never on it (while it rests, the chord's tones up to br_grid above home)
         const under = set.filter(x => x < cc), d = k === 'l' ? set[0] : k === 'h' ? set[set.length - 1] : under.length ? under[under.length - 1] : -1; if (d < 0) return;
         voices.push(...V(at, sc.notes[d], dyn * accV * (k === 'h' ? 0.55 : 0.45) * rr(0.96, 1.03), sc, false, pd));
       } else if (k === 'p') voices.push(...V(at, sc.notes[imp.home], dyn * 0.5 * rr(0.96, 1.03), sc, false, pd));
@@ -3366,7 +3366,7 @@ function Player(voice, scaleOf, bass, opt = {}) { // drives one instrument: an i
     bandClock(nowAbs); if (me.rejoin || BAND.rc - me.rc > 40 || !BAND.m[me.seq]) { me.join = nowAbs; me.rejoin = false; }
     me.rc = BAND.rc; me.at = nowAbs + n; me.stop = stopping; me.ans = !!(opt.follow && opt.follow(p)); BAND.m[me.seq] = me;
     { const ms = []; for (const id in BAND.m) { const x = BAND.m[id]; if (BAND.rc - x.rc > 4000) delete BAND.m[id]; else if (live(x)) ms.push(x); }
-      ms.sort((a, b) => (!!a.drum - !!b.drum) || (a.ans - b.ans) || (a.join - b.join) || (a.seq - b.seq)); ens = !stopping && ms.length >= 2; lead = !ens || ms[0] === me; } // who plays; the first in leads (one that answers, only when alone; a drum keeps time but never leads)
+      ms.sort((a, b) => (!!a.drum - !!b.drum) || (a.ans - b.ans) || (a.join - b.join) || (a.seq - b.seq)); ens = !stopping && ms.length >= 2; alone = !ens || ms.every(x => x === me || x.drum); lead = !ens || ms[0] === me; } // who plays; the first in leads (one that answers, only when alone; a drum keeps time but never leads)
     if (BAND.prog && !fresh({ by: BAND.progBy })) { if (lead && imp) pubProg(); else BAND.prog = null; } // the chords of one who has stopped: the new leader's own
     let sc = piece ? tune(p) : null;
     if (stopping) t = Math.max(t, n + Math.floor(0.5 * SR));
@@ -4394,24 +4394,24 @@ function fdStroke(off, f0, kind, v, pan, tune, tc) { // one stroke: kind D a dee
     const t60 = m[4] * (k ? r1 : r0) * (tune[k].cut < 1 ? 0.5 : 1), a = v * K.fd_A * Math.pow(10, db / 20) * tune[k].cut / Math.sqrt(1 + (f / tilt) * (f / tilt)), [l, r] = panG(clamp(pan + rr(-0.12, 0.12) * Math.min(1, k / 3), -1, 1)); // the higher modes a little apart across the field
     ms.push({ w: TAU * f / SR, a, a0: a * 1e-3, d: Math.exp(-6.9 / (t60 * SR)), c: 1, s: 0, cw: 1, sw: 0, l, r }); life = Math.max(life, t60);
   });
-  const rampN = Math.ceil(rise * SR), [nl, nr] = panG(pan), noise = (fc, q, fl, a, att, tau, len) => ({ bp: new BQ('bp', fc, q), lp: new BQ('lp', fl, 0.6), a, att: Math.max(1, Math.ceil(att * SR)), d: Math.exp(-1 / (tau * SR)), len: Math.ceil((att + len) * SR), e: 1 });
+  const rampN = Math.ceil(rise * SR), [nl, nr] = panG(pan), noise = (fc, q, fl, a, att, tau) => ({ bp: new BQ('bp', fc, q), lp: new BQ('lp', fl, 0.6), a, att: Math.max(1, Math.ceil(att * SR)), d: Math.exp(-1 / (tau * SR)), len: Math.ceil((att + 9.2 * tau) * SR), e: 1 }); // each runs until 80 dB down
   const nz = [ // the skin: the brush of the hand (of the felt, much less), short and brighter; then the many close modes above the ninth, too dense to hear one by one, as a band of noise dying in a few tenths of a second
-    noise(rim ? lr(1200, 1900) : palm ? lr(380, 520) : lr(520, 780), 0.8, 4000, v * K.fd_A * K.fd_skin * (rim ? 1.6 : palm ? 1.2 : 1) * (felt ? 0.35 : 1), 0.002, rim ? 0.008 : 0.012, rim ? 0.06 : 0.09),
-    noise(f0 * (rim ? 6 : 3.5), 0.5, f0 * (rim ? 10 : 5.5) * (1 + 0.5 * tc) * (felt ? 1.3 : 1), v * K.fd_A * K.fd_body * (rim ? 1.4 : 1) * (palm ? 0.5 : 1), rise, (palm ? 0.025 : rim ? 0.04 : 0.05 + 0.04 * tc), palm ? 0.2 : 0.5)];
-  let k = 0; const nLen = Math.max(...nz.map(z => z.len)); life = Math.ceil(life * SR) + rampN;
+    noise(rim ? lr(1200, 1900) : palm ? lr(380, 520) : lr(520, 780), 0.8, 4000, v * K.fd_A * K.fd_skin * (rim ? 1.6 : palm ? 1.2 : 1) * (felt ? 0.35 : 1), 0.002, rim ? 0.008 : 0.012),
+    noise(f0 * (rim ? 6 : 3.5), 0.5, f0 * (rim ? 10 : 5.5) * (1 + 0.5 * tc) * (felt ? 1.3 : 1), v * K.fd_A * K.fd_body * (rim ? 1.4 : 1) * (palm ? 0.5 : 1), rise, (palm ? 0.025 : rim ? 0.04 : 0.05 + 0.04 * tc))];
+  let k = 0; const nLen = Math.max(...nz.map(z => z.len)) + 960; life = Math.ceil((2 * life + 0.05) * SR) + rampN; // the noise filters ring down 20 ms after their input ends; life is only a bound
   return { off, run(L, R, n) {
     if (this.off >= n) { this.off -= n; return true; }
     let i = this.off; this.off = 0;
     for (; i < n && k < life; i++, k++) {
-      if ((k & 31) === 0) { // the pitch falls as the stretch relaxes; the phasors kept on the unit circle; modes 60 dB down let go
+      if ((k & 31) === 0) { // the pitch falls as the stretch relaxes; the phasors kept on the unit circle; a mode 60 dB down fades out over a few ms (never cut: a cut is a tick) and then lets go
         const g = 1 + gl * Math.exp(-k / tg);
-        for (let j = ms.length - 1; j >= 0; j--) { const m = ms[j]; if (m.a < m.a0) { ms.splice(j, 1); continue; } const w = m.w * g, q = 1.5 - 0.5 * (m.c * m.c + m.s * m.s); m.cw = Math.cos(w); m.sw = Math.sin(w); m.c *= q; m.s *= q; }
+        for (let j = ms.length - 1; j >= 0; j--) { const m = ms[j]; if (m.a < m.a0) { if (m.f) { ms.splice(j, 1); continue; } m.f = 1; m.d = Math.exp(-1 / (0.004 * SR)); m.a0 *= 1e-3; } const w = m.w * g, q = 1.5 - 0.5 * (m.c * m.c + m.s * m.s); m.cw = Math.cos(w); m.sw = Math.sin(w); m.c *= q; m.s *= q; }
         if (!ms.length && k > nLen) { k = life; break; }
       }
       let yl = 0, yr = 0;
       for (let j = 0; j < ms.length; j++) { const m = ms[j], c = m.c * m.cw - m.s * m.sw; m.s = m.c * m.sw + m.s * m.cw; m.c = c; const y = m.s * m.a; m.a *= m.d; yl += y * m.l; yr += y * m.r; }
       if (k < rampN) { const e = 0.5 - 0.5 * Math.cos(Math.PI * k / rampN); yl *= e; yr *= e; } // a soft onset: the hand, never a click
-      for (const z of nz) if (k < z.len) { const x = z.lp.run(z.bp.run(ns())) * z.a * (k < z.att ? 0.5 - 0.5 * Math.cos(Math.PI * k / z.att) : (z.e *= z.d)); yl += x * nl; yr += x * nr; }
+      for (const z of nz) if (k < z.len + 960) { const e = k < z.att ? 0.5 - 0.5 * Math.cos(Math.PI * k / z.att) : k < z.len ? (z.e *= z.d) : 0, x = z.lp.run(z.bp.run(e ? ns() * e : 0)) * z.a; yl += x * nl; yr += x * nr; } // shaped before the filters, so even its end is smooth
       L[i] += yl; R[i] += yr;
     }
     return k < life;
