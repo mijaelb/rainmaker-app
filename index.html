@@ -4978,7 +4978,7 @@ class Engine {
         ch.tL = new Float32Array(GD); ch.tR = new Float32Array(GD); ch.twL = new Float32Array(GD); ch.twR = new Float32Array(GD); for (const gn of [ch.g, ch.wg]) if (gn) { gn.gain.cancelScheduledValues(t); gn.gain.setValueAtTime(chanGain(d.id), t); } }
       // every change happens the way weather does: settings glide over a few seconds, and a new kind (another surface,
       // another bird, another colour) crossfades in while the old one fades away
-      const tgt = effective(d.id, st.p, t, M), key = d.params.filter(q => q.type === 'choice').map(q => tgt[q.id]).join('|');
+      const tgt = !st.on && ch.pv ? ch.pv : effective(d.id, st.p, t, M), key = d.params.filter(q => q.type === 'choice').map(q => tgt[q.id]).join('|'); // fading out, a sound keeps the settings it had: a new scene resets the ones it leaves out, and the soft rain going out turned into a heavier, nearer one in its last seconds
       if (!ch.pv || ch.fade === 0) ch.pv = Object.assign({}, tgt); // just starting: begin exactly where it is set
       else if (key !== ch.key && st.on) { // a new kind: keep the old one playing to fade it out, from the level it has (it may itself be fading in); while switched off, nothing new begins
         const o = { inst: ch.inst, p: Object.assign({}, ch.pv), x: 0, ring: 1, g0: ch.olds && ch.olds.length ? Math.sin(Math.min(1, ch.inx / this.fadeN) * Math.PI / 2) : 1 };
