@@ -897,6 +897,25 @@ body.is-playing .dock-orb { animation: dock-glow var(--breath) ease-in-out infin
 .osw { flex: none; width: 12px; height: 12px; border-radius: 50%; background: var(--sw); box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--ink) 28%, transparent); }
 .opt-hint { margin: 0; padding-inline: var(--space-3); font: var(--size-xs)/1.35 var(--font-body); color: var(--muted); }
 .opt-hint::first-letter { text-transform: uppercase; }
+/* the breaths: one tray, as the modes and a tile's options are, the chosen one lifting out */
+#patterns { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); grid-template-columns: none; gap: 0; max-width: 520px; border-radius: var(--radius-pill); background: var(--surface-2); }
+#patterns button { min-width: 0; padding: 0 var(--space-2); border: 3px solid transparent; border-radius: var(--radius-pill); background: none; color: var(--muted); white-space: nowrap; }
+#patterns button[aria-pressed="true"] { border-color: transparent; background: var(--bg) padding-box; box-shadow: inset 0 0 0 1px var(--btn-on-line); color: var(--ink); }
+@media (hover: hover) {
+  #patterns button:not(:disabled):hover { border-color: transparent; background: color-mix(in oklab, var(--ink) 8%, transparent) padding-box; color: var(--ink); }
+  #patterns button[aria-pressed="true"]:hover { background: var(--bg) padding-box; } }
+/* the six places: a tray like the modes, each icon over its name; six across where they fit, three by two in a narrow column */
+#spaces { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: 0; max-width: 760px; border-radius: var(--radius-md); background: var(--surface-2); }
+#spaces button { flex-direction: column; justify-content: center; gap: 6px; height: auto; min-height: 68px; padding: var(--space-2) var(--space-1); border: 3px solid transparent;
+  border-radius: calc(var(--radius-md) - 1px); background: none; color: var(--muted); font-size: var(--size-sm); line-height: 1.2; white-space: normal; text-wrap: balance; }
+#spaces button .ic { width: 20px; height: 20px; color: inherit; }
+#spaces button:has(> .ic:first-child) { padding-left: var(--space-1); }
+#spaces button[aria-pressed="true"] { border-color: transparent; background: var(--bg) padding-box; box-shadow: inset 0 0 0 1px var(--btn-on-line); color: var(--ink); }
+#spaces button[aria-pressed="true"] .ic { color: var(--accent-text); }
+@container (max-width: 600px) { #spaces { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (hover: hover) {
+  #spaces button:not(:disabled):hover { border-color: transparent; background: color-mix(in oklab, var(--ink) 8%, transparent) padding-box; color: var(--ink); }
+  #spaces button[aria-pressed="true"]:hover { background: var(--bg) padding-box; } }
 </style>
 </head>
 <body>
@@ -6101,7 +6120,7 @@ function choiceRow(id, q, value, onPick, sid) {
 }
 function statusOf(d) { // a short reading of the sound's main setting, shown on its tile
   if (!state.sounds[d.id].on) return T('Off');
-  const q = d.params.find(x => x.type !== 'action'), v = state.sounds[d.id].p[q.id];
+  const q = d.params.find(x => x.type !== 'action' && x.id !== 'duet'), v = state.sounds[d.id].p[q.id]; // not whether it answers: what it plays
   return capF(q.type === 'choice' ? q.options.find(o => o[0] === v)[1] : q.fmt(v).split(' · ').pop()); // the words, not the units: "Moderate", "Fresh breeze"
 }
 const tileOf = id => document.querySelector(`.tile[data-id="${id}"]`);
