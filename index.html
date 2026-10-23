@@ -1223,7 +1223,9 @@ const K = {
   wk_A: 0.3, wk_rate: 1, wk_thud: 0.15, wk_cloth: 0.4, wk_twig: 0.06, wk_twigA: 0.1, wk_peb: 0.05, wk_pebA: 0.05, wk_slap: 0.05, wk_suck: 0.03, wk_bed: 0.15, wk_sea: 2, wk_foam: 0.5, wk_bough: 0.02, wk_hush: 0.5, wk_air: 0.01, wk_crum: 0.5, wk_crumR: 30, hb_lake: 0.9, hb_creakP: 0.5, hb_creakA: 8, hb_tapR: 0.03, hb_tapA: 0.15, hb_slapR: 0.3, hb_slapA: 0.5, hb_gullR: 0.05, hb_gullA: 0.12, hb_bellA: 0.035, hb_bellT: 4, hb_bed: 0.1, hb_wind: 0.02, hb_shelf: -4, // slow walk: level; grains a second (x); the heel's thud; the trousers' brush; twigs (a step's chance, level); pebbles kicked (chance, level); wet sand's slap and suck; the hush of the finest fractures, the open air; the crunch's flicker (depth, rate); the place around, the sea (x), its foam; a bough's snow far off; harbour: the water at your feet (x the lake), a creak at a roll's end (chance, level), halyard bouts (a second a boat in a full breeze, level), the chop on hulls further out (a second a boat, level), gulls far off (calls a second, level), the bell buoy (level, ring s), the hush, the breeze; the lapping's top (dB above 3 kHz)
   au_root: 261.63, au_det: 3, /* the aulos: its drone's home (C4, as in The Odyssey's score), and cents between the two pipes on one melody */
   m3_arch: 0.85, m3_frag: 1, m3_call: 1, m3_link: 0.8, m3_end: 0.18, m3_seam: 0.45, m3_orch: 1, m3_tac: { still: 0.6, release: 0.3, arrival: 0.5 }, m3_key: 1, // music3: themes with one peak inside (the share held to it); the theme fragmented and sequenced; answers that quote the caller's head or tail and enter near its last note; a new piece born of the last one's theme, from its last note (chance); the last phrase's diminuendo (share); the breath between pieces (x: the next enters while the held home note still rings); followers sitting out by section (chance; arrival only in a later journey); the key moved at the high point and home at the release
-  m3_anc: 1, m3_het: 0.55, m3_hetV: 0.42, m3_ancDb: 0.6, // music3: the ancient band (1 on); the chance a waiting player doubles the singer's phrase loosely, and its touch; its level made up (dB: open fourths and fifths, fewer thirds, measured 0.6-1 dB under on lyresea and odyssey)
+  m3_hetOff: 0.015, m3_hetSD: 0.045, m3_lz: 1, // music3c: the doubling's mean offset and its drifting spread (s); the old metres' looser hands (1 on)
+  m3_anc: 1, m3_het: 0.55, m3_hetV: 0.5, m3_ancDb: 0.6, // music3: the ancient band (1 on); the chance a waiting player doubles the singer's phrase loosely, and its touch; its level made up (dB: open fourths and fifths, fewer thirds, measured 0.6-1 dB under on lyresea and odyssey)
+  nx_duck: 0.35, nx_bird: 0.6, nx_house: 1, // music3d: how far the band softens under a near thunder roll; the chance a songbird answers a breathed phrase in its breath (half for other lines); a lone instrument starting on the bells' home note (1 on)
   i2_pace: 1, i2_xf: 20, i2_gap: 30, i2_formT: 0.6, i2_reg: 0.6, i2_flow: 0.5, i2_rub: 0.8, i2_mrub: 0.35, i2_metre: 0.35, i2_kin: 0.35, i2_ret: 0.8, i2_col: 1, i2_loopV: 0.6, i2_tintV: 0.6, i2_mk: 0.5, i2_air: 0.3, i2_harm: 1, i2_push: 0.12, i2_lay: 1, i2_sus: 0.5, i2_den: 0.7, i2_lvl: 1, i2_ease: 24, i2_hold: 0.35, i2_easeMax: 9, i2_pre: 4, i2_lvT: 300, // the journey: section lengths x; seconds sections glide into each other; silence (s) after which the music arrives anew; the form's share of a phrase's tension; its register (x an octave); its notes (re the Notes slider); free time's rubato; the rubato kept over a beat; the pulse under which a drum's beat no longer holds a free line; themes born of recent ones; the first theme's return; colour centres on (1); loops' and the T-voice's touch; steps drawn from the airs' transitions; motifs on the airs' rhythms; the form's own progressions (1); a syncopated long note over a beat (a phrase's chance, x 0.5 + energy); the laid-back and leading micro-timing (x); an alone cadence's 4-3 suspension; the form's density in rests and a groove's thinning (+-, around the middle); the ways of playing levelled (x STYLE_DB); a new piece eased from the last one's level over s, the share of the difference it keeps, the most it is moved (dB), how much louder it is taken for until heard (dB), the span (s) whose mean gain is taken off
   ly_A: 0.16, ly_root: 146.83, ly_t60: 7, ly_tf: 0.4, ly_lp: 0.05, ly_pol: 0.4, ly_vert: 0.35, ly_beta: 0.07, ly_roundP: 0.45, ly_roundF: 0.55, ly_noise: 0.02, ly_hp: 0.99, ly_tone: 4000, ly_tick: 0.03, ly_pad: 0.05, ly_pickAt: 0.75, ly_wide: 0.12, ly_body: 1.5, ly_direct: 0.5, ly_symp: 0.04, ly_sympT: 3, // the lyre: level, home string (D3, as in The Odyssey's score), ring (s at 147 Hz, and its fall with pitch), the strings' loss, the two planes, where it is struck (share of the length), the plectrum's and the finger's width, the shape's grain, the bridge's differentiation, the skin's top (Hz), the tick and the finger's touch, firm from, spread, the body, the open strings ringing along
   cd_A: 0.06, cd_vel: 0.1, cd_lp: 0.5, cd_beta: 0.08, cd_rosin: 1.5, cd_att: 1.5, cd_chg: 0.5, cd_turn: 0.12, cd_dip: 0.25, cd_rel: 0.8, cd_ovl: 0.3, cd_vib: 0.006, cd_cents: 1, cd_drift: 3, cd_lean: 0.35, cd_wait: 8, cd_bow: 7, cd_swell: 12, cd_body: 5.5, cd_direct: 0.08, // the deep cellos: level, bow speed, string loss, bowing point, rosin, first bow's rise, a bow change's, its release, the old note's overlap, vibrato, cents apart, intonation drift, the lean off a rubbed note, seconds before moving to the fifth, seconds a bow, the section's swell (s), body
@@ -1808,13 +1810,13 @@ function Thunder() {
   const sm = x => x * x * (3 - 2 * x), flashes = u => u < 0 || u >= 1 ? 0 : u < 0.35 ? 0.25 + 0.75 * sm(u / 0.35) : 0.15 + 0.85 * sm((1 - u) / 0.65); // the flash rate over a cell's life re its peak: a few flashes as it first electrifies, the peak at a third, then dying away (mean 0.59)
   let cell = newCell(rr(0.2, 0.5)); // met growing or near its height
   const voices = []; let frame = 0;
-  const self = { force: false, onStrike: null, render(L, R, n, p, cx) {
+  const self = { force: false, onStrike: null, render(L, R, n, p, cx) { self.cxT = cx && cx.t != null ? Math.round(cx.t * SR) : null;
     const c = cell, km0 = 0.5 * Math.pow(30, p.distance), near = t => Math.sqrt(c.a * c.a + ((t - c.tc) / c.tau) ** 2); // the cell's distance re its closest pass
     const strike = (off, km) => {
       km = clamp(km || km0 * near(c.t + off / SR) * lr(0.85, 1.2), 0.3, 25); // flashes spread over the cell's core
       const at = frame + off, v = { L: null, start: 0 };
       voices.push(v);
-      if (self.onStrike) self.onStrike(km, off, Math.round(km * 2.915 * SR)); // flash now; sound follows at about 2.9 s per km
+      if (self.onStrike) self.onStrike(km, off, Math.round(km * 2.915 * SR)); if (self.cxT != null) natureEvent('thunder', self.cxT + off + Math.round(km * 2.915 * SR), clamp(1.6 / km - 0.1, 0, 1), km); // music3d: the roll as it will be heard, for the music // flash now; sound follows at about 2.9 s per km
       const done = b => { v.L = b[0]; v.R = b[1]; v.start = at + Math.round(b[2] * SR); }; // sound leaves from the nearest part of the channel
       if (THUNDER_BUILD) THUNDER_BUILD(km, done); else done(makeThunder(km));
       if (rnd() < K.t_burst) burst.push({ at: at + Math.floor(lr(2, 30) * SR), km: km * lr(0.85, 1.18) }); // the same part of the storm flashes again
@@ -2535,12 +2537,14 @@ function Chorus(mix, night) { // a population of callers that take turns, like r
     }
     while (list.length > cnt) { const c = list.pop(); if (c.busy > frame && gone.length < 40) gone.push(c); }
     const wL = cx && cx.wL, wR = cx && cx.wR;
+    if (K.nx_bird && !frogs && cx && cx.t != null) { const now = Math.round(cx.t * SR); for (const e of NATURE.ev) if ((e.kind === 'gap' || e.kind === 'phrase') && !e.done && e.at >= now - SR && e.at < now + n + SR) { e.done = 1; if (e.kind === 'phrase') { const fa = frame + (e.at - now); for (const c of list.slice(0, 5)) if (c.next > fa + Math.max(0, e.x - 4 * SR) && c.next < fa + e.x && rnd() < K.nx_bird * e.v) { const d = fa + e.x + Math.floor(rr(0.3, 1.5) * SR) - c.next; c.next += d; c.owe = (c.owe || 0) + d; } continue; } if (rnd() >= K.nx_bird * e.v) continue; // music3d: a melody breathes: one of the near songbirds, free then, answers in the breath (a call already due, brought forward)
+        const fa = frame + (e.at - now), ok = list.slice(0, 5).filter(c => c.busy < fa && SPECIES[c.sp].g >= 0.2 && c.next > fa + SR); if (ok.length) ok[Math.floor(rnd() * ok.length)].next = Math.max(frame, fa + Math.floor(rr(0.3, 0.9) * SR)); } }
     for (const c of list) {
       if (c.next < frame + n) {
         let at = Math.max(c.next, frame);
         if (rnd() < 0.6) for (const o of list) if (o !== c && o.busy > at && SPECIES[o.sp].g >= 0.2 && SPECIES[c.sp].g >= 0.2) at = Math.max(at, o.busy + Math.floor(rr(0.1, 0.6) * SR)); // wait for a neighbour to finish
         const end = c.sing(at), g = c.S.gap;
-        c.next = end + Math.floor(rr(g[0], g[1]) * SR / act);
+        c.next = Math.max(end + Math.floor(0.3 * SR), end + Math.floor(rr(g[0], g[1]) * SR / act) - (c.owe || 0)); c.owe = 0; // music3d: a call held for a melody is made up after it, so the birds sing as much
       }
       c.render(L, R, wL, wR, n, frame);
     }
@@ -3386,6 +3390,10 @@ function bandClock(now) { if (now < BAND.now) { BAND.tl = []; BAND.m = {}; BAND.
 function bandKey(cx) { const now = cx && cx.t != null ? Math.round(cx.t * SR) : null; if (now != null) bandClock(now); else BAND.rc++; const B = BAND.key, m = B && BAND.m[B.by]; // the key the music instruments play in, if one plays now (a tuned sound calls this once a chunk)
   return m && !m.stop && BAND.rc - m.rc < 40 && (now == null || Math.abs(now - m.at) < SR) ? B : null; }
 function snapPc(f, pcs) { let best = f, bd = 99; for (let d = -6; d <= 6; d++) { const g = f * Math.pow(2, d / 12); if (pcs.includes(pcOf(g)) && Math.abs(d) < bd) { bd = Math.abs(d); best = g; } } return best; } // the nearest pitch of these classes, within half an octave
+const NATURE = { ev: [], th: null }; // music3d: the shared event bus, nature and music telling each other what they do: { kind, at (samples on the band's clock), v (0..1), x }
+function natureEvent(kind, at, v, x) { const E = NATURE.ev; for (let i = E.length - 1; i >= 0; i--) if (E[i].at > at + 300 * SR) E.splice(i, 1); if (NATURE.th && NATURE.th.at > at + 300 * SR) NATURE.th = null; // a clock that ran back: a new session
+  const e = { kind, at, v, x }; E.push(e); if (E.length > 64) E.shift(); if (kind === 'thunder' && v > 0.15 && (!NATURE.th || at > NATURE.th.at + 2 * SR || v > NATURE.th.v)) NATURE.th = e; return e; }
+function natureLast(kind, from, to) { const E = NATURE.ev; for (let i = E.length - 1; i >= 0; i--) if (E[i].kind === kind && E[i].at > from && E[i].at < to) return E[i]; return null; }
 let SCENE_XF = false; // set by the page for a few seconds after a scene change
 // One key for every tuned sound in the mix: the band's while a music instrument plays; otherwise the key of the tuned
 // sound that holds one best (lowest rank: the strings 1, a lullaby 2, the tanpura 3, a bowl 4, the bells 5, the chimes 6)
@@ -3416,7 +3424,7 @@ function Player(voice, scaleOf, bass, opt = {}) { // drives one instrument: an i
   const voices = [], mono = !!opt.mono, wander = new Drift(1 / 40); let base = 0, phr = 0, lastV = 0.5, mqFull = 0; // the pulse wanders slowly, as a player's does
   const PROGS = { minor: [[0, 0, 0, 0], [0, 8, 3, 10], [0, 5, 0, 10], [0, 10, 8, 0], [0, 3, 8, 0]], major: [[0, 0, 0, 0], [0, 9, 5, 7], [0, 5, 0, 7], [0, 2, 5, 0], [0, 9, 2, 7]] }; // calm progressions, as semitones above the key: i VI III VII and the like
   const V = (off, f, v, sc, low, dur) => { const e = piece ? clamp(((base + off) / SR - piece.at0) / 20, 0, 1) : 1; v *= 0.75 + 0.25 * e * e * (3 - 2 * e); if (opt.depth) v = 0.45 + (v - 0.45) * opt.depth(); // a piece enters softly and grows over its first 20 s; an instrument played with an even touch keeps closer to it
-    if (me.tacE) { const u = clamp((base + off - me.tacE) / (12 * SR), 0, 1); v *= 0.55 + 0.45 * u * u * (3 - 2 * u); } pend.push([Math.max(0, Math.round(off)), f, v, sc, low, dur, pedalAt, MEL]); return []; }; // on a whole sample: a voice at a fractional index writes nothing // held until the step is laid out, then touched in time order
+    if (K.nx_duck && NATURE.th) { const u = (nowAbs + off - NATURE.th.at) / SR; if (u > -0.3 && u < 12) v *= 1 - K.nx_duck * NATURE.th.v * (u < 0 ? (u + 0.3) / 0.3 : u < 2.5 ? 1 : 1 - sstep((u - 2.5) / 9.5)); } if (me.tacE) { const u = clamp((base + off - me.tacE) / (12 * SR), 0, 1); v *= 0.55 + 0.45 * u * u * (3 - 2 * u); } pend.push([Math.max(0, Math.round(off)), f, v, sc, low, dur, pedalAt, MEL]); return []; }; // on a whole sample: a voice at a fractional index writes nothing // held until the step is laid out, then touched in time order
   let pend = [], pedalAt = 0, ringV = 0, ringT = 0; const nv = { cents: K.nv_cents, db: K.nv_db, spread: K.nv_spread, body: makeBody(7, 120, 5000, K.nv_body) }; // this instrument's body, and how far one note differs from the next
   let bL = new Float32Array(0), bR = bL; const post = opt.post ? opt.post() : null; // an instrument's own body, after its strings
   const flush = () => { // the hand plays into the sound: a note seldom stands more than a few dB over what still rings, one after a silence comes softly, and the level moves on smoothly from note to note
@@ -3475,11 +3483,12 @@ function Player(voice, scaleOf, bass, opt = {}) { // drives one instrument: an i
       const g = BAND.grid, x = m.a + Math.floor(hold * 0.45), at = fresh(g) ? Math.round(g.at + Math.round((x - g.at) / (g.beat / 2)) * (g.beat / 2)) : x; // over a groove, on its half-beat
       if (best >= 0 && at > m.a && at < m.a + hold) { prev = best; voices.push(...V(at - nowAbs, sc.notes[best], m.v * K.im_ctrV, sc, false, hold * 0.5 / SR)); } }); };
   const ancOwn = sc => !!(opt.ancient || /odyssey|phrygian|dorian|hijaz/.test(sc.key)); // music3: an old instrument or an old mode leads the ancient band
-  const hetero = (sc, C) => { const st = f => 12 * Math.log2(f); // music3: heterophony, the singer's line doubled loosely: a touch late, the quick notes thinned, a turn from above now and then, softer
-    C.ns.forEach((m, i) => { const nx = C.ns[i + 1], hold = (nx ? nx.a : C.end) - m.a; if (m.a < nowAbs + t || (hold < 0.35 * SR && rnd() < 0.6)) return;
-      let g = 0, bd = 99; for (const x of sc.notes) { if (pcOf(x) !== pcOf(m.f)) continue; const e = Math.abs(st(x) - st(m.f)); if (e < bd) { bd = e; g = x; } } if (!g) return;
-      const at = m.a - nowAbs + Math.floor(rr(0.04, 0.13) * SR), v = m.v * K.m3_hetV * rr(0.85, 1.05);
-      if (hold > 1.2 * SR && rnd() < 0.3) { const up = sc.notes.find(x => x > g * 1.03); if (up) voices.push(...V(at - Math.floor(0.09 * SR), up, v * 0.55, sc, false, 0.1)); }
+  const hetero = (sc, C) => { const st = f => 12 * Math.log2(f), lo8 = rnd() < 0.3; let on = rnd() < 0.7, left = on ? 3 + Math.floor(rnd() * 4) : 1 + Math.floor(rnd() * 2), gV = rr(0.8, 1.25), dr = gauss(), lastG = 0; // music3: heterophony, a second player: in stretches of a few notes, around the singer's time (now ahead, now behind), each stretch its own touch, the quick notes thinned, a long one turned, now and then an octave under
+    C.ns.forEach((m, i) => { if (--left < 0) { on = !on; left = on ? 2 + Math.floor(rnd() * 4) : Math.floor(rnd() * 2); gV = rr(0.8, 1.25); } dr = 0.85 * dr + 0.53 * gauss();
+      const nx = C.ns[i + 1], hold = (nx ? nx.a : C.end) - m.a, off = Math.floor(clamp(K.m3_hetOff + K.m3_hetSD * dr, -0.06, 0.11) * SR); if (!on || m.a + off < nowAbs + t || (hold < 0.35 * SR && rnd() < 0.6)) return;
+      let g = 0, bd = 99; const want = lo8 ? m.f / 2 : m.f; for (const x of sc.notes) { if (pcOf(x) !== pcOf(m.f)) continue; const e = Math.abs(st(x) - st(want)); if (e < bd) { bd = e; g = x; } } if (!g) return;
+      if (g === lastG && hold < 1.5 * SR) return; lastG = g; const at = m.a - nowAbs + off, v = m.v * K.m3_hetV * gV * rr(0.9, 1.08);
+      if (hold > 1.2 * SR && rnd() < 0.3) { const up = rnd() < 0.5, nb = up ? sc.notes.find(x => x > g * 1.03) : [...sc.notes].reverse().find(x => x < g / 1.03); if (nb) voices.push(...V(at - Math.floor(0.09 * SR), nb, v * 0.55, sc, false, 0.1)); }
       voices.push(...V(at, g, v, sc, false, Math.min(4, 0.9 * hold / SR))); }); };
   const ancWait = (sc, a) => { const C = BAND.call; // music3: while another sings in the ancient band: double its phrase (heterophony), or hold home and fifth low under it, a pedal
     if (C && C.by !== me.seq && me.het !== C && C.end > a && live(BAND.m[C.by])) { me.het = C; if (rnd() < K.m3_het) { hetero(sc, C); return; } }
@@ -3517,8 +3526,9 @@ function Player(voice, scaleOf, bass, opt = {}) { // drives one instrument: an i
     const name = pick(p), P = PLAY[name]; piece = { name, ...P, bars: P.bars && P.bars.map(b => b.split(' ')), tempoX: lastTempo ? clamp((lastTempo + 0.25 * (1.01 - lastTempo)) * rr(0.95, 1.055), 0.9, 1.12) : rr(0.9, 1.12), shift: lastShift, scale: curScale }; lastTempo = piece.tempoX; // the pulse moves a little between pieces, never by a jump, and drifts back toward the middle
     if (mono) { piece.roll = 0; piece.dyads = 0; }
     let moved = false;
-    const lk = lullKey(nowAbs);
+    const lk = lullKey(nowAbs), hk = !lk && K.nx_house && !started && (alone || lead) && !PLAY[p.style] && p.scale !== 'wander' && ['bells', 'chimes', 'cowbells', 'gong', 'bowl'].includes(HOUSE.by) && Math.abs(nowAbs - HOUSE.at) < SR ? HOUSE.home : null; // music3d: a bell holds the key: begin on its home note
     if (lk && lead) { const f = fitBand(p, lk); piece.shift = f.sh; piece.scale = f.scn; piece.mask = f.mask; moved = f.sh !== lastShift || f.scn !== curScale; me.lkid = lk.kid; } // a lullaby plays: its key leads, and this one fits around it
+    else if (hk != null) { const s0 = scaleOf(p), b0 = s0.bass || s0.notes[0], lowest = Math.min(...s0.notes, s0.bass || 1e9); let sh = 0; for (const d of [0, 1, -1, 2, -2, 3, -3, 4, -4, 5, -5, -6]) if (pcOf(b0 * Math.pow(2, d / 12)) === hk && !(d < 0 && lowest * Math.pow(2, d / 12) < Math.min(lowest, 80))) { sh = d; break; } piece.shift = sh; piece.scale = null; moved = sh !== lastShift; }
     else if (ens && !lead && fresh(BAND.key)) { const f = fitBand(p); piece.shift = f.sh; piece.scale = f.scn; piece.mask = f.mask; moved = f.sh !== lastShift || f.scn !== curScale; me.kid = BAND.key.kid; } // playing with others: the band's key, on this instrument's nearest scale
     else if (p.scale === 'wander' && opt.scales) { // set to wander, alone or leading: now and then another of its own scales, as a modulation (nextScale); the band's key moves with it
       const at = (id, sh) => { const s0 = scaleOf(Object.assign({}, p, { scale: id })), r = Math.pow(2, sh / 12), b = (s0.bass || s0.notes[0]) * r, fe = scaleFeel(s0), low = Math.min(...s0.notes, s0.bass || 1e9);
@@ -3572,6 +3582,7 @@ function Player(voice, scaleOf, bass, opt = {}) { // drives one instrument: an i
   const free = (p, sc, beat) => { // one phrase, with its rubato; the rest after it is decided when it begins, so an answering instrument gets its room
     beat *= opt.freeX || K.mu_freeX; imp.style = piece; imp.breathes = !!opt.breath; imp.band = ens ? BAND : null; imp.call = callFor(sc); imp.from = imp.call ? null : fromOf(sc); imp.drone = droneRel(); imp.metre = false; imp.bandT = ens && !lead && BAND.arc != null ? BAND.arc : null; imp.form = formAt(nowAbs + t); colour(sc); if (piece.loops) { loopStep(p, sc, beat); return; } // the notes of a free phrase move at about the pace real players' do; one that breathes phrases by the breath
     if (restBeats) { const dueted = DUET.alive > 0 && !(opt.follow && opt.follow(p)); t += Math.floor((dueted ? Math.max(restBeats, lastBeats * 1.1 + 2.5) : restBeats) * beat); restBeats = 0; return; }
+    if (K.nx_duck) { const th = natureLast('thunder', nowAbs + t - 3 * SR, nowAbs + t + Math.floor(1.5 * SR)); if (th && th.v > 0.25) { t = Math.max(t + 1, th.at + 3 * SR - nowAbs); return; } } // music3d: a near roll of thunder: let it pass before the next phrase
     if (BAND.grid && BAND.grid.by === me.seq) BAND.grid = null; // no groove of this one's to keep time to now
     let chRel = null;
     if (ens && !me.ans) { const a = nowAbs + t;
@@ -3587,7 +3598,8 @@ function Player(voice, scaleOf, bass, opt = {}) { // drives one instrument: an i
     const c0 = { root: imp.croot, set: imp.ch }; if (alone && ph.cad) { chRel = x => (x >= ph.cad.at - 0.05 ? ph.cad : c0); const su = susOf(ph); if (su) postChord(nowAbs + t + Math.floor(su.at * beat), su.c); postChord(nowAbs + t + Math.floor(ph.cad.at * beat), ph.cad); } // alone, the harmony goes home with the melody at its cadence (strings under it follow)
     if (piece.dialog) { const dn = !imp.open && ph.notes.every(nt => nt.d >= imp.oct), up = imp.open && ph.notes.every(nt => nt.d + imp.oct <= top); if (dn || up) for (const nt of ph.notes) { nt.d += up ? imp.oct : -imp.oct; nt.v *= dn ? 0.92 : 1; } } // dialogue: the answer an octave below the question (or the question an octave above), as two hands or two registers reply
     postCall(ph, sc, beat); imp.chAt = null; if (ens && !me.ans) BAND.sing = { id: me.seq, until: nowAbs + t + Math.floor((ph.beats + (imp.open ? ph.rest * K.mu_rest + 1 : 0)) * beat) }; // singing: through the breath after a question, to the end of its answer
-    const breath = ph.rest * K.mu_rest * (1 + 0.6 * MUSIC_EASE); pedalAt = base + t + Math.floor((ph.beats + breath) * beat); // the pedal is changed as the next phrase begins
+    const breath = ph.rest * K.mu_rest * (1 + 0.6 * MUSIC_EASE); pedalAt = base + t + Math.floor((ph.beats + breath) * beat);
+    if (lead) { natureEvent('phrase', nowAbs + t, opt.breath ? 1 : 0.5, Math.floor(ph.beats * beat)); if (breath * beat > 1.5 * SR) natureEvent('gap', nowAbs + t + Math.floor(ph.beats * beat), opt.breath ? 1 : 0.5, Math.floor(breath * beat)); } // music3d: the phrase, and the breath after it, for the birds: the near ones hold their calls while it sings and answer in the breath // the pedal is changed as the next phrase begins
     if (opt.breath) voices.push(...opt.breath(Math.max(0, t - Math.floor(0.45 * SR)), ph.notes[0].v)); // the player breathes in before the phrase
     for (const nt of ph.notes) {
       if (chRel && alone) { const c = chRel(nt.b); imp.croot = c.root; imp.ch = c.set; } // the chord under this note (the dyads take theirs from it)
@@ -5205,9 +5217,9 @@ const FD_PAT = { // a bar of each pattern as [beat, stroke, velocity]: A, and B 
     B: [[0, 'D', 1], [1.5, 'g', 0.12], [2, 'd', 0.6], [3.5, 'g', 0.15]], orn: [3, 'g', 0.11], fill: [[2, 'T', 0.45], [3, 'g', 0.13], [3.5, 'g', 0.17], [3.75, 'g', 0.21]] },
   stillness: { nb: 4, fam: 'duple', gain: 1.2, A: [[0, 'D', 1], [2.5, 'g', 0.1]], // one deep stroke a bar, left to ring; a breath of a tap
     B: [[0, 'D', 1], [3, 'T', 0.34]], orn: [3.5, 'g', 0.1], fill: [[2, 'T', 0.36], [3, 'g', 0.12], [3.5, 'g', 0.16]] },
-  dance7: { nb: 3.5, fam: '3.5', gain: 1.1, A: [[0, 'D', 1], [1, 'g', 0.12], [1.5, 'T', 0.42], [2.5, 'd', 0.5], [3, 'g', 0.12]], // music3: 7/8 as 3 + 2 + 2 (the old Greek dance's limp), slow and soft
+  dance7: { nb: 3.5, fam: '3.5', gain: 1.1, old: 1, A: [[0, 'D', 1], [1, 'g', 0.12], [1.5, 'T', 0.42], [2.5, 'd', 0.5], [3, 'g', 0.12]], // music3: 7/8 as 3 + 2 + 2 (the old Greek dance's limp), slow and soft
     B: [[0, 'D', 1], [1.5, 'd', 0.5], [2.5, 'T', 0.4]], orn: [0.5, 'g', 0.1], fill: [[2.5, 'T', 0.4], [3, 'g', 0.15], [3.25, 'g', 0.2]] },
-  aksak: { nb: 5, fam: '5', gain: 1.1, A: [[0, 'D', 1], [1.5, 'T', 0.4], [3, 'd', 0.6], [4, 'T', 0.38]], // music3: 10/8 as 3 + 3 + 2 + 2, the limping aksak, a stroke on each group
+  aksak: { nb: 5, fam: '5', gain: 1.1, old: 1, A: [[0, 'D', 1], [1.5, 'T', 0.4], [3, 'd', 0.6], [4, 'T', 0.38]], // music3: 10/8 as 3 + 3 + 2 + 2, the limping aksak, a stroke on each group
     B: [[0, 'D', 1], [1.5, 'g', 0.14], [3, 'd', 0.55], [4, 'g', 0.14]], orn: [2.5, 'g', 0.1], fill: [[3, 'd', 0.5], [4, 'T', 0.4], [4.5, 'g', 0.18]] },
   tide: { nb: 3, fam: '3', gain: 1.1, A: [[0, 'D', 1], [2, 'T', 0.4], [2.5, 'g', 0.12]], // a slow rocking three: the deep stroke, the rim on three, a tap leaning into the next
     B: [[0, 'D', 1], [1, 'P', 0.38], [2, 'd', 0.5]], orn: [1.5, 'g', 0.1], fill: [[2, 'T', 0.4], [2.5, 'g', 0.15], [2.75, 'g', 0.2]] },
@@ -5480,9 +5492,9 @@ function FrameDrum() {
     for (const [b, kind, v0] of r.pulse) {
       if (kind === 'g' && rnd() < 0.6 * MUSIC_EASE) continue; // fewer taps as a sleep timer runs down
       const odd = band ? (r.sp < r.nb - 0.01 ? (Math.abs(b - Math.round(b)) < 1e-6 && Math.round(b) % 2 ? 0.055 : 0) : Math.abs(b % 1 - 0.5) < 1e-6 ? 0.025 : Math.abs(b % 0.5 - 0.25) < 1e-6 ? 0.014 : 0) : 0; // under a groove its off-pulses come a little late, with the players' swing
-      const back = kind === 'g' || kind === 'T' ? 0.003 : 0, a = Math.round(r.at + b * bt + odd * r.len / r.nb + (r.jit + clamp(pink() * 0.002, -0.004, 0.004) + back) * SR); // the ensemble's looseness and a hand's own; the light strokes a touch behind
+      const lz = r.P && r.P.old ? K.m3_lz : 0, back = kind === 'g' || kind === 'T' ? 0.003 : 0, a = Math.round(r.at + b * bt + odd * r.len / r.nb + (r.jit + clamp(pink() * (0.002 + 0.0055 * lz), -0.004 - 0.012 * lz, 0.004 + 0.012 * lz) + back) * SR); // the ensemble's looseness and a hand's own; the light strokes a touch behind (music3c: the old metres' hands looser)
       if (a < now - 0.03 * SR) continue;
-      q.push({ at: Math.max(a, now), kind, v: v0 * (r.P.gain || 1) * dyn * rr(0.95, 1.05) });
+      q.push({ at: Math.max(a, now), kind, v: v0 * (r.P.gain || 1) * dyn * (lz ? Math.exp(0.17 * lz * clamp(gauss(), -2, 2)) * (kind !== 'g' && r.P.A.some(y => Math.abs(y[0] - b) < 1e-6 && y[1] !== 'g') && [0, 1.5, 2.5, 3, 4].includes(b) ? 1.06 : 1) : rr(0.95, 1.05)) });
     }
   };
   return {
