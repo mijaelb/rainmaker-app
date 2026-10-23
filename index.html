@@ -1267,7 +1267,7 @@ const K = {
   ko_A: 0.2, ko_t60: 3, ko_dk: 0.06, ko_ramp: 0.014, ko_up: 0, ko_inh: 0.0006, ko_box: 180, ko_boxA: 0.2, ko_tok: 0.24, ko_nail: 0.16, ko_snap: 0.1, ko_symp: 0.09, // kora: level, the ring at 172 Hz, how much faster the harmonics die, the onset's rise in seconds (a firm finger: half), a lift of the upper harmonics, stiffness, the calabash knock, the skin's tok, the nail, the pluck's snap, the other strings; a longer ring, a slower rise and a soft snap keep the dense riffs smooth (roughness 0.29 to 0.10 asper)
   ha_A: 0.2, ha_t60: 3.64, ha_dk: 0.15, ha_up: 0, ha_inh: 0.0009, ha_box: 210, ha_boxA: 0.625, ha_pad: 0.05, ha_nail: 0.03, ha_snap: 0.15, ha_symp: 0.34, // harp: level, the fundamental's ring at 590 Hz, how much faster the harmonics die, a lift of the upper harmonics in dB, string stiffness, the soundboard knock, the pad's contact, the fingertip tick, the pluck's snap, the other strings (tools/tune.py against harp1-2: ring, stiffness, knock and the other strings rose; the attack stayed)
   bl_A: 0.12, bl_t60: 14, bl_clang: 1.5, // church bells: level, the prime's ring in seconds (bell1: 12-17 s), the clapper's clang
-  sz_A: 0.25, sz_trick: 0.5, sz_knock: 0.36, sz_click: 0.35, sz_ramp: 0.0015, sz_tok: 0.8, sz_thud: 0.6, sz_gush: 5, // bamboo fountain: trickle level, knock, its slap and thud, the pour after a knock (a flow factor)
+  sz_A: 0.25, sz_trick: 0.5, sz_knock: 0.2, sz_click: 0.08, sz_ramp: 0.005, sz_tok: 0.3, sz_thud: 0.75, sz_gush: 3, // bamboo fountain: trickle level, knock, its slap and thud, the pour after a knock (a flow factor)
   gq_A: 0.108, gq_fmt: 630, gq_bw: 0.745, gq_fund: 0.25, gq_pluck: 0.26, gq_kmax: 30, gq_wash: 0, gq_slide: 0.8, gq_vib: 0.25, gq_click: 0.4, gq_nail: 1.1, gq_symp: 0.35, // guqin
   pu_A: 1.1, pu_bed: 0.012, // resting pulse
   tr_rumble: 0.45, tr_mid: 0.3, tr_hiss: 0.035, tr_thud: 0.6, tr_knock: 0.16, tr_rattle: 0.03, // night train
@@ -4253,7 +4253,7 @@ function Sozu() {
   return { render(L, R, n, p, cx) {
     const g = K.sz_A, bk = sharedKey(cx, 'sozu', 0), now = cx && cx.t != null ? Math.round(cx.t * SR) : 0;
     if (!tl || tl.length !== n) { tl = new Float32Array(n); tr = new Float32Array(n); pl = new Float32Array(n); pr = new Float32Array(n); } else { tl.fill(0); tr.fill(0); }
-    trick.render(tl, tr, n, { flow: p.flow * 0.3, size: 0.6, babble: 0.15 }); // the trickle
+    trick.render(tl, tr, n, { flow: p.flow * 0.3, size: 0.6, babble: 0.08 }); // the trickle
     for (let i = 0; i < n; i++) { L[i] += tl[i] * K.sz_trick; R[i] += tr[i] * K.sz_trick; }
     while (next < n) { // the tube fills, tips, knocks on the stone and empties
       const fs = 280 * Math.pow(2, (p.pitch - 0.5) * 0.6), f = bk ? snapPc(fs, [bk.home, (bk.home + 7) % 12]) : fs * rr(0.97, 1.03), a = g * K.sz_knock * Math.min(1, 0.7 + 0.75 * p.flow) * rr(0.85, 1); // over a thin trickle the knock is a little softer, so it never stands far out
@@ -4262,9 +4262,9 @@ function Sozu() {
       at = next; logNote(cx, next, f); // then the water pours into the basin
       next += Math.floor(lr(p.every * 0.7, p.every * 1.4) * SR); if (bk) next = nextBeat(now + next, now) - now; // under a groove, on its beat
     }
-    if (at < n && at > -1.6 * SR) { // the tube's water pours into the basin: it swells in from the knock and dies away (switched on and off at the chunk's edges, it was a 7-9 dB step each way, and began up to 0.17 s before the knock)
+    if (at < n && at > -2.4 * SR) { // the tube's water pours into the basin: it swells in from the knock and dies away (switched on and off at the chunk's edges, it was a 7-9 dB step each way, and began up to 0.17 s before the knock)
       pl.fill(0); pr.fill(0); pour.render(pl, pr, n, { flow: p.flow * 0.3 * K.sz_gush, size: 0.6, babble: 0.15 });
-      for (let i = Math.max(0, at); i < n; i++) { const t = (i - at) / SR, e = (t < 0.05 ? 0.5 - 0.5 * Math.cos(Math.PI * t / 0.05) : 1) * (t < 0.3 ? 1 : Math.exp((0.3 - t) / 0.2)) * K.sz_trick; L[i] += pl[i] * e; R[i] += pr[i] * e; }
+      for (let i = Math.max(0, at); i < n; i++) { const t = (i - at) / SR, e = (t < 0.3 ? 0.5 - 0.5 * Math.cos(Math.PI * t / 0.3) : 1) * (t < 0.45 ? 1 : Math.exp((0.45 - t) / 0.3)) * K.sz_trick; L[i] += pl[i] * e; R[i] += pr[i] * e; }
     }
     next -= n; at -= n;
     runVoices(voices, L, R, n);
