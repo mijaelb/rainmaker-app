@@ -1,5 +1,5 @@
 // Offline support: serve the app from the network when online (so updates arrive at once), from the cache when not.
-const CACHE = 'rainmaker-d1c5b5a2d9';
+const CACHE = 'rainmaker-e2cefdd830';
 const SHELL = ['./', 'index.html', 'app.enc', 'site.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png'];
 self.addEventListener('install', e => e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())));
 self.addEventListener('activate', e => e.waitUntil(caches.keys()
